@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Larkmoor House · Assisted Living &amp; Memory Care · Millbrook Bend, Oregon</title>
+<meta name="description" content="This week's calendar, today's menu, our care team, current rates, the state inspection record and the family handbook for Larkmoor House. Demonstration site.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400..800&family=Merriweather:ital,opsz,wght@0,18..144,400..900;1,18..144,400..900&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --ink:#1B2626;
+  --ink-2:#44524F;
+  --ink-3:#5E6B69;
+  --teal:#0E5A57;
+  --teal-deep:#083D3B;
+  --teal-tint:#E4EFED;
+  --teal-tint-2:#F2F7F6;
+  --gold:#F0B54A;
+  --gold-ink:#7A4E07;
+  --gold-tint:#FFF3DA;
+  --red:#9B2A21;
+  --red-deep:#7C1F18;
+  --red-tint:#FBEBE8;
+  --bg:#FFFFFF;
+  --bg-2:#F5F7F6;
+  --line:#D6DFDC;
+  --line-2:#EAEFED;
+  --spec:#3F35A3;
+  --spec-tint:#EEEDFB;
+  --spec-line:#8D86D8;
+  --radius:12px;
+  --radius-s:8px;
+  --shadow:0 2px 6px rgba(27,38,38,.06),0 10px 24px -8px rgba(27,38,38,.14);
+  --font-body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --font-display:"Merriweather",Georgia,"Times New Roman",serif;
+  --measure:70ch;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:96px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font-body);font-size:18px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+::selection{background:var(--gold);color:var(--ink)}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:4px}
+.spec :focus-visible{outline-color:var(--spec)}
+a{color:var(--teal);text-decoration-thickness:2px;text-underline-offset:3px}
+a:hover{color:var(--teal-deep)}
+.tap{display:inline-block;padding:11px 0;margin:-11px 0}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.2;margin:0;text-wrap:balance;letter-spacing:-.005em}
+h2{font-size:clamp(30px,3.2vw,38px);margin-bottom:.35em}
+h3{font-size:clamp(22px,2.2vw,25px);margin-bottom:.5em}
+h4{font-size:19px;font-family:var(--font-body);font-weight:700;margin-bottom:.35em}
+p{margin:0 0 1em;max-width:var(--measure)}
+ul,ol{margin:0;padding:0}
+strong{font-weight:700}
+small{font-size:.92em}
+time{font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+caption{text-align:left;font-weight:700;padding:0 0 10px;color:var(--ink-2)}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:700;color:var(--ink-2);background:var(--bg-2);font-size:17px}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+.muted{color:var(--ink-2)}
+.tiny{font-size:17px}
+.tiny2{font-size:17px}
+.skip{position:absolute;left:12px;top:-60px;background:var(--teal);color:#fff;padding:12px 18px;border-radius:8px;z-index:100;font-weight:700}
+.skip:focus{top:12px}
+.wrap{width:min(1120px,100% - 40px);margin-inline:auto}
+.wrap-wide{width:min(1360px,100% - 40px);margin-inline:auto}
+.icon{width:1.15em;height:1.15em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;flex:none}
+.vh{position:absolute!important;clip:rect(0 0 0 0);width:1px;height:1px;overflow:hidden;white-space:nowrap}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:10px 22px;border-radius:999px;font:inherit;font-weight:700;text-decoration:none;cursor:pointer;border:2px solid transparent;transition:transform .18s var(--ease),box-shadow .18s var(--ease),background .18s}
+.btn:active{transform:translateY(1px)}
+.btn-gold{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.btn-gold:hover{background:#F6C466;color:var(--ink)}
+.btn-teal{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-teal:hover{background:var(--teal-deep);color:#fff}
+.btn-outline{background:transparent;color:var(--teal);border-color:var(--teal)}
+.btn-outline:hover{background:var(--teal-tint);color:var(--teal-deep)}
+.btn-white{background:#fff;color:var(--teal);border-color:#fff}
+.btn-white:hover{background:var(--teal-tint);color:var(--teal-deep)}
+
+/* ---------- header ---------- */
+.site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.site-header .wrap{display:flex;align-items:center;gap:14px;min-height:76px;flex-wrap:wrap;padding-block:8px;width:min(1400px,100% - 40px)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);margin-right:auto;white-space:nowrap}
+.brand-mark{width:44px;height:44px;flex:none}
+.brand-name{font-family:var(--font-display);font-weight:900;font-size:24px;line-height:1;letter-spacing:-.01em}
+.brand-sub{display:block;font-family:var(--font-body);font-size:17px;font-weight:700;color:var(--teal);margin-top:2px}
+.site-nav{display:flex;gap:4px;flex-wrap:wrap}
+.site-nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 11px;border-radius:8px;text-decoration:none;color:var(--ink-2);font-weight:700;font-size:17px}
+.site-nav a:hover{background:var(--teal-tint);color:var(--teal-deep)}
+.header-phone{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 6px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap}
+.header-phone:hover{color:var(--teal-deep)}
+@media (max-width:1420px){.site-nav{width:100%;order:9;margin-top:-4px}}
+@media (max-width:760px){.site-nav{display:none}}
+@media (max-width:760px){.site-header{position:static}.site-header .wrap{gap:8px 12px;padding-block:10px}.brand{width:100%}.brand-name{font-size:22px}.header-phone{margin-right:auto}}
+
+/* structure switch */
+.spec-switch{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:6px 8px 6px 14px;border-radius:999px;border:2px solid var(--line);background:#fff;font:inherit;font-weight:700;font-size:17px;white-space:nowrap;color:var(--ink-2);cursor:pointer;transition:border-color .2s,background .2s,color .2s}
+.spec-switch:hover{border-color:var(--spec-line);color:var(--spec)}
+.spec-switch .track{width:50px;height:30px;border-radius:999px;background:#C8CFCD;position:relative;transition:background .25s var(--ease);flex:none}
+.spec-switch .track::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .25s var(--ease)}
+.spec-switch[aria-checked="true"]{border-color:var(--spec);background:var(--spec-tint);color:var(--spec)}
+.spec-switch[aria-checked="true"] .track{background:var(--spec)}
+.spec-switch[aria-checked="true"] .track::after{transform:translateX(20px)}
+.spec-switch .lbl-on,.spec-switch .lbl-short{display:none}
+.spec-switch[aria-checked="true"] .lbl-off{display:none}
+.spec-switch[aria-checked="true"] .lbl-on{display:inline}
+
+/* ---------- spec (structure) mode ---------- */
+.spec-banner{display:none;background:var(--spec);color:#fff}
+.spec .spec-banner{display:block}
+.spec-banner .wrap{display:flex;gap:16px 32px;flex-wrap:wrap;align-items:center;padding-block:14px;font-size:17px}
+.spec-banner strong{font-size:18px}
+.spec-banner .legend{display:flex;gap:18px;flex-wrap:wrap;margin-left:auto}
+.spec-banner .legend span{display:inline-flex;align-items:center;gap:8px}
+.lane{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:17px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.lane-fast{background:#DFF5E3;color:#0F5A27}
+.lane-approve{background:#FFE9C2;color:#6E4300}
+.lane-urgent{background:#FFD9D4;color:#7C1F18}
+.spec-banner .lane{border:1px solid rgba(255,255,255,.5)}
+
+.mod{position:relative;transition:box-shadow .3s var(--ease)}
+.spec .mod{box-shadow:inset 0 0 0 2px var(--spec-line)}
+.spec-label{display:none}
+.spec .spec-label{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;align-items:start;background:var(--spec-tint);color:var(--spec);border:2px dashed var(--spec-line);border-radius:var(--radius-s);padding:14px 18px;margin:0 0 26px;font-size:17px;line-height:1.4;animation:labelIn .45s var(--ease) both}
+@keyframes labelIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.spec .spec-label{animation:none}}
+.spec-label b{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:17px;padding-top:3px}
+.spec-label .k{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:17px;padding-top:3px;color:#5B52B8}
+.spec-label .v{color:#211C5C}
+.spec-label .v .lane{vertical-align:1px}
+.spec-only{display:none}
+.spec .spec-only{display:block}
+@media (max-width:600px){.spec .spec-label{grid-template-columns:1fr;gap:2px}.spec-label .k{margin-top:8px}}
+
+/* ---------- alert ---------- */
+.alert{background:var(--red);color:#fff}
+.alert .wrap{display:grid;grid-template-columns:auto 1fr auto;gap:14px 20px;align-items:start;padding-block:18px}
+.alert .icon{width:30px;height:30px;margin-top:2px}
+.alert h2{font-family:var(--font-body);font-size:20px;margin:0 0 4px;letter-spacing:0}
+.alert p{margin:0;max-width:none;font-size:17px;color:#FFF3F1}
+.alert .meta{font-size:17px;color:#FFE1DD;margin-top:6px}
+.alert a{color:#fff;text-decoration-color:rgba(255,255,255,.6)}
+.alert a.btn-white{color:var(--teal)}
+.alert a.btn-white:hover{color:var(--teal-deep)}
+.alert .btn{white-space:nowrap}
+@media (max-width:760px){.alert .wrap{grid-template-columns:auto 1fr}.alert .btn{grid-column:2;white-space:normal;justify-self:start;text-align:left}}
+.spec .alert .spec-label{grid-column:1/-1;background:#FFF;border-color:#fff;color:var(--spec);margin-bottom:0}
+
+/* ---------- identity ---------- */
+.identity{background:var(--teal);color:#fff;padding-block:24px 22px;position:relative;overflow:hidden}
+.identity::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(900px 400px at 85% -10%,rgba(255,255,255,.10),transparent 60%),
+  radial-gradient(600px 300px at 0% 110%,rgba(0,0,0,.14),transparent 60%);pointer-events:none}
+.identity .wrap{position:relative}
+.identity h1{font-size:clamp(32px,3.4vw,40px);font-weight:900;letter-spacing:-.015em;color:#fff}
+.identity .tag{font-size:19px;margin:8px 0 0;color:#E1F1EE;max-width:none}
+.id-top{display:flex;gap:20px 40px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.id-top>div:first-child{flex:1 1 480px}
+.facts{display:grid;grid-template-columns:repeat(6,1fr);gap:14px 20px;padding:0;list-style:none;margin-top:22px}
+@media (max-width:1100px){.facts{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:640px){.facts{grid-template-columns:1fr 1fr}}
+.facts li{border-top:2px solid rgba(255,255,255,.28);padding-top:10px}
+.facts .k{display:block;font-size:17px;letter-spacing:.04em;text-transform:uppercase;color:#D3ECE8;font-weight:700}
+.facts .v{display:block;font-size:18px;font-weight:700;color:#fff;margin-top:2px}
+.facts .v.small{font-size:17px;font-weight:400}
+.id-actions{display:flex;flex-direction:column;gap:8px;align-items:stretch;min-width:300px}
+.id-actions .btn{font-size:19px;min-height:54px}
+.id-actions .phone{display:inline-flex;align-items:center;justify-content:center;gap:10px;color:#fff;font-weight:700;font-size:22px;text-decoration:none;min-height:48px;flex-wrap:wrap;text-align:center}
+.id-actions .phone small{font-weight:400;font-size:17px;color:#E1F1EE}
+
+
+/* ---------- audience switcher ---------- */
+.audience{background:var(--teal-tint-2);border-bottom:1px solid var(--line)}
+.audience .wrap{padding-block:16px 18px}
+.aud-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:6px;background:#fff;border:2px solid var(--line);border-radius:14px;list-style:none;max-width:820px}
+.aud-tabs button{font:inherit;font-weight:700;font-size:17px;min-height:48px;padding:8px 14px;border:0;border-radius:9px;background:transparent;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,color .2s}
+.aud-tabs button:hover{background:var(--teal-tint);color:var(--teal-deep)}
+.aud-tabs button[aria-selected="true"]{background:var(--teal);color:#fff}
+.aud-panel{display:flex;gap:16px 28px;align-items:center;flex-wrap:wrap;margin-top:18px;min-height:56px}
+.aud-panel p{margin:0;max-width:62ch;font-size:19px}
+.aud-panel .btn{white-space:nowrap}
+.aud-note{display:none;margin-top:12px;font-size:17px;color:var(--spec);font-weight:700}
+.spec .aud-note{display:block}
+@media (max-width:640px){.aud-tabs{grid-template-columns:1fr}.aud-tabs button{justify-content:flex-start}}
+
+/* ---------- sections ---------- */
+section.mod{padding-block:64px}
+#daily-life{padding-top:44px}
+section.mod.alt{background:var(--bg-2)}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;margin-bottom:26px}
+.sec-head p{margin:0;color:var(--ink-2);max-width:70ch}
+.stamp{display:inline-flex;align-items:center;gap:8px;font-size:17px;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;white-space:nowrap}
+.alt .stamp{background:#fff}
+.stamp .dot{width:10px;height:10px;border-radius:50%;background:#1E9A55;flex:none}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;min-width:0}
+.card.scroll{overflow-x:auto}
+@media (max-width:760px){.card{padding:16px 14px}th,td{padding:10px 8px}}
+.alt .card{box-shadow:var(--shadow);border-color:var(--line-2)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media (max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* ---------- calendar ---------- */
+.cal-head{display:flex;align-items:center;gap:12px 24px;flex-wrap:wrap;margin-bottom:14px}
+.cal-head h3{margin:0}
+.cal-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:17px;color:var(--ink-2);margin-left:auto}
+.cal-legend span{display:inline-flex;align-items:center;gap:6px}
+.cat{width:12px;height:12px;border-radius:3px;flex:none}
+.c-move{background:#2F8F6B}.c-social{background:#E0912B}.c-mind{background:#4C6FD1}.c-faith{background:#8B5CB8}.c-out{background:#C5433A}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.day{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;min-width:0}
+.day summary{list-style:none;cursor:default;padding:12px 14px;border-bottom:1px solid var(--line-2);display:flex;align-items:baseline;gap:8px;background:var(--bg-2)}
+.day summary::-webkit-details-marker{display:none}
+.day summary .dn{font-family:var(--font-display);font-weight:700;font-size:19px}
+.day summary .dd{color:var(--ink-2);font-size:17px;white-space:nowrap}
+.day summary .chev{display:none;margin-left:auto;transition:transform .2s}
+.day[open] summary .chev{transform:rotate(180deg)}
+.day.today{border:2px solid var(--gold);box-shadow:var(--shadow)}
+.day.today summary{background:var(--gold-tint)}
+.day.today summary .dn::after{content:"Today";font-family:var(--font-body);font-size:17px;letter-spacing:.06em;text-transform:uppercase;background:var(--gold);color:var(--ink);border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:2px}
+.evs{list-style:none;padding:6px 0}
+.evs li{display:grid;grid-template-columns:8px 1fr;gap:0 10px;padding:9px 14px 9px 12px;border-bottom:1px solid var(--line-2);font-size:17px;line-height:1.35}
+.evs li:last-child{border-bottom:0}
+.evs .cat{margin-top:6px;height:auto;align-self:stretch;width:5px;border-radius:3px}
+.evs time{display:block;font-weight:700;color:var(--ink);font-size:17px}
+.evs .nm{display:block;font-weight:700;color:var(--ink);font-size:17px}
+.evs .rm{display:block;color:var(--ink-2);font-size:17px}
+.evs .rm .icon{width:1em;height:1em;vertical-align:-.15em}
+.evs .note{display:block;color:var(--red);font-size:17px;font-weight:700}
+@media (max-width:1180px){.cal{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:820px){
+  .cal{grid-template-columns:1fr;gap:8px}
+  .day summary{cursor:pointer;padding:14px 16px;min-height:52px}
+  .day summary .chev{display:block}
+  .evs li,.evs time,.evs .nm{font-size:17px}
+}
+
+/* ---------- menu ---------- */
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px}
+.meal{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.meal h4{font-family:var(--font-display);font-size:21px;display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:10px}
+.meal h4 span{font-family:var(--font-body);font-size:17px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.meal ul{list-style:none}
+.meal li{padding:7px 0;border-top:1px solid var(--line-2);font-size:17px;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.meal li:first-child{border-top:0}
+.diet{display:inline-flex;gap:4px;flex:none}
+.diet abbr{text-decoration:none;font-size:17px;font-weight:800;letter-spacing:.03em;border:1.5px solid var(--line);color:var(--ink-2);border-radius:5px;padding:1px 5px;line-height:1.3}
+.menu-foot{display:flex;gap:10px 22px;flex-wrap:wrap;font-size:17px;color:var(--ink-2);margin-top:14px}
+@media (max-width:860px){.menu-grid{grid-template-columns:1fr}}
+
+/* ---------- photos ---------- */
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:10px}
+.photo{margin:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.ph-frame{aspect-ratio:4/3;background:
+   repeating-linear-gradient(135deg,rgba(14,90,87,.06) 0 6px,transparent 6px 14px),
+   linear-gradient(180deg,#DCEAE7,#C9DDD9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--teal-deep);text-align:center;padding:16px}
+.ph-frame .icon{width:30px;height:30px;opacity:.7}
+.ph-frame span{font-size:17px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.8}
+.photo figcaption{padding:14px 16px 16px;font-size:17px;line-height:1.4}
+.photo figcaption b{display:block;font-size:17px;margin-bottom:3px}
+.photo figcaption .meta{color:var(--ink-2);display:block}
+@media (max-width:1000px){.photos{grid-template-columns:1fr 1fr}}
+@media (max-width:540px){.photos{grid-template-columns:1fr}}
+
+/* ---------- care team ---------- */
+.staff{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.staff li{display:grid;grid-template-columns:64px 1fr;gap:16px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;align-items:start}
+.mono{width:64px;height:64px;border-radius:50%;background:var(--teal-tint);color:var(--teal-deep);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:.02em}
+.staff .nm{font-weight:800;font-size:19px;display:block}
+.staff .role{display:block;color:var(--teal-deep);font-weight:700}
+.staff .cred{display:block;color:var(--ink-2);font-size:17px;margin-top:2px}
+.staff .call{display:block;margin-top:8px;font-size:17px;padding-top:8px;border-top:1px solid var(--line-2)}
+.staff .call b{color:var(--ink-2)}
+@media (max-width:860px){.staff{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;list-style:none;margin-top:8px}
+.kpis li{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.kpis .v{display:block;font-family:var(--font-display);font-weight:700;font-size:28px;color:var(--teal-deep);line-height:1.1}
+.kpis .k{display:block;font-size:17px;color:var(--ink-2);margin-top:6px}
+.kpis .k b{color:var(--ink)}
+
+/* ---------- costs ---------- */
+.avail{display:inline-flex;align-items:center;gap:6px;font-size:17px;white-space:nowrap}
+.avail::before{content:"";width:9px;height:9px;border-radius:50%;background:#1E9A55}
+.avail.wait::before{background:#E0912B}
+.inc{list-style:none}
+.inc li{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line-2);align-items:flex-start}
+.inc li:first-child{border-top:0}
+.inc .icon{margin-top:.2em;color:var(--teal)}
+.inc.sep .icon{color:var(--ink-3)}
+.inc li span.p{margin-left:auto;white-space:nowrap;color:var(--ink-2);font-size:17px}
+.note-box{background:var(--gold-tint);border:1px solid #F1D48F;border-radius:var(--radius-s);padding:14px 18px;font-size:17px;margin-top:16px}
+
+/* ---------- quality ---------- */
+.q-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;list-style:none}
+@media (max-width:900px){.q-summary{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.q-summary{grid-template-columns:1fr}}
+.q-summary li{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.q-summary .k{display:block;font-size:17px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:700}
+.q-summary .v{display:block;font-size:20px;font-weight:800;margin-top:4px}
+.q-summary .s{display:block;font-size:17px;color:var(--ink-2);margin-top:4px}
+.ok{color:#146C3A;font-weight:800}
+.cite{color:var(--red);font-weight:800}
+.hist td:nth-child(4){max-width:44ch}
+.hist td:first-child,td.nw{white-space:nowrap}
+.hist tr.flag td{background:#FFF8EC}
+.src{font-size:17px;color:var(--ink-2);margin-top:12px;display:flex;gap:8px;align-items:flex-start}
+
+/* ---------- handbook ---------- */
+.hb{display:grid;grid-template-columns:1fr 1fr;gap:0 48px;margin:0;border-top:1px solid var(--line)}
+.hb div{padding:20px 0 22px;border-bottom:1px solid var(--line)}
+.hb dt{font-weight:800;font-size:19px;display:flex;align-items:center;gap:10px;margin-bottom:6px;color:var(--teal-deep)}
+.hb dd{margin:0;font-size:17px}
+.hb dd p{margin:0 0 .5em;max-width:none}
+.hb dd p:last-child{margin:0}
+@media (max-width:860px){.hb{grid-template-columns:1fr}}
+.docs{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.docs li a{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius-s);padding:12px 16px;text-decoration:none;color:var(--ink);min-height:56px}
+.docs li a:hover{border-color:var(--teal);background:var(--teal-tint-2)}
+.docs .icon{color:var(--teal);width:26px;height:26px}
+.docs b{display:block;font-size:17px}
+.docs span{display:block;font-size:17px;color:var(--ink-2)}
+.docs .dl{color:var(--teal);font-weight:700;font-size:17px;display:inline-flex;align-items:center;gap:6px}
+@media (max-width:760px){.docs{grid-template-columns:1fr}}
+
+/* ---------- news ---------- */
+.news{list-style:none}
+.news li{display:grid;grid-template-columns:150px 1fr;gap:6px 20px;padding:16px 0;border-top:1px solid var(--line)}
+.news li:first-child{border-top:0;padding-top:0}
+.news time{color:var(--ink-2);font-size:17px;padding-top:3px}
+.news b{display:block;font-size:19px}
+.news p{margin:4px 0 0;font-size:17px}
+.news .tagline{display:inline-block;font-size:17px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:2px 7px;margin-right:8px;vertical-align:2px}
+.tag-urgent{background:var(--red-tint);color:var(--red-deep)}
+.tag-notice{background:var(--gold-tint);color:var(--gold-ink)}
+.tag-news{background:var(--teal-tint);color:var(--teal-deep)}
+@media (max-width:640px){.news li{grid-template-columns:1fr}}
+.channels{display:flex;gap:10px 18px;flex-wrap:wrap;font-size:17px;color:var(--ink-2);margin-top:14px;align-items:center}
+.channels span{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.urgent-card{border:2px solid var(--red);background:var(--red-tint);border-radius:var(--radius);padding:20px 22px;margin-bottom:26px}
+.urgent-card h3{color:var(--red-deep);display:flex;align-items:center;gap:10px}
+.urgent-card p{max-width:none;margin:0 0 .6em}
+
+/* ---------- accessibility panel ---------- */
+.a11y{background:var(--teal-tint-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:48px}
+.a11y .grid-2{align-items:start;gap:32px}
+.a11y ul{list-style:none}
+.a11y li{display:flex;gap:10px;padding:7px 0;align-items:flex-start;font-size:17px}
+.a11y li .icon{color:var(--teal);margin-top:.2em}
+
+/* ---------- about demo ---------- */
+.about{background:var(--teal-deep);color:#E9F3F1;padding-block:64px}
+.about h2{color:#fff}
+.about p{color:#D6EBE8}
+.about .grid-2{gap:36px}
+.about ol{list-style:decimal;padding-left:1.4em;color:#D6EBE8}
+.about ol li{padding:5px 0}
+.about ol li b{color:#fff}
+.about .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.about a{color:#fff}
+.about a.btn-white{color:var(--teal)}
+.about a.btn-white:hover{color:var(--teal-deep)}
+.mod-list{list-style:none;display:grid;gap:8px}
+.mod-list li{display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:10px 14px;font-size:17px}
+.mod-list li b{display:block;font-size:17px;color:#fff}
+.mod-list li span{color:#BFE0DB}
+.mod-list li span.lane-fast{color:#0F5A27}.mod-list li span.lane-approve{color:#6E4300}.mod-list li span.lane-urgent{color:#7C1F18}
+.about .lane{border:0}
+
+/* ---------- footer ---------- */
+footer{padding-block:28px;font-size:17px;color:var(--ink-2);border-top:1px solid var(--line)}
+footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-between}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s var(--ease);z-index:60}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- phone overrides (kept last on purpose) ---------- */
+@media (max-width:760px){.stamp{white-space:normal}.spec-switch .lbl-off,.spec-switch .lbl-on{display:none}.spec-switch .lbl-short{display:inline}}
+</style>
+</head>
+<body>
+<!--
+DIRECTION CONTRACT (seed 00a75b14 · canon)
+WORLD: The category standard for a senior living community website, executed at the craft level of the largest national operators: white ground, deep teal fields, warm gold for the single primary action, soft sage section bands, a book serif for headings, a hyperlegible sans for body.
+FIRST VIEWPORT: An active alert, then the identity block with facts and one gold action, then the audience switcher. No hero image, no lead form. This week's calendar begins before the fold ends.
+VISITOR PATH: Alert → who/where/licence/phone → choose framing → calendar → menu → photos → people → cost → inspection record → handbook → news → accessibility → about this demo.
+SIGNATURE INTERACTION: "Show module structure" turns the site into a product spec: violet annotation labels name owner, content type and lane on every section.
+HONEST RISK: Familiar by design; the argument is carried by structure and specificity, not by novelty.
+-->
+<a class="skip" href="#daily-life">Skip to this week's calendar</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 9v5M12 17.5v.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M4 20h16"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-sms" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-app" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M10 14L20 4M20 4h-6M20 4v6"/><path d="M19 13v6H5V5h6"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-paw" viewBox="0 0 24 24"><circle cx="7" cy="9" r="1.8"/><circle cx="11" cy="6" r="1.8"/><circle cx="15" cy="6.5" r="1.8"/><circle cx="18.5" cy="10" r="1.8"/><path d="M8 17c0-3 2-5 4.5-5S17 14 17 17c0 2-1.5 3-3 3H11c-1.5 0-3-1-3-3z"/></symbol>
+  <symbol id="i-bus" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="14" rx="2"/><path d="M4 11h16M8 18v2M16 18v2M8 15h.01M16 15h.01"/></symbol>
+  <symbol id="i-fork" viewBox="0 0 24 24"><path d="M7 3v7a2 2 0 0 0 4 0V3M9 12v9M17 3c-2 1-3 4-3 7h3v11"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4-9 4z"/><path d="M3 8v9l9 4 9-4V8M12 12v9"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h12l-2 4 2 4H5"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+</svg>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Larkmoor House, home">
+      <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#0E5A57"/><path d="M10 26l12-11 12 11" fill="none" stroke="#F0B54A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 24v10h16V24" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M19 34v-6h6v6" fill="#F0B54A"/></svg>
+      <span><span class="brand-name">Larkmoor House</span><span class="brand-sub">Assisted living &amp; memory care</span></span>
+    </a>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="#daily-life">This week</a>
+      <a href="#care-team">Care team</a>
+      <a href="#costs">Costs</a>
+      <a href="#quality">Inspections</a>
+      <a href="#handbook">Handbook</a>
+      <a href="#news">News</a>
+    </nav>
+    <a class="header-phone" href="tel:+15035550142"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>(503) 555-0142</a>
+    <button class="spec-switch" id="specToggle" role="switch" aria-checked="false" aria-label="Show module structure">
+      <span class="lbl-off">Show module structure</span><span class="lbl-on">Structure shown</span><span class="lbl-short">Structure</span>
+      <span class="track" aria-hidden="true"></span>
+    </button>
+  </div>
+</header>
+
+<div class="spec-banner" id="specBanner" hidden>
+  <div class="wrap">
+    <div><strong>Product view.</strong> Six content modules, five owners inside the building, two publishing lanes. Every section below now shows who edits it and how it gets published. Switch off to see the page as a family would.</div>
+    <div class="legend" aria-label="Lane legend"><span class="lane lane-fast">Fast lane</span><span class="lane lane-approve">Approval required</span><span class="lane lane-urgent">Urgent · bypasses approval</span></div>
+  </div>
+</div>
+
+<main id="main">
+<span id="top"></span>
+
+<!-- ============ ACTIVE ALERT ============ -->
+<aside class="alert mod" aria-labelledby="alert-h" data-module="alerts">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module</span><span class="v"><b>Alerts &amp; News</b> · urgent notice</span>
+      <span class="k">Editor</span><span class="v">Executive Director (or Director of Nursing after hours)</span>
+      <span class="k">Content type</span><span class="v">Notice — severity, audience, effective window, channels, translations</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-urgent">Urgent · bypasses approval</span> Published 07:40, sent by email, text and app at 07:41, translated per recipient (Spanish, Russian, Vietnamese)</span>
+    </div>
+    <svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>
+    <div>
+      <h2 id="alert-h">Visiting change on the second floor (Memory Care) through Sunday 13 September</h2>
+      <p>Three residents on the second floor have confirmed influenza A. Visits are still welcome. Please wear a mask on the second floor (available at the front desk), skip the visit if you have symptoms, and use the Garden Room for family meals instead of the second-floor dining room. First floor is unaffected.</p>
+      <p class="meta">Posted Thursday 10 September 2026, 7:40 am by Marianne Okafor, Executive Director · Sent to 132 family contacts by email, text and app · <a class="tap" href="#news">Details and updates</a></p>
+    </div>
+    <a class="btn btn-white" href="tel:+15035550142"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Questions? Call the nurse on duty</a>
+  </div>
+</aside>
+
+<!-- ============ IDENTITY ============ -->
+<section class="identity mod" aria-labelledby="site-title" data-module="profile">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module</span><span class="v"><b>Community profile</b></span>
+      <span class="k">Editor</span><span class="v">Executive Director</span>
+      <span class="k">Content type</span><span class="v">Organisation record — name, licence, capacity, current census, care levels, contacts</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-approve">Approval required</span> Census and licence status sync nightly from the operations system</span>
+    </div>
+    <div class="id-top">
+      <div>
+        <h1 id="site-title">Larkmoor House</h1>
+        <p class="tag">Assisted living and memory care on Fern Street in Millbrook Bend, Oregon. Family owned since 2009.</p>
+      </div>
+      <div class="id-actions">
+        <a class="btn btn-gold" id="primaryCta" href="#visit"><svg class="icon" aria-hidden="true"><use href="#i-cal"/></svg><span>Book a visit</span></a>
+        <a class="phone" href="tel:+15035550142"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>(503) 555-0142 <small>· ask for Marianne or Daniel</small></a>
+      </div>
+    </div>
+    <ul class="facts">
+      <li><span class="k">Care levels</span><span class="v">Assisted living · Memory care</span></li>
+      <li><span class="k">Residents today</span><span class="v">84 <span class="v small">of 96 apartments</span></span></li>
+      <li><span class="k">State licence</span><span class="v">AL-1024-0417 <span class="v small">Active · renews 30 Jun 2027</span></span></li>
+      <li><span class="k">Last state survey</span><span class="v">18 Mar 2026 <span class="v small">No deficiencies</span></span></li>
+      <li><span class="k">Address</span><span class="v small">1400 Fern Street, Millbrook Bend, OR 97xxx</span></li>
+      <li><span class="k">Front desk</span><span class="v small">Staffed 6 am – 10 pm, nurse on site 24 hours</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ AUDIENCE SWITCHER ============ -->
+<div class="audience mod" data-module="audience">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module</span><span class="v"><b>Audience framing</b></span>
+      <span class="k">Editor</span><span class="v">Marketing (three short lines and three button labels, nothing else)</span>
+      <span class="k">Content type</span><span class="v">Framing — one contextual sentence and one primary action per audience</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-approve">Approval required</span> The content below the switcher is identical for all three audiences. Only this line and the button change.</span>
+    </div>
+    <p class="vh" id="aud-label">Who is reading this page?</p>
+    <ul class="aud-tabs" role="tablist" aria-labelledby="aud-label">
+      <li role="presentation"><button role="tab" id="tab-care" aria-selected="true" aria-controls="aud-panel" data-aud="care"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>I'm looking for care</button></li>
+      <li role="presentation"><button role="tab" id="tab-family" aria-selected="false" aria-controls="aud-panel" data-aud="family" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>My family member lives here</button></li>
+      <li role="presentation"><button role="tab" id="tab-share" aria-selected="false" aria-controls="aud-panel" data-aud="share" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-share"/></svg>I'm sending this to someone</button></li>
+    </ul>
+    <div class="aud-panel" id="aud-panel" role="tabpanel" aria-labelledby="tab-care">
+      <p id="aud-line">Comparing communities is hard when every website says the same thing. Start with what is actually happening here this week, then come and see it.</p>
+      <a class="btn btn-teal" id="aud-cta" href="#visit"><svg class="icon" aria-hidden="true"><use href="#i-cal"/></svg><span>Book a visit this week</span></a>
+    </div>
+    <p class="aud-note">Structure note: switching audience changed one sentence and one button. Everything from the calendar down is the same page for all three readers.</p>
+  </div>
+</div>
+
+<!-- ============ 1. DAILY LIFE ============ -->
+<section class="mod" id="daily-life" aria-labelledby="dl-h" data-module="daily">
+  <div class="wrap-wide">
+    <div class="spec-label" hidden>
+      <span class="k">Module 1</span><span class="v"><b>Daily Life</b></span>
+      <span class="k">Editors</span><span class="v">Tom Delacroix, Life Enrichment Director (calendar, photos) · Luis Barrientos, Dining Services Director (menu)</span>
+      <span class="k">Content types</span><span class="v">Event (time, room, category, recurrence, cancellation) · Menu (meal, service hours, items, dietary flags) · Photo (caption, date, attendance, consent flag)</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-fast">Fast lane</span> Publishes immediately on an approved template. A stale calendar is worse than no calendar, so this module is deliberately not gated.</span>
+    </div>
+    <div class="sec-head">
+      <div>
+        <h2 id="dl-h">This week at Larkmoor House</h2>
+        <p>The real calendar, not a sample. Times and rooms are what residents see on the board by the lift. Cancellations show here the moment they are made.</p>
+      </div>
+      <span class="stamp"><span class="dot" aria-hidden="true"></span>Updated today, 10 Sep, 6:55 am</span>
+    </div>
+
+    <div class="cal-head">
+      <h3>Monday 7 – Sunday 13 September 2026</h3>
+      <div class="cal-legend" aria-label="Activity categories">
+        <span><i class="cat c-move" aria-hidden="true"></i>Movement</span>
+        <span><i class="cat c-social" aria-hidden="true"></i>Social &amp; music</span>
+        <span><i class="cat c-mind" aria-hidden="true"></i>Mind &amp; making</span>
+        <span><i class="cat c-faith" aria-hidden="true"></i>Faith</span>
+        <span><i class="cat c-out" aria-hidden="true"></i>Outings</span>
+      </div>
+    </div>
+
+    <div class="cal" id="cal">
+      <details class="day" open>
+        <summary><span class="dn">Monday</span><span class="dd">7 Sep</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+        <ul class="evs">
+          <li><i class="cat c-move"></i><div><span class="vh">Movement: </span><time datetime="2026-09-07T09:30">9:30 am</time><span class="nm">Chair yoga with Bev</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Wellness Room</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-07T10:30">10:30 am</time><span class="nm">Coffee &amp; the headlines</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Bistro</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-07T12:00">12:00 pm</time><span class="nm">Labor Day cookout for families</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Courtyard</span></div></li>
+          <li><i class="cat c-mind"></i><div><span class="vh">Mind &amp; making: </span><time datetime="2026-09-07T14:30">2:30 pm</time><span class="nm">Word games &amp; trivia</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Library</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-07T18:30">6:30 pm</time><span class="nm">Movie: <em>Singin' in the Rain</em></span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Cinema Lounge</span></div></li>
+        </ul>
+      </details>
+      <details class="day" open>
+        <summary><span class="dn">Tuesday</span><span class="dd">8 Sep</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+        <ul class="evs">
+          <li><i class="cat c-move"></i><div><span class="vh">Movement: </span><time datetime="2026-09-08T09:30">9:30 am</time><span class="nm">Walking club (weather permitting)</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Meet at Front Lobby</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-08T10:30">10:30 am</time><span class="nm">Larkmoor Singers rehearsal</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Garden Room</span></div></li>
+          <li><i class="cat c-out"></i><div><span class="vh">Outings: </span><time datetime="2026-09-08T13:00">1:00 pm</time><span class="nm">Medical appointments bus</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Departs Front Lobby · book with Roy</span></div></li>
+          <li><i class="cat c-mind"></i><div><span class="vh">Mind &amp; making: </span><time datetime="2026-09-08T14:30">2:30 pm</time><span class="nm">Watercolor with Ines</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Art Studio</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-08T16:00">4:00 pm</time><span class="nm">Happy hour with pianist Del Mercer</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Bistro</span></div></li>
+        </ul>
+      </details>
+      <details class="day" open>
+        <summary><span class="dn">Wednesday</span><span class="dd">9 Sep</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+        <ul class="evs">
+          <li><i class="cat c-move"></i><div><span class="vh">Movement: </span><time datetime="2026-09-09T09:30">9:30 am</time><span class="nm">Sit &amp; be fit</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Wellness Room</span></div></li>
+          <li><i class="cat c-out"></i><div><span class="vh">Outings: </span><time datetime="2026-09-09T10:00">10:00 am</time><span class="nm">Shopping bus: Fred's Market &amp; the pharmacy</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Departs Front Lobby</span></div></li>
+          <li><i class="cat c-faith"></i><div><span class="vh">Faith: </span><time datetime="2026-09-09T11:00">11:00 am</time><span class="nm">Catholic communion service</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Chapel</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-09T14:00">2:00 pm</time><span class="nm">Bingo (prizes from the gift shop)</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Main Dining Room</span></div></li>
+          <li><i class="cat c-mind"></i><div><span class="vh">Mind &amp; making: </span><time datetime="2026-09-09T15:30">3:30 pm</time><span class="nm">Memory Care: sensory garden hour</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Second-floor Terrace</span></div></li>
+        </ul>
+      </details>
+      <details class="day today" open>
+        <summary><span class="dn">Thursday</span><span class="dd">10 Sep</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+        <ul class="evs">
+          <li><i class="cat c-move"></i><div><span class="vh">Movement: </span><time datetime="2026-09-10T09:30">9:30 am</time><span class="nm">Chair yoga with Bev</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Wellness Room</span></div></li>
+          <li><i class="cat c-mind"></i><div><span class="vh">Mind &amp; making: </span><time datetime="2026-09-10T10:30">10:30 am</time><span class="nm">Current events with Daniel</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Library</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-10T13:30">1:30 pm</time><span class="nm">Garden club: planting fall bulbs</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Courtyard raised beds</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-10T15:00">3:00 pm</time><span class="nm">Second-floor sing-along</span><span class="note">Moved to Garden Room (see notice)</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-10T18:30">6:30 pm</time><span class="nm">Cribbage &amp; cards</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Bistro</span></div></li>
+        </ul>
+      </details>
+      <details class="day" open>
+        <summary><span class="dn">Friday</span><span class="dd">11 Sep</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+        <ul class="evs">
+          <li><i class="cat c-move"></i><div><span class="vh">Movement: </span><time datetime="2026-09-11T09:30">9:30 am</time><span class="nm">Balance &amp; strength (PT-led)</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Wellness Room</span></div></li>
+          <li><i class="cat c-mind"></i><div><span class="vh">Mind &amp; making: </span><time datetime="2026-09-11T10:30">10:30 am</time><span class="nm">Book group: <em>The Thursday Murder Club</em></span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Library</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-11T14:00">2:00 pm</time><span class="nm">Visit from Millbrook Bend Elementary 3rd grade</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Garden Room</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-11T16:00">4:00 pm</time><span class="nm">Happy hour: Oktoberfest preview</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Bistro</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-11T18:30">6:30 pm</time><span class="nm">Movie: <em>Roman Holiday</em></span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Cinema Lounge</span></div></li>
+        </ul>
+      </details>
+      <details class="day" open>
+        <summary><span class="dn">Saturday</span><span class="dd">12 Sep</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+        <ul class="evs">
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-12T09:00">9:00 am</time><span class="nm">Pancake breakfast (families welcome, $6)</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Main Dining Room</span></div></li>
+          <li><i class="cat c-mind"></i><div><span class="vh">Mind &amp; making: </span><time datetime="2026-09-12T10:30">10:30 am</time><span class="nm">Documentary &amp; discussion</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Cinema Lounge</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-12T14:00">2:00 pm</time><span class="nm">Ice cream social</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Courtyard</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-12T15:30">3:30 pm</time><span class="nm">College football on the big screen</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Cinema Lounge</span></div></li>
+        </ul>
+      </details>
+      <details class="day" open>
+        <summary><span class="dn">Sunday</span><span class="dd">13 Sep</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+        <ul class="evs">
+          <li><i class="cat c-faith"></i><div><span class="vh">Faith: </span><time datetime="2026-09-13T09:30">9:30 am</time><span class="nm">Bus to First Methodist</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Departs Front Lobby</span></div></li>
+          <li><i class="cat c-faith"></i><div><span class="vh">Faith: </span><time datetime="2026-09-13T10:30">10:30 am</time><span class="nm">Interfaith service with Pastor Ruth Alvarez</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Chapel</span></div></li>
+          <li><i class="cat c-social"></i><div><span class="vh">Social &amp; music: </span><time datetime="2026-09-13T12:00">12:00 pm</time><span class="nm">Sunday roast (guest meals $12)</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Main Dining Room</span></div></li>
+          <li><i class="cat c-mind"></i><div><span class="vh">Mind &amp; making: </span><time datetime="2026-09-13T14:30">2:30 pm</time><span class="nm">Jigsaw table &amp; quiet reading</span><span class="rm"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Library</span></div></li>
+        </ul>
+      </details>
+    </div>
+    <p class="tiny muted" style="margin-top:14px">Every activity is open to family members. Memory care residents have a parallel programme on the second floor; ask Hannah Steinberg for this week's sheet.</p>
+
+    <!-- menu -->
+    <div style="margin-top:44px">
+      <div class="sec-head" style="margin-bottom:6px">
+        <h3>Today's menu · Thursday 10 September</h3>
+        <span class="stamp"><span class="dot" aria-hidden="true"></span>September cycle, week 2 · posted by Chef Luis</span>
+      </div>
+      <div class="menu-grid">
+        <div class="meal">
+          <h4>Breakfast <span>7:30 – 9:00 am</span></h4>
+          <ul>
+            <li>Steel-cut oats with brown sugar and berries <span class="diet"><abbr title="Vegetarian">V</abbr><abbr title="Gluten free">GF</abbr></span></li>
+            <li>Scrambled eggs, turkey sausage, wheat toast</li>
+            <li>Seasonal fruit plate and yogurt <span class="diet"><abbr title="Vegetarian">V</abbr><abbr title="Gluten free">GF</abbr><abbr title="Soft texture available">Soft</abbr></span></li>
+            <li>Always available: cold cereal, toast, juice, coffee, tea</li>
+          </ul>
+        </div>
+        <div class="meal">
+          <h4>Lunch <span>11:45 am – 1:15 pm</span></h4>
+          <ul>
+            <li>Tomato basil soup <span class="diet"><abbr title="Vegetarian">V</abbr><abbr title="Gluten free">GF</abbr></span></li>
+            <li>Grilled chicken Caesar wrap, kettle chips</li>
+            <li>Baked mac and cheese, steamed broccoli <span class="diet"><abbr title="Vegetarian">V</abbr><abbr title="Soft texture available">Soft</abbr></span></li>
+            <li>Peach cobbler <span class="diet"><abbr title="Sugar free option">SF</abbr></span></li>
+          </ul>
+        </div>
+        <div class="meal">
+          <h4>Dinner <span>4:45 – 6:15 pm</span></h4>
+          <ul>
+            <li>Herb-roasted pork loin, apple chutney, mashed potatoes <span class="diet"><abbr title="Gluten free">GF</abbr><abbr title="Soft texture available">Soft</abbr></span></li>
+            <li>Pan-seared salmon, lemon rice, green beans <span class="diet"><abbr title="Gluten free">GF</abbr></span></li>
+            <li>Vegetable lasagne <span class="diet"><abbr title="Vegetarian">V</abbr></span></li>
+            <li>Lemon pudding <span class="diet"><abbr title="Sugar free option">SF</abbr></span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="menu-foot">
+        <span><b>V</b> vegetarian · <b>GF</b> gluten free · <b>SF</b> sugar-free option · <b>Soft</b> mechanical-soft available</span>
+        <span>Puréed and thickened-liquid versions of every item on request.</span>
+        <span>Guest meals $9 (Sunday roast $12), book by 10 am with the front desk.</span>
+      </div>
+    </div>
+
+    <!-- photos -->
+    <div style="margin-top:44px">
+      <div class="sec-head" style="margin-bottom:6px">
+        <h3>Recent photos</h3>
+        <span class="stamp">Residents pictured have signed photo consent</span>
+      </div>
+      <div class="photos">
+        <figure class="photo">
+          <div class="ph-frame" role="img" aria-label="Photo placeholder: Labor Day cookout in the courtyard"><svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg><span>Photo placeholder</span></div>
+          <figcaption><b>Labor Day cookout, Courtyard</b><span class="meta">Mon 7 Sep · 46 residents, 19 family guests</span></figcaption>
+        </figure>
+        <figure class="photo">
+          <div class="ph-frame" role="img" aria-label="Photo placeholder: watercolor class results"><svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg><span>Photo placeholder</span></div>
+          <figcaption><b>Watercolor class: September skies</b><span class="meta">Tue 8 Sep · 11 residents, Art Studio</span></figcaption>
+        </figure>
+        <figure class="photo">
+          <div class="ph-frame" role="img" aria-label="Photo placeholder: farmers market outing"><svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg><span>Photo placeholder</span></div>
+          <figcaption><b>Bus trip to the Saturday farmers' market</b><span class="meta">Sat 5 Sep · 14 residents, 2 volunteers</span></figcaption>
+        </figure>
+        <figure class="photo">
+          <div class="ph-frame" role="img" aria-label="Photo placeholder: Larkmoor Singers at First Methodist"><svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg><span>Photo placeholder</span></div>
+          <figcaption><b>Larkmoor Singers at First Methodist</b><span class="meta">Sun 6 Sep · 9 residents sang two hymns</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. CARE TEAM ============ -->
+<section class="mod alt" id="care-team" aria-labelledby="ct-h" data-module="team">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module 2</span><span class="v"><b>Care Team</b></span>
+      <span class="k">Editor</span><span class="v">HR (Jenna Park). Names, roles, start dates and credentials sync from the staff record; the "call me about" line is written by each person.</span>
+      <span class="k">Content type</span><span class="v">Staff profile — role, credential (verified against licence register), start date, responsibilities, contact route. Ratios computed from the schedule.</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-approve">Approval required</span> Executive Director approves; departures unpublish automatically the day the record closes.</span>
+    </div>
+    <div class="sec-head">
+      <div>
+        <h2 id="ct-h">The people who work here</h2>
+        <p>Who to call about what. Everyone below is on site most weekdays; the nurse line is answered 24 hours a day.</p>
+      </div>
+      <span class="stamp"><span class="dot" aria-hidden="true"></span>Synced from staff record 10 Sep</span>
+    </div>
+
+    <ul class="staff">
+      <li><span class="mono" aria-hidden="true">MO</span><div><span class="nm">Marianne Okafor</span><span class="role">Executive Director</span><span class="cred">Licensed Nursing Home Administrator (LNHA), MBA · 9 years at Larkmoor</span><span class="call"><b>Call me about:</b> move-in decisions, rates, any concern you couldn't resolve with the team. Ext. 101</span></div></li>
+      <li><span class="mono" aria-hidden="true">PR</span><div><span class="nm">Priya Raghunathan</span><span class="role">Director of Nursing</span><span class="cred">Registered Nurse (RN, BSN) · 6 years</span><span class="call"><b>Call me about:</b> medications, a change in your family member's health, hospital returns. Ext. 120, nurse line 24 h</span></div></li>
+      <li><span class="mono" aria-hidden="true">HS</span><div><span class="nm">Hannah Steinberg</span><span class="role">Memory Care Coordinator</span><span class="cred">Licensed Practical Nurse (LPN), Certified Dementia Practitioner (CDP) · 5 years</span><span class="call"><b>Call me about:</b> anything on the second floor, care-plan meetings, behaviour changes. Ext. 210</span></div></li>
+      <li><span class="mono" aria-hidden="true">TD</span><div><span class="nm">Tom Delacroix</span><span class="role">Life Enrichment Director</span><span class="cred">Certified Therapeutic Recreation Specialist (CTRS) · 4 years</span><span class="call"><b>Call me about:</b> the calendar, outings, volunteering, birthday parties. Ext. 140</span></div></li>
+      <li><span class="mono" aria-hidden="true">LB</span><div><span class="nm">Luis Barrientos</span><span class="role">Dining Services Director</span><span class="cred">Certified Dietary Manager (CDM, CFPP) · 7 years</span><span class="call"><b>Call me about:</b> diets, allergies, textures, guest meals, the menu cycle. Ext. 150</span></div></li>
+      <li><span class="mono" aria-hidden="true">DW</span><div><span class="nm">Daniel Whitcombe</span><span class="role">Family Liaison &amp; Social Services</span><span class="cred">Licensed Clinical Social Worker (MSW, LCSW) · 2 years</span><span class="call"><b>Call me about:</b> tours, paperwork, Medicaid and VA questions, family meetings. Ext. 105</span></div></li>
+      <li><span class="mono" aria-hidden="true">GM</span><div><span class="nm">Grace Mbeki</span><span class="role">Resident Care Coordinator, first floor</span><span class="cred">Licensed Practical Nurse (LPN) · 3 years</span><span class="call"><b>Call me about:</b> daily care routines, laundry, caregiver assignments on the first floor. Ext. 110</span></div></li>
+      <li><span class="mono" aria-hidden="true">RC</span><div><span class="nm">Roy Castellano</span><span class="role">Maintenance &amp; Transportation</span><span class="cred">Commercial driver's licence (CDL-P), EPA 608 · 11 years</span><span class="call"><b>Call me about:</b> the bus, apartment repairs, TV and thermostat. Ext. 160</span></div></li>
+      <li><span class="mono" aria-hidden="true">JP</span><div><span class="nm">Jenna Park</span><span class="role">Business Office Manager &amp; HR</span><span class="cred">Certified Payroll Professional (CPP) · 5 years</span><span class="call"><b>Call me about:</b> invoices, insurance paperwork, staff hiring. Ext. 102</span></div></li>
+    </ul>
+
+    <h3 style="margin-top:36px">Staffing, in numbers</h3>
+    <ul class="kpis">
+      <li><span class="v">1 : 7</span><span class="k">Caregiver to resident, days (6 am – 10 pm), <b>assisted living</b></span></li>
+      <li><span class="v">1 : 5</span><span class="k">Caregiver to resident, days, <b>memory care</b></span></li>
+      <li><span class="v">1 : 14</span><span class="k">Caregiver to resident, nights, both floors, <b>plus one nurse on site</b></span></li>
+      <li><span class="v">5.2 yrs</span><span class="k">Average tenure across 61 staff · <b>turnover last 12 months: 18%</b></span></li>
+    </ul>
+    <p class="tiny muted" style="margin-top:12px">Ratios are computed from last month's actual shift roster, not the target. Agency staff covered 3% of hours in August.</p>
+  </div>
+</section>
+
+<!-- ============ 3. COSTS ============ -->
+<section class="mod" id="costs" aria-labelledby="co-h" data-module="costs">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module 3</span><span class="v"><b>Costs &amp; Inclusions</b></span>
+      <span class="k">Editor</span><span class="v">Marianne Okafor, Executive Director</span>
+      <span class="k">Content type</span><span class="v">Rate table — versioned and effective-dated. Apartment types × base rate, care-level band, one-time fees, inclusion list, exclusion list. Prior versions kept for residents on older agreements.</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-approve">Approval required</span> Owner sign-off; a change is scheduled with its effective date and appears on that date, not before.</span>
+    </div>
+    <div class="sec-head">
+      <div>
+        <h2 id="co-h">What it costs</h2>
+        <p>Published in full because you will ask anyway. Your monthly total is the apartment rate plus the care level from the nurse's assessment.</p>
+      </div>
+      <span class="stamp"><span class="dot" aria-hidden="true"></span>Effective 1 Jul 2026 · next review 1 Jan 2027</span>
+    </div>
+
+    <div class="grid-2" style="align-items:start">
+      <div class="card scroll">
+        <table>
+          <caption>Monthly apartment rate (single occupancy)</caption>
+          <thead><tr><th scope="col">Apartment</th><th scope="col">Size</th><th scope="col" class="num">Per month</th><th scope="col">Availability</th></tr></thead>
+          <tbody>
+            <tr><td>Studio</td><td>380 sq ft</td><td class="num">$4,650</td><td><span class="avail">2 available</span></td></tr>
+            <tr><td>One bedroom</td><td>540 sq ft</td><td class="num">$5,450</td><td><span class="avail">1 available</span></td></tr>
+            <tr><td>One bedroom, courtyard</td><td>560 sq ft</td><td class="num">$5,750</td><td><span class="avail wait">Waitlist (3)</span></td></tr>
+            <tr><td>Two bedroom</td><td>760 sq ft</td><td class="num">$6,750</td><td><span class="avail">1 available</span></td></tr>
+            <tr><td>Memory care suite</td><td>320 sq ft</td><td class="num">$6,100</td><td><span class="avail">1 available</span></td></tr>
+            <tr><td>Memory care companion suite</td><td>420 sq ft, shared</td><td class="num">$4,900</td><td><span class="avail wait">Waitlist (1)</span></td></tr>
+          </tbody>
+        </table>
+        <p class="tiny muted" style="margin:12px 0 0">Second occupant: $1,100 per month plus their own care level. Availability updates nightly from the census.</p>
+      </div>
+      <div class="card scroll">
+        <table>
+          <caption>Care level, added to the apartment rate</caption>
+          <thead><tr><th scope="col">Level</th><th scope="col">What it covers</th><th scope="col" class="num">Per month</th></tr></thead>
+          <tbody>
+            <tr><td class="nw">Level 1</td><td>Reminders, escorts to meals, medication management, weekly check-in</td><td class="num">$650</td></tr>
+            <tr><td class="nw">Level 2</td><td>Level 1 plus hands-on help with bathing and dressing, up to 45 min a day</td><td class="num">$1,350</td></tr>
+            <tr><td class="nw">Level 3</td><td>Level 2 plus two-person transfers, incontinence care, up to 90 min a day</td><td class="num">$2,150</td></tr>
+            <tr><td class="nw">Level 4</td><td>Extensive daily care, behavioural support, more than 90 min a day</td><td class="num">$2,950</td></tr>
+          </tbody>
+        </table>
+        <p class="tiny muted" style="margin:12px 0 0">Memory care suite rates already include Level 2. Levels are reassessed every 90 days and after any hospital stay; you get 14 days' notice of a change.</p>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:24px;align-items:start">
+      <div class="card">
+        <h3>One-time fees</h3>
+        <ul class="inc">
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Community fee (non-refundable)<span class="p">$3,500</span></li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Pet deposit (refundable)<span class="p">$500</span></li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Pre-move nursing assessment<span class="p">$0</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Included in the base rate</h3>
+        <ul class="inc">
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Three meals a day plus snacks, any diet on the menu</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Weekly housekeeping, linens and towel service</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>All utilities, cable TV, Wi-Fi</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Scheduled bus: medical Tue/Thu, shopping Wed</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>The full activity calendar and outings (except ticketed events)</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>24-hour staff and emergency pendant</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Charged separately</h3>
+        <ul class="inc sep">
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Personal laundry<span class="p">$60 / mo</span></li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Incontinence supplies<span class="p">at cost</span></li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Escort to appointments beyond the bus<span class="p">$35 / hr</span></li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Salon, podiatry, private phone line<span class="p">vendor rates</span></li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Guest meals<span class="p">$9 / $12</span></li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg>Ticketed outings (theatre, ball games)<span class="p">at cost</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="note-box"><b>Example:</b> a one-bedroom apartment at Level 2 is $5,450 + $1,350 = <b>$6,800 a month</b>. We accept private pay, long-term care insurance and, after two years of residency, Oregon Medicaid waiver for up to 12 apartments. Daniel Whitcombe can walk you through it: ext. 105.</div>
+  </div>
+</section>
+
+<!-- ============ 4. QUALITY RECORD ============ -->
+<section class="mod alt" id="quality" aria-labelledby="qr-h" data-module="quality">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module 4</span><span class="v"><b>Quality Record</b></span>
+      <span class="k">Editor</span><span class="v">Marianne Okafor, Executive Director. Survey rows are imported from the state licensing register and cannot be edited; only the plain-language "what happened" column is written here.</span>
+      <span class="k">Content type</span><span class="v">Survey record (date, type, result, citation, correction verified) · Licence (number, status, capacity, renewal) · Endorsement</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-approve">Approval required</span> for the commentary; imported facts publish on sync so the page can never be more flattering than the register.</span>
+    </div>
+    <div class="sec-head">
+      <div>
+        <h2 id="qr-h">Our inspection record</h2>
+        <p>Every licensed community in Oregon is surveyed by the state. We publish ours here, including the year we were cited, because a record you can check is worth more than one we describe.</p>
+      </div>
+      <span class="stamp"><span class="dot" aria-hidden="true"></span>Imported from state register 4 Sep 2026</span>
+    </div>
+
+    <ul class="q-summary">
+      <li><span class="k">Most recent survey</span><span class="v ok">No deficiencies</span><span class="s">Annual licensing survey, 18 March 2026</span></li>
+      <li><span class="k">Licence</span><span class="v">AL-1024-0417</span><span class="s">Assisted living facility, active. Licensed capacity 96. Renews 30 June 2027.</span></li>
+      <li><span class="k">Memory care endorsement</span><span class="v ok">Current</span><span class="s">Second floor, 22 apartments. Last endorsement review 18 March 2026.</span></li>
+      <li><span class="k">Voluntary accreditation</span><span class="v">None held</span><span class="s">We are asked about this. We publish the state record instead; it is the inspection that carries penalties.</span></li>
+      <li><span class="k">Staffing ratio (days)</span><span class="v">1 : 7 &nbsp;·&nbsp; 1 : 5</span><span class="s">Assisted living · memory care. From the actual August roster.</span></li>
+      <li><span class="k">Complaints to the state, 5 yrs</span><span class="v">2</span><span class="s">Both investigated, neither substantiated. Listed below.</span></li>
+    </ul>
+
+    <div class="card scroll" style="margin-top:24px">
+      <table class="hist">
+        <caption>Survey history, 2021 to 2026</caption>
+        <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Result</th><th scope="col">What happened</th><th scope="col">Corrected</th></tr></thead>
+        <tbody>
+          <tr><td><time datetime="2026-03-18">18 Mar 2026</time></td><td>Annual licensing survey</td><td class="ok">No deficiencies</td><td>Full survey over three days including memory care endorsement review, medication pass observation and 14 resident interviews.</td><td>—</td></tr>
+          <tr><td><time datetime="2025-04-02">2 Apr 2025</time></td><td>Annual licensing survey</td><td class="ok">No deficiencies</td><td>Full survey. Surveyor noted the dining programme and the published calendar as strengths.</td><td>—</td></tr>
+          <tr><td><time datetime="2024-09-11">11 Sep 2024</time></td><td>Complaint investigation</td><td class="ok">Not substantiated</td><td>A family member reported a delayed call-light response. Call-light logs for the 30 days reviewed showed an average response of 6 minutes; the state closed the complaint.</td><td>—</td></tr>
+          <tr><td><time datetime="2024-03-27">27 Mar 2024</time></td><td>Annual licensing survey</td><td class="ok">No deficiencies</td><td>Full survey.</td><td>—</td></tr>
+          <tr class="flag"><td><time datetime="2023-02-14">14 Feb 2023</time></td><td>Annual licensing survey</td><td class="cite">1 citation</td><td>Medication administration records for two residents were missing caregiver initials for three as-needed doses over one week (OAR 411-054-0055). No resident was harmed and the doses were given. We retrained all med aides, added a second daily record check by the nurse, and the state verified the fix on its return visit.</td><td><b>14 days</b><br><span class="tiny2 muted">Plan accepted 21 Feb, verified 28 Feb 2023</span></td></tr>
+          <tr><td><time datetime="2022-01-19">19 Jan 2022</time></td><td>Annual licensing survey</td><td class="ok">No deficiencies</td><td>Full survey.</td><td>—</td></tr>
+          <tr><td><time datetime="2021-11-03">3 Nov 2021</time></td><td>Complaint investigation</td><td class="ok">Not substantiated</td><td>Anonymous complaint about visiting restrictions during the COVID-19 period. The state found the restrictions matched its own guidance in force at the time.</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="src"><svg class="icon" aria-hidden="true"><use href="#i-link"/></svg><span>Source: Oregon Department of Human Services, Aging and People with Disabilities, facility licensing register. You can look up licence AL-1024-0417 yourself; if the register and this page ever disagree, the register is right and please tell us.</span></p>
+  </div>
+</section>
+
+<!-- ============ 5. FAMILY HANDBOOK ============ -->
+<section class="mod" id="handbook" aria-labelledby="hb-h" data-module="handbook">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module 5</span><span class="v"><b>Family Handbook</b></span>
+      <span class="k">Editor</span><span class="v">Operations (Jenna Park, with Roy Castellano for transport). Documents are uploaded with a version and a review date.</span>
+      <span class="k">Content type</span><span class="v">Policy page (topic, current text, last reviewed) · Document (file, version, size, owner, review-by date, accessibility check)</span>
+      <span class="k">Lane</span><span class="v"><span class="lane lane-approve">Approval required</span> Executive Director. Unglamorous, and it is what most phone calls to the front desk are about.</span>
+    </div>
+    <div class="sec-head">
+      <div>
+        <h2 id="hb-h">Family handbook</h2>
+        <p>The practical answers. If it is not here, the front desk will know: (503) 555-0142, 6 am to 10 pm.</p>
+      </div>
+      <span class="stamp"><span class="dot" aria-hidden="true"></span>Reviewed 1 Aug 2026</span>
+    </div>
+
+    <dl class="hb">
+      <div>
+        <dt><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Visiting hours</dt>
+        <dd><p>Any day, 8 am to 8 pm, no appointment needed. After 8 pm ring the bell; the night nurse will let you in. Overnight stays in your family member's apartment are fine for up to three nights, just tell the front desk. During an outbreak the alert at the top of this page takes precedence.</p></dd>
+      </div>
+      <div>
+        <dt><svg class="icon" aria-hidden="true"><use href="#i-paw"/></svg>Pets</dt>
+        <dd><p>Cats and dogs under 25 lb may live with residents who can care for them, with current vaccinations and a $500 refundable deposit. Visiting dogs are welcome on a lead in the courtyard and first-floor common areas, not in dining rooms. Two resident cats, Biscuit and Pearl, live on the first floor.</p></dd>
+      </div>
+      <div>
+        <dt><svg class="icon" aria-hidden="true"><use href="#i-bus"/></svg>Transport</dt>
+        <dd><p>The bus does medical appointments within 15 miles on Tuesdays and Thursdays from 8:30 am, and the shopping run on Wednesdays at 10 am. Book with Roy (ext. 160) by noon the day before. Wheelchair lift on board. Outside those hours we can arrange a paid escort at $35 an hour.</p></dd>
+      </div>
+      <div>
+        <dt><svg class="icon" aria-hidden="true"><use href="#i-fork"/></svg>Guest meals</dt>
+        <dd><p>Join your family member for any meal: $9, or $12 for the Sunday roast, added to the monthly invoice. Tell the front desk by 10 am so the kitchen sets a place. Private dining room for up to 12 is free to reserve for birthdays; give Luis a week's notice.</p></dd>
+      </div>
+      <div>
+        <dt><svg class="icon" aria-hidden="true"><use href="#i-box"/></svg>Mail and packages</dt>
+        <dd><p>Address mail to the resident's name and apartment number at 1400 Fern Street. Letters are delivered to apartments by 2 pm. Packages are signed for at the front desk and logged; we call the resident, and we can open and put things away if that has been agreed in the care plan.</p></dd>
+      </div>
+      <div>
+        <dt><svg class="icon" aria-hidden="true"><use href="#i-flag"/></svg>Raising a concern</dt>
+        <dd><p><b>1.</b> The department lead (see the care team). <b>2.</b> Marianne Okafor, Executive Director, ext. 101, who will respond within one business day. <b>3.</b> The Oregon Long-Term Care Ombudsman, an independent state advocate: <a class="tap" href="tel:+18005550142">1-800-555-0142</a>. The ombudsman's poster is by the lift on each floor, and residents' council meets the first Tuesday of the month.</p></dd>
+      </div>
+    </dl>
+
+    <h3 style="margin-top:36px">Documents</h3>
+    <ul class="docs">
+      <li><a href="#doc-handbook" aria-describedby="d1"><svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg><span><b>Resident &amp; Family Handbook 2026</b><span id="d1">PDF, 1.2 MB · version 6 · updated 1 Aug 2026</span></span><span class="dl"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download</span></a></li>
+      <li><a href="#doc-agreement" aria-describedby="d2"><svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg><span><b>Residency agreement (sample)</b><span id="d2">PDF, 640 KB · the full contract, with the rate schedule above attached</span></span><span class="dl"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download</span></a></li>
+      <li><a href="#doc-menu" aria-describedby="d3"><svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg><span><b>September menu cycle, all four weeks</b><span id="d3">PDF, 310 KB · large-print version included</span></span><span class="dl"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download</span></a></li>
+      <li><a href="#doc-emergency" aria-describedby="d4"><svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg><span><b>Emergency and evacuation plan</b><span id="d4">PDF, 480 KB · reviewed with the fire marshal 12 May 2026</span></span><span class="dl"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download</span></a></li>
+      <li><a href="#doc-visitor" aria-describedby="d5"><svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg><span><b>Visitor and infection-control policy</b><span id="d5">PDF, 190 KB · updated 10 Sep 2026 with the current notice</span></span><span class="dl"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download</span></a></li>
+      <li><a href="#doc-medicaid" aria-describedby="d6"><svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg><span><b>Paying for care: Medicaid, VA and insurance</b><span id="d6">PDF, 220 KB · Spanish and Russian versions available</span></span><span class="dl"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 6. ALERTS & NEWS ============ -->
+<section class="mod alt" id="news" aria-labelledby="nw-h" data-module="news">
+  <div class="wrap">
+    <div class="spec-label" hidden>
+      <span class="k">Module 6</span><span class="v"><b>Alerts &amp; News</b></span>
+      <span class="k">Editor</span><span class="v">Marianne Okafor, Executive Director; Priya Raghunathan may issue urgent notices after hours</span>
+      <span class="k">Content types</span><span class="v">Notice (urgent: outbreak, closure, visiting change; pinned to the top of the page and expires) · News post (routine)</span>
+      <span class="k">Lanes</span><span class="v"><span class="lane lane-urgent">Urgent · bypasses approval</span> and is sent by email, text and app in each recipient's language. <span class="lane lane-approve">Approval required</span> for routine news.</span>
+    </div>
+    <div class="sec-head">
+      <div>
+        <h2 id="nw-h">Alerts and news</h2>
+        <p>Urgent notices go out the moment they are written, on this page and to every family contact by email, text and the app. Routine news is posted most weeks.</p>
+      </div>
+      <a class="btn btn-outline" href="#subscribe"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>Get alerts by text or email</a>
+    </div>
+
+    <div class="urgent-card" aria-labelledby="uc-h">
+      <h3 id="uc-h"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>Current notice: influenza A on the second floor</h3>
+      <p><b>Thursday 10 September, 7:40 am.</b> Three memory care residents tested positive for influenza A on Wednesday evening. All three are being treated with antivirals and are comfortable. Their families have been called. Following state guidance we have paused group dining and group activities on the second floor until Sunday 13 September; meals are served in apartments and one-to-one visits by our life enrichment team continue.</p>
+      <p><b>What this means for you:</b> visits are welcome. Wear a mask on the second floor, stay home if you have symptoms, and use the Garden Room for family meals. Flu vaccination for residents and staff was 91% before this outbreak; the flu clinic on Wednesday 23 September is still on and open to families.</p>
+      <p style="margin:0"><b>Next update:</b> Friday 11 September by 9 am, or sooner if anything changes. Questions: nurse on duty, (503) 555-0142.</p>
+      <div class="channels" aria-label="How this notice was delivered">
+        <span><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>Email 07:41 · 132 contacts</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#i-sms"/></svg>Text 07:41 · 118 contacts</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#i-app"/></svg>App 07:41</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Sent in English, Spanish, Russian and Vietnamese</span>
+      </div>
+    </div>
+
+    <ul class="news">
+      <li><time datetime="2026-09-08">Tue 8 Sep 2026</time><div><b><span class="tagline tag-notice">Notice</span>Lift B out of service Tuesday 15 September, 9 to 11 am</b><p>Annual inspection. Lift A and the second-floor ramp remain available; staff will help anyone who needs it.</p></div></li>
+      <li><time datetime="2026-09-03">Thu 3 Sep 2026</time><div><b><span class="tagline tag-news">News</span>Six new raised garden beds in the courtyard</b><p>Built at wheelchair height by the Millbrook Bend Rotary. The garden club plants fall bulbs on Thursday afternoons; family members are welcome to bring gloves.</p></div></li>
+      <li><time datetime="2026-09-01">Tue 1 Sep 2026</time><div><b><span class="tagline tag-news">News</span>Flu and COVID vaccination clinic, Wednesday 23 September</b><p>Fern Street Pharmacy will be in the Garden Room 10 am to 2 pm. Residents, staff and family members. Bring your insurance card; consent forms are at the front desk.</p></div></li>
+      <li><time datetime="2026-08-29">Sat 29 Aug 2026</time><div><b><span class="tagline tag-news">News</span>September menu cycle published</b><p>Four weeks of menus with a large-print version are in the handbook documents. New this month: Friday fish tacos, by request of the residents' council.</p></div></li>
+      <li><time datetime="2026-08-21">Fri 21 Aug 2026</time><div><b><span class="tagline tag-news">News</span>Welcome to Grace Mbeki, our new first-floor Resident Care Coordinator</b><p>Grace joined us from a home-health agency in Salem and has been with Larkmoor as a med aide since 2023. Her extension is 110.</p></div></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ ACCESSIBILITY ============ -->
+<section class="a11y" aria-labelledby="ax-h">
+  <div class="wrap">
+    <div class="grid-2">
+      <div>
+        <h2 id="ax-h">Built to be read at 78, or on a phone in a hospital car park</h2>
+        <p>The person reading this page is often the resident herself, or a daughter making a decision under stress on a small screen. So this site is built to a standard, not a style.</p>
+        <p class="tiny2 muted">The publishing platform behind this page was built for school districts, which are legally required to meet WCAG 2.1 AA under the 2024 update to Title II of the Americans with Disabilities Act. Every template, table and document check on this page comes from that obligation.</p>
+      </div>
+      <ul>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span><b>Text is 17 px or larger</b> everywhere, 18 px for body copy, and the page reflows at 200% zoom without side-scrolling.</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span><b>Contrast above WCAG AA</b> on every colour pairing: nothing below 4.5:1, body text above 10:1.</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span><b>Buttons and links are at least 44 px tall</b> so they can be hit with a thumb or a shaky hand.</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span><b>Visible focus outline</b> on every control for people who use a keyboard.</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span><b>Real headings and real tables</b> with header cells, so a screen reader can read the rate table row by row.</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span><b>Nothing is conveyed by colour alone.</b> The calendar categories, the citation row and the availability dots all carry text.</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span><b>Documents are checked before they publish.</b> A PDF without tags or a scanned image is blocked until it is fixed.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABOUT THIS DEMO ============ -->
+<section class="about" id="about" aria-labelledby="ab-h">
+  <div class="wrap">
+    <div class="grid-2">
+      <div>
+        <h2 id="ab-h">About this demo</h2>
+        <p>Larkmoor House is fictional. Every name, number, price and date on this page was written for this demonstration; the phone numbers are 555 numbers. The structure is the point.</p>
+        <p>Almost every senior living website is a brochure: a hero photograph, a promise of a "robust activity calendar", and a lead form. The real information, what happens on a Tuesday, who works there, what it costs, what the state found, is either in a PDF, on a resident-built site on another domain, or not published at all.</p>
+        <p>This page argues that in senior living <b>the information is the sales asset</b>. A real, dated calendar is un-fakeable: a community with thin programming cannot publish one. A stock photo is a promise; this week's schedule is evidence. So proof comes before pitch, and there is no hero image and no lead form.</p>
+        <p>The publishing model is borrowed from school district websites, which already publish calendars, menus, staff directories, documents and alerts continuously to a community that belongs to them. It is adapted here as six content modules, each with a different owner inside the building and its own publishing lane. That ownership split is why this needs a governed platform, not a website builder.</p>
+        <div class="cta-row">
+          <button class="btn btn-gold" type="button" id="aboutToggle"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg><span>Show the module structure</span></button>
+          <a class="btn btn-white" href="#top">Back to the top</a>
+        </div>
+      </div>
+      <div>
+        <h3 style="color:#fff">What to look for</h3>
+        <ol>
+          <li><b>Press "Show module structure"</b> in the header. Every section is labelled with its module, its editor, the content type underneath and whether it publishes immediately or needs approval.</li>
+          <li><b>Switch the audience</b> near the top. Only one sentence and one button change; the content is one set, framed three ways: the adult child shopping after a crisis, the family member checking on this week, and the remote sibling who has never visited.</li>
+          <li><b>Read the calendar.</b> Real times, named rooms, a moved event tied to the live notice. This is the module that cannot be faked.</li>
+          <li><b>Find the 2023 citation</b> in the inspection record, corrected in 14 days. An all-clean history reads as marketing; a small problem fixed quickly is what makes the clean years credible.</li>
+          <li><b>Notice what is missing:</b> no hero, no stock photography, no lead form. The photos are honest placeholders with real captions and dates.</li>
+        </ol>
+        <h3 style="color:#fff;margin-top:26px">The six modules and who owns them</h3>
+        <ul class="mod-list">
+          <li><div><b>1 · Daily Life</b><span>Life Enrichment Director + Dining Services</span></div><span class="lane lane-fast">Fast lane</span></li>
+          <li><div><b>2 · Care Team</b><span>HR, synced from the staff record</span></div><span class="lane lane-approve">Approval</span></li>
+          <li><div><b>3 · Costs &amp; Inclusions</b><span>Executive Director</span></div><span class="lane lane-approve">Approval</span></li>
+          <li><div><b>4 · Quality Record</b><span>Executive Director, imported from the state register</span></div><span class="lane lane-approve">Approval</span></li>
+          <li><div><b>5 · Family Handbook</b><span>Operations</span></div><span class="lane lane-approve">Approval</span></li>
+          <li><div><b>6 · Alerts &amp; News</b><span>Executive Director</span></div><span class="lane lane-urgent">Urgent bypasses</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Larkmoor House · 1400 Fern Street, Millbrook Bend, Oregon · (503) 555-0142 · Licence AL-1024-0417</span>
+    <span>Fictional community built as a product demonstration, September 2026.</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var body=document.body;
+  var toggle=document.getElementById('specToggle');
+  var banner=document.getElementById('specBanner');
+  var aboutBtn=document.getElementById('aboutToggle');
+  var labels=document.querySelectorAll('.spec-label');
+
+  function setSpec(on){
+    body.classList.toggle('spec',on);
+    toggle.setAttribute('aria-checked',on?'true':'false');
+    banner.hidden=!on;
+    for(var i=0;i<labels.length;i++){labels[i].hidden=!on;}
+    aboutBtn.querySelector('span').textContent=on?'Hide the module structure':'Show the module structure';
+    document.title=(on?'[Structure] ':'')+'Larkmoor House · Assisted Living & Memory Care · Millbrook Bend, Oregon';
+  }
+  toggle.addEventListener('click',function(){setSpec(toggle.getAttribute('aria-checked')!=='true');});
+  aboutBtn.addEventListener('click',function(){
+    var on=toggle.getAttribute('aria-checked')!=='true';
+    setSpec(on);
+    if(on){window.scrollTo({top:0,behavior:'smooth'});}
+  });
+  setSpec(false);
+
+  /* audience switcher: changes one line and one button only */
+  var aud={
+    care:{line:'Comparing communities is hard when every website says the same thing. Start with what is actually happening here this week, then come and see it.',cta:'Book a visit this week',href:'#visit',icon:'#i-cal'},
+    family:{line:'Everything on this page is current as of Thursday 10 September, 7:40 am. Today’s schedule and menu are below; the second-floor notice is at the top.',cta:'Get alerts by text and email',href:'#subscribe',icon:'#i-mail'},
+    share:{line:'Sent this to a brother or sister who hasn’t visited? This page is the visit: this week’s calendar, who works here, what it costs and what the state inspector found.',cta:'Copy a link to this page',href:'#copy',icon:'#i-link'}
+  };
+  var tabs=document.querySelectorAll('.aud-tabs [role=tab]');
+  var line=document.getElementById('aud-line'),cta=document.getElementById('aud-cta'),panel=document.getElementById('aud-panel');
+  function select(tab){
+    var key=tab.getAttribute('data-aud'),d=aud[key];
+    for(var i=0;i<tabs.length;i++){var t=tabs[i],on=t===tab;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;}
+    panel.setAttribute('aria-labelledby',tab.id);
+    line.textContent=d.line;
+    cta.querySelector('span').textContent=d.cta;cta.setAttribute('href',d.href);
+    cta.querySelector('use').setAttribute('href',d.icon);
+  }
+  for(var i=0;i<tabs.length;i++){
+    tabs[i].addEventListener('click',function(){select(this);});
+    tabs[i].addEventListener('keydown',function(e){
+      var idx=Array.prototype.indexOf.call(tabs,this),n=null;
+      if(e.key==='ArrowRight')n=tabs[(idx+1)%tabs.length];
+      if(e.key==='ArrowLeft')n=tabs[(idx-1+tabs.length)%tabs.length];
+      if(n){e.preventDefault();n.focus();select(n);}
+    });
+  }
+
+  /* copy link */
+  var toast=document.getElementById('toast'),tt;
+  function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){toast.classList.remove('show');},2600);}
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a[href="#copy"]');if(!a)return;e.preventDefault();
+    var url=location.href.split('#')[0];
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){showToast('Link copied. Send it to whoever needs to see this week.');},function(){showToast(url);});}
+    else{showToast(url);}
+  });
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a[href="#visit"],a[href="#subscribe"],a[href^="#doc-"]');if(!a)return;e.preventDefault();
+    var h=a.getAttribute('href');
+    showToast(h==='#visit'?'Demo: this would open the visit booking with Daniel’s calendar.':h==='#subscribe'?'Demo: this would open the family alert sign-up.':'Demo: this would download the document.');
+  });
+
+  /* calendar: all days open on wide screens; only today open on phones */
+  var days=document.querySelectorAll('.day'),mq=window.matchMedia('(max-width:820px)');
+  function layoutDays(){
+    var narrow=mq.matches;
+    for(var i=0;i<days.length;i++){
+      var d=days[i];
+      if(narrow){d.open=d.classList.contains('today');}else{d.open=true;}
+      d.querySelector('summary').tabIndex=narrow?0:-1;
+    }
+  }
+  layoutDays();
+  if(mq.addEventListener)mq.addEventListener('change',layoutDays);else mq.addListener(layoutDays);
+  for(var j=0;j<days.length;j++){
+    days[j].addEventListener('click',function(e){if(!mq.matches&&e.target.closest('summary')){e.preventDefault();}});
+  }
+})();
+</script>
+</body>
+</html>
