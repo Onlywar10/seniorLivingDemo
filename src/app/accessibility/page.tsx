@@ -1,53 +1,90 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/PageHeader";
-import { SectionBar } from "@/components/SectionBar";
+import Link from "next/link";
+import { PageHero } from "@/components/PageHero";
 import { Icon } from "@/components/Icon";
+import { site } from "@/data/site";
+import "@/components/info/info.css";
 
-export const metadata: Metadata = { title: "Accessibility statement" };
+export const metadata: Metadata = {
+  title: "Accessibility",
+  description: "Prairie City Landing’s accessibility statement: our WCAG 2.1 AA goal, text size, contrast and language tools, ASL interpreters and large-print calendars.",
+};
 
-const items = [
-  ["Text is 17 px or larger", "everywhere, 18 px for body copy, and every page reflows at 200% zoom without side-scrolling."],
-  ["Contrast above WCAG AA", "on every colour pairing: nothing below 4.5:1, body text above 10:1."],
-  ["Buttons and links are at least 44 px tall", "so they can be hit with a thumb or a shaky hand."],
-  ["A visible focus outline", "on every control for people who use a keyboard."],
-  ["Real headings and real tables", "with header cells, so a screen reader can read the rate table row by row."],
-  ["Nothing is conveyed by colour alone.", "Calendar categories, the citation row and the availability dots all carry text."],
-  ["Documents are checked before they publish.", "A PDF without tags or a scanned image is blocked until it is fixed."],
-  ["Urgent notices are translated", "into Spanish, Russian and Vietnamese before they are sent."],
-];
+const tools = [
+  { icon: "access", title: "Text size", text: "Use the A A A buttons at the top of every page to make text larger. Your choice is remembered on this device." },
+  { icon: "eye", title: "High contrast", text: "Turn on High contrast at the top of the page for stronger colors and bolder outlines." },
+  { icon: "translate", title: "Language", text: "Switch the site between English and Español at the top of every page." },
+  { icon: "printer", title: "Print-friendly pages", text: "Calendars and menus print cleanly, without navigation or decoration." },
+] as const;
 
 export default function AccessibilityPage() {
   return (
     <>
-      <PageHeader
-        title="Built to be read at 78, or on a phone in a hospital car park"
-        intro="The person reading this site is often the resident herself, or a daughter making a decision under stress on a small screen. So it is built to a standard, not a style."
+      <PageHero
+        crumbs={[["Accessibility", "/accessibility"]]}
+        eyebrow="Accessibility"
+        title={
+          <>
+            Easy to see, hear, reach <em>and read</em>
+          </>
+        }
+        lede="Prairie City Landing is a home for everyone, and our website, printed materials and community spaces should be too."
       />
-      <div className="wrap page-body">
-        <section aria-labelledby="std-h">
-          <SectionBar id="std-h" title="What we hold ourselves to" sub="WCAG 2.1 AA, checked on every publish" />
-          <div className="panel">
-            <div className="split">
-              <ul className="checklist">
-                {items.map(([b, t]) => (
-                  <li key={b}>
-                    <Icon name="check" />
-                    <span>
-                      <b>{b}</b> {t}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="prose">
-                <p>We check every page and every document against WCAG 2.1 AA before it goes up, and we test the site with a screen reader and at 200% zoom.</p>
-                <p style={{ margin: 0 }}>
-                  If anything on this site is hard for you to use, tell the front desk on (503) 555-0142 or email the office, and we will fix it or read it to you over the phone.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
+      <section className="sec tone-cream">
+        <div className="wrap-narrow inf-legal">
+          <h2>Our commitment</h2>
+          <p>
+            We aim for our website to meet the Web Content Accessibility Guidelines (WCAG) 2.1, Level AA. That means clear headings, text alternatives
+            for images, labels on every form field, sufficient color contrast, visible focus outlines, large tap targets, and pages that work with a
+            keyboard, a screen reader, or zoomed in on a phone.
+          </p>
+          <p>
+            We review the site regularly and test with assistive technology. Accessibility is ongoing work, and some pages or documents may not yet meet
+            every standard. If something gets in your way, please tell us — we will fix it, and we will get you the information you need in the meantime.
+          </p>
+
+          <h2>Tools on every page</h2>
+          <ul className="inf-tools">
+            {tools.map((t) => (
+              <li key={t.title}>
+                <span className="inf-tool-ico">
+                  <Icon name={t.icon} />
+                </span>
+                <div>
+                  <h3>{t.title}</h3>
+                  <p className="small">{t.text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <h2>In the community</h2>
+          <ul className="inf-bullets">
+            <li>
+              <b>ASL interpreters</b> are available for tours, care conferences and community events. Let us know when you book and we’ll arrange it.
+            </li>
+            <li>
+              <b>Large-print calendars</b> are available at the front desk every month, and we’re happy to mail one to family members.
+            </li>
+            <li>
+              <b>Accessible buildings</b> with elevators, wide corridors, accessible parking at the main entrance and a covered drop-off at the Lobby.
+            </li>
+            <li>
+              <b>Assistive listening</b> in the Theatre for movies, lectures and services. Ask an Ambassador for a receiver.
+            </li>
+          </ul>
+
+          <h2>Contact us about accessibility</h2>
+          <p>
+            Email <a href={`mailto:${site.accessibilityEmail}`}>{site.accessibilityEmail}</a> or call <a href={site.phoneHref}>{site.phone}</a>. Tell us
+            the page or document and what you were trying to do, and we’ll respond within two business days.
+          </p>
+          <p className="small muted">
+            Prairie City Landing is operated by {site.operator}. {site.licence}. This statement was last reviewed in October 2026.{" "}
+            <Link href="/privacy">Privacy policy</Link>
+          </p>
+        </div>
+      </section>
     </>
   );
 }

@@ -2,65 +2,82 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { approvals } from "@/data/staff";
-import { Badge } from "./ui";
+import { staffPeople, type Approval } from "@/data/staff";
 import { Icon } from "../Icon";
+import { Avatar, Badge } from "./ui";
 
-export function Approvals({ where }: { where?: string }) {
-  const items = approvals().filter((a) => !where || a.where === where);
-  const [state, setState] = useState<Record<string, "approved" | "changes">>({});
-  const waiting = items.filter((a) => !state[a.id]).length;
+export function Approvals({ items }: { items: (Approval & { when: string })[] }) {
+  const [state, setState] = useState<Record<string, "ok" | "req" | "asking">>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const waiting = items.filter((i) => !state[i.id] || state[i.id] === "asking").length;
+
   return (
     <section className="sx-card">
       <header className="sx-card-head">
         <div>
-          <h2>Waiting for you</h2>
-          <p>Approve and it publishes straight away, everywhere it was meant to go</p>
+          <h2>Waiting for Cheryl Martin <Badge tone={waiting ? "accent" : "good"}>{waiting ? `${waiting} waiting` : "All done"}</Badge></h2>
+          <p>Posts with resident photos, pricing and menus for special days are approved by the Executive Director before they publish.</p>
         </div>
-        <Badge tone={waiting ? "warn" : "good"}>{waiting ? `${waiting} waiting` : "All done"}</Badge>
       </header>
-      <div className="sx-card-body">
-        {items.map((a) => (
-          <article key={a.id} className="appr">
-            <div className="appr-img">
-              <Image src={a.photo} alt="" fill sizes="96px" />
-            </div>
-            <div>
-              <h3>{a.title}</h3>
-              <div className="appr-meta">
-                <Badge tone="neutral">{a.kind}</Badge>
-                <span>{a.where}</span>
-                <span>
-                  Submitted by <b>{a.who}</b>, {a.role} · {a.when}
-                </span>
+      <div className="sx-card-body" style={{ paddingTop: 4 }}>
+        {items.map((a) => {
+          const s = state[a.id];
+          const who = staffPeople[a.by];
+          return (
+            <article key={a.id} className="appr">
+              <div className="appr-img">
+                {a.photo ? <Image src={a.photo} alt="" fill sizes="120px" /> : <Icon name="doc" />}
               </div>
-              <p>{a.note}</p>
-            </div>
-            <div className="appr-act">
-              {state[a.id] === "approved" ? (
-                <span className="appr-done" style={{ color: "var(--sx-good)" }}>
-                  <Icon name="check" /> Approved and published
-                </span>
-              ) : state[a.id] === "changes" ? (
-                <span className="appr-done" style={{ color: "var(--sx-warn)" }}>
-                  Sent back to {a.who.split(" ")[0]} with your note
-                </span>
-              ) : (
-                <>
-                  <button className="sx-btn" type="button">
-                    <Icon name="eye" /> Preview
-                  </button>
-                  <button className="sx-btn" type="button" onClick={() => setState({ ...state, [a.id]: "changes" })}>
-                    Ask for changes
-                  </button>
-                  <button className="sx-btn sx-btn-primary" type="button" onClick={() => setState({ ...state, [a.id]: "approved" })}>
-                    <Icon name="check" /> Approve
-                  </button>
-                </>
+              <div style={{ minWidth: 0 }}>
+                <div className="appr-meta">
+                  <Avatar who={a.by} size={24} />
+                  <span><b style={{ color: "var(--sx-ink)" }}>{who.name}</b> · {who.role}</span>
+                  <span>· {a.when}</span>
+                  <Badge tone="neutral">{a.kind}</Badge>
+                </div>
+                <h3>{a.title}</h3>
+                <p>{a.detail}</p>
+                {a.diff && (
+                  <div className="appr-diff">
+                    <s>{a.diff[0]}</s> <Icon name="arrow" /> <b>{a.diff[1]}</b>
+                  </div>
+                )}
+                {a.note && <p style={{ fontStyle: "italic" }}>“{a.note}”</p>}
+                <div className="appr-ch">
+                  {a.channels.map((c) => <Badge key={c} tone="info">{c}</Badge>)}
+                </div>
+              </div>
+              <div className="appr-act">
+                {s === "ok" ? (
+                  <span className="appr-done" style={{ color: "var(--sx-good)" }} role="status"><Icon name="check" /> Approved and published</span>
+                ) : s === "req" ? (
+                  <span className="appr-done" style={{ color: "var(--sx-warn)" }} role="status"><Icon name="edit" /> Sent back to {who.name.split(" ")[0]}</span>
+                ) : (
+                  <>
+                    <button type="button" className="sx-btn sx-btn-primary" onClick={() => setState((x) => ({ ...x, [a.id]: "ok" }))}>
+                      <Icon name="check" /> Approve and publish
+                    </button>
+                    <button type="button" className="sx-btn" onClick={() => setState((x) => ({ ...x, [a.id]: "asking" }))} aria-expanded={s === "asking"}>
+                      <Icon name="edit" /> Request changes
+                    </button>
+                  </>
+                )}
+              </div>
+              {s === "asking" && (
+                <div className="appr-req sx-form">
+                  <label>
+                    Note to {who.name.split(" ")[0]}
+                    <textarea rows={2} value={notes[a.id] ?? ""} onChange={(e) => setNotes((n) => ({ ...n, [a.id]: e.target.value }))} placeholder="What should change?" />
+                  </label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => setState((x) => ({ ...x, [a.id]: "req" }))}>Send</button>
+                    <button type="button" className="sx-btn sx-btn-sm" onClick={() => setState((x) => { const n = { ...x }; delete n[a.id]; return n; })}>Cancel</button>
+                  </div>
+                </div>
               )}
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

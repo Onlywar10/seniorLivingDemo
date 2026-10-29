@@ -1,90 +1,86 @@
 import type { Metadata } from "next";
-import { PageHead, Card, Badge } from "@/components/staff/ui";
+import Image from "next/image";
 import { Icon } from "@/components/Icon";
-import { stats, nameOf } from "@/data/staff";
-import { monthName, today } from "@/lib/clock";
+import { Card, Delta, PageHead, fmt, pctChange } from "@/components/staff/ui";
+import { enquirySources, enquirySourcesPrev, highlights, scoreRows, scorecardMonths, topPosts } from "@/data/staff";
 
 export const metadata: Metadata = { title: "Monthly scorecard" };
 
-type Row = { k: string; get: (s: (typeof stats)[number]) => number; fmt: (n: number) => string; low?: boolean };
+const show = (v: number, f?: string) => (f === "pct" ? `${v}%` : f === "dec" ? (v % 1 ? v.toFixed(1) : v.toFixed(1)) + (v > 10 ? "%" : "") : fmt(v));
 
-const rows: Row[] = [
-  { k: "Occupancy", get: (s) => s.occupancy, fmt: (n) => `${n}%` },
-  { k: "Move-ins", get: (s) => s.moveIns, fmt: String },
-  { k: "Tours", get: (s) => s.tours * 4 + 2, fmt: String },
-  { k: "Enquiries", get: (s) => s.enquiries * 4, fmt: String },
-  { k: "First reply (minutes)", get: (s) => s.responseMins, fmt: String, low: true },
-  { k: "Website visits", get: (s) => s.visits * 4, fmt: (n) => n.toLocaleString() },
-  { k: "Calendar and menus on time", get: (s) => (s.fresh === "stale" ? 61 : s.fresh === "due" ? 93 : 100), fmt: (n) => `${n}%` },
-  { k: "Posts", get: (s) => s.posts * 4, fmt: String },
-  { k: "Families reached", get: (s) => Math.round((s.familiesReached / s.families) * 100), fmt: (n) => `${n}%` },
-  { k: "Message open rate", get: (s) => s.openRate, fmt: (n) => `${n}%` },
-  { k: "Google position (avg)", get: (s) => s.seoPos, fmt: (n) => n.toFixed(1), low: true },
-  { k: "AI visibility score", get: (s) => s.geo, fmt: String },
-  { k: "Google rating", get: (s) => s.rating, fmt: (n) => `★ ${n}` },
-];
-
-export default function Scorecard() {
-  const month = monthName(today());
+export default function ScorecardPage() {
+  const m = scorecardMonths();
+  const hit = scoreRows.filter((r) => r.now >= r.target).length;
+  const maxSrc = Math.max(...enquirySources.map((s) => s.value), ...enquirySourcesPrev);
   return (
     <>
-      <PageHead title={`Monthly scorecard · ${month}`} sub="All six communities side by side. Best in each row in green, the one to help in red.">
-        <button className="sx-btn" type="button">
-          <Icon name="download" /> Download PDF for the board
-        </button>
+      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`Prairie City Landing compared with ${m.prev} and this month’s targets. Shared with Cheryl Martin and Tenfold Senior Living.`}>
+        <button type="button" className="sx-btn"><Icon name="download" /> Download PDF</button>
+        <button type="button" className="sx-btn sx-btn-primary"><Icon name="mail" /> Email to the team</button>
       </PageHead>
-      <Card pad={false}>
-        <div className="sx-table-wrap">
-          <table className="sx-table">
-            <thead>
-              <tr>
-                <th>{month} to date</th>
-                {stats.map((s) => (
-                  <th key={s.slug} className="num">
-                    {nameOf(s.slug)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const vals = stats.map(r.get);
-                const best = r.low ? Math.min(...vals) : Math.max(...vals);
-                const worst = r.low ? Math.max(...vals) : Math.min(...vals);
-                return (
-                  <tr key={r.k}>
-                    <td>
-                      <b>{r.k}</b>
-                    </td>
-                    {vals.map((v, i) => (
-                      <td key={stats[i].slug} className={`num ${v === best ? "best" : v === worst ? "worst" : ""}`}>
-                        {r.fmt(v)}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+
+      <div className="sx-grid g-21">
+        <Card title="Key metrics" sub={`${hit} of ${scoreRows.length} on or above target`} pad={false}>
+          <div className="sx-table-wrap">
+            <table className="sx-table">
+              <thead><tr><th>Metric</th><th className="num">{m.month}</th><th className="num">{m.prev}</th><th>Change</th><th className="num">Target</th><th>Status</th></tr></thead>
+              <tbody>
+                {scoreRows.map((r) => {
+                  const diff = r.fmt === "pct" || r.fmt === "dec" || r.k.includes("score") || r.k.includes("visibility") ? Number((r.now - r.prev).toFixed(1)) : pctChange(r.now, r.prev);
+                  const suf = r.fmt === "pct" || (r.fmt === "dec" && r.now > 10) || r.k.includes("score") || r.k.includes("visibility") ? " pts" : r.fmt === "dec" ? "" : "%";
+                  return (
+                    <tr key={r.k}>
+                      <td><b>{r.k}</b></td>
+                      <td className="num"><b>{show(r.now, r.fmt)}</b></td>
+                      <td className="num">{show(r.prev, r.fmt)}</td>
+                      <td><Delta v={diff} suffix={suf} /></td>
+                      <td className="num">{show(r.target, r.fmt)}</td>
+                      <td>{r.now >= r.target ? <span className="sc-status hit"><Icon name="check" /> On target</span> : <span className="sc-status miss"><Icon name="minus" /> Below</span>}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+        <div className="sx-grid">
+          <Card title="Highlights">
+            <ul className="hl">
+              {highlights.map((h) => <li key={h}><Icon name="star" /><span>{h}</span></li>)}
+            </ul>
+          </Card>
+          <Card title="Top posts" sub="By families reached and opens">
+            <ul className="top-posts">
+              {topPosts.map((p) => (
+                <li key={p.title}>
+                  <span className="sx-thumb"><Image src={p.photo} alt="" fill sizes="56px" /></span>
+                  <span><b>{p.title}</b><small>{p.kind} · {fmt(p.reach)} views</small></span>
+                  <span className="sx-hint">{p.opens} opens</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
-      </Card>
-      <div className="sx-grid g-3">
-        <Card title="Most improved">
-          <p style={{ margin: 0 }}>
-            <b>Larkmoor House</b> · tours up 50% and AI visibility up 31 points since the daily calendar went live.
-          </p>
-        </Card>
-        <Card title="Needs help">
-          <p style={{ margin: 0 }}>
-            <b>Harbor View</b> · calendar and menus 8 days old; first reply 96 minutes. <Badge tone="bad">Call booked with Colleen, Friday</Badge>
-          </p>
-        </Card>
-        <Card title="Share what works">
-          <p style={{ margin: 0 }}>
-            Ashby Grove’s Thursday photo post gets the highest open rate (84%). <a className="sx-link" href="/staff/library">Shared to the library</a>
-          </p>
-        </Card>
       </div>
+
+      <Card title="Leads by source" sub={`${m.month} compared with ${m.prev}`}>
+        <ul className="sx-legend">
+          <li><i style={{ background: "var(--green)" }} />{m.month}</li>
+          <li><i style={{ background: "#cdbfa5" }} />{m.prev}</li>
+        </ul>
+        <ul className="sx-hbars">
+          {enquirySources.map((s, i) => (
+            <li key={s.label}>
+              <span className="sx-hb-l">{s.label}</span>
+              <span className="sx-hb-v">{s.value} <small>({enquirySourcesPrev[i]})</small></span>
+              <span className="sx-hb-track" style={{ display: "grid", gap: 2, height: "auto", background: "none", borderRadius: 0 }}>
+                <span className="sx-hb-bar" style={{ width: `${(s.value / maxSrc) * 100}%`, background: "var(--green)", height: 10 }} />
+                <span className="sx-hb-bar" style={{ width: `${(enquirySourcesPrev[i] / maxSrc) * 100}%`, background: "#cdbfa5", height: 6 }} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </>
   );
 }

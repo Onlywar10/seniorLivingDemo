@@ -1,156 +1,182 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHead, Card, Kpi, LineChart, HBars, Badge, Score, fmt, pct } from "@/components/staff/ui";
 import { Icon } from "@/components/Icon";
-import { scope, sources, feed, weekTicks, stats, nameOf, user } from "@/data/staff";
-import { greeting, longDate, today } from "@/lib/clock";
+import { Avatar, Badge, Card, Delta, HBars, Kpi, LineChart, Meter, fmt, pctChange } from "@/components/staff/ui";
+import { cats, eventsBetween, eventsOn, isHarbor } from "@/data/calendar";
+import { activity, ago, atToday, community, dailyVisits, enquirySources, enquirySourcesPrev, staffPeople, user, weekKpis } from "@/data/staff";
+import { dayShort, fmtRange, fmtTime, greeting, iso, longDate, nowMinutes, today } from "@/lib/clock";
 
-export const metadata: Metadata = { title: "Home" };
+export const metadata: Metadata = { title: "Dashboard" };
 
-export default async function Dashboard({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c } = await searchParams;
-  const s = scope(c);
-  const q = c ? `?c=${c}` : "";
-  const freshCount = s.list.filter((x) => x.fresh !== "stale").length;
+export default function Dashboard() {
+  const t = today();
+  const now = nowMinutes();
+  const todays = eventsOn(t).filter((e) => !isHarbor(e) || e.cat !== "harbor");
+  const harborToday = eventsOn(t).filter((e) => e.cat === "harbor").length;
+  const trips = eventsBetween(t, 8, iso(t))
+    .flatMap((d) => d.events.filter((e) => e.cap && e.cat === "trips").map((e) => ({ ...e, d: d.date })))
+    .slice(0, 6);
+  const later = todays.filter((e) => (e.end ?? e.start + 60) >= now);
+  const upcoming = later.length >= 3 ? later : todays.slice(-6);
+  const earlier = todays.length - upcoming.length;
+  const visits = dailyVisits(30);
+  const prev = dailyVisits(30, 30);
+  const total = visits.reduce((n, v) => n + v.v, 0);
+  const prevTotal = prev.reduce((n, v) => n + v.v, 0);
+  const enq = enquirySources.reduce((n, s) => n + s.value, 0);
+  const enqPrev = enquirySourcesPrev.reduce((n, s) => n + s, 0);
+
   return (
     <>
-      <PageHead title={`${greeting()}, ${user.name.split(" ")[0]}`} sub={`${longDate(today())} · ${s.label} · last 7 days compared with the 7 before`}>
-        <Link className="sx-btn" href={`/staff/scorecard${q}`}>
-          <Icon name="star" /> Monthly scorecard
-        </Link>
-        <Link className="sx-btn sx-btn-primary" href={`/staff/publish${q}`}>
-          <Icon name="plus" /> Post once
-        </Link>
-      </PageHead>
+      <div className="sx-hello">
+        <div>
+          <h1>
+            {greeting()}, <em>{user.first}</em>
+          </h1>
+          <p>
+            {longDate(t)} · {todays.length} events on today’s calendar · 4 posts waiting for Cheryl
+          </p>
+        </div>
+        <div className="sx-head-actions">
+          <Link href="/staff/approvals" className="sx-btn">
+            <Icon name="check" /> Approvals <Badge tone="accent">4</Badge>
+          </Link>
+          <Link href="/staff/publish" className="sx-btn sx-btn-primary">
+            <Icon name="send" /> Post once, publish everywhere
+          </Link>
+        </div>
+      </div>
 
       <div className="sx-kpis">
-        <Kpi label="Families reached" value={fmt(s.familiesReached)} note={`of ${fmt(s.families)} family contacts (${Math.round((s.familiesReached / s.families) * 100)}%)`} href={`/staff/families${q}`} />
-        <Kpi label="Posts this week" value={s.posts} delta={12} note="calendar, menus, news, photos" href={`/staff/publish${q}`} />
-        <Kpi label="Messages sent" value={fmt(s.sent)} note={`${s.openRate}% opened · ${s.replies} replies`} href={`/staff/messages${q}`} />
-        <Kpi label="Tours booked" value={s.tours} delta={pct(s.tours, s.toursPrev)} href={`/staff/tours${q}`} />
-        <Kpi label="New enquiries" value={s.enquiries} delta={14} href={`/staff/tours${q}`} />
-        <Kpi label="Website visits" value={fmt(s.visits)} delta={pct(s.visits, s.visitsPrev)} spark={s.visitsTrend} href={`/staff/seo${q}`} />
+        <Kpi label="Families reached this week" value={<>{weekKpis.familiesReached}<small> / {community.families}</small></>} note={`${Math.round((weekKpis.familiesReached / community.families) * 100)}% opened at least one message`} href="/staff/families" />
+        <Kpi label="Posts this week" value={weekKpis.postsThisWeek} delta={weekKpis.postsThisWeek - weekKpis.postsLastWeek} deltaSuffix="" note="vs last week" href="/staff/publish" />
+        <Kpi label="Messages sent" value={fmt(weekKpis.messagesSent)} note={`${weekKpis.deliveredRate}% delivered · ${weekKpis.openRate}% opened`} href="/staff/messages" />
+        <Kpi label="Open rate" value={`${weekKpis.openRate}%`} delta={weekKpis.openRate - weekKpis.openRateLast} deltaSuffix=" pts" note="vs last week" href="/staff/messages" />
+        <Kpi label="Tours booked" value={weekKpis.toursBooked} delta={weekKpis.toursBooked - weekKpis.toursLast} deltaSuffix="" note="vs last week" href="/staff/tours" />
       </div>
 
       <div className="sx-grid g-21">
-        <Card title="Website visits" sub="Weekly, last 12 weeks" action={<Badge tone="good">▲ {pct(s.visitsTrend[11], s.visitsTrend[0])}% since the calendar went live daily</Badge>}>
+        <Card title="Website visits" sub="Last 30 days, all pages" action={<Link className="sx-btn sx-btn-sm" href="/staff/seo">Search report</Link>}>
+          <div className="sx-visits-head">
+            <span className="sx-bignum">{fmt(total)}</span>
+            <Delta v={pctChange(total, prevTotal)} label="vs previous 30 days" />
+          </div>
+          <ul className="sx-legend">
+            <li><i style={{ background: "var(--green)" }} />This period</li>
+            <li style={{ color: "#b3a790" }}><i className="dash" />Previous 30 days</li>
+          </ul>
           <LineChart
-            labels={weekTicks()}
-            series={
-              c
-                ? [{ name: s.label, values: s.visitsTrend, color: "var(--c1)" }]
-                : stats.slice(0, 6).map((x, i) => ({ name: x.short, values: x.visitsTrend, color: `var(--c${i + 1})` }))
-            }
+            label={`Daily website visits over the last 30 days, ${fmt(total)} in total, up ${pctChange(total, prevTotal)}% on the previous 30 days`}
+            labels={visits.map((v) => v.label)}
+            series={[
+              { name: "Previous", values: prev.map((v) => v.v), color: "#c9bea8", dashed: true },
+              { name: "Visits", values: visits.map((v) => v.v), color: "var(--green)", area: true },
+            ]}
+            height={230}
+            every={7}
+            ends={false}
           />
         </Card>
-        <Card title="Website freshness" sub="Every calendar and menu up to date?" action={<Badge tone={freshCount === s.list.length ? "good" : "warn"}>{freshCount} of {s.list.length} current</Badge>}>
+
+        <Card title="Website freshness" sub="Everything families see is current" action={<Badge tone="good"><Icon name="check" /> All current</Badge>}>
           <ul className="sx-list">
-            {s.list.map((x) => (
-              <li key={x.slug} className="sx-fresh">
-                <b>{nameOf(x.slug)}</b>
-                <Badge tone={x.fresh === "fresh" ? "good" : x.fresh === "due" ? "warn" : "bad"}>{x.fresh === "fresh" ? "Up to date" : x.fresh === "due" ? "Due soon" : "Out of date"}</Badge>
-                <small>
-                  Calendar {x.calendarUpdated} · Menu {x.menuUpdated}
-                  {x.fresh === "stale" && (
-                    <>
-                      {" · "}
-                      <Link href={`/staff/calendar?c=${x.slug}`}>Remind {x.ed.split(" ")[0]}</Link>
-                    </>
-                  )}
-                </small>
-              </li>
-            ))}
+            <Fresh title="Activity calendar" detail="Current through November 30 · published by Toni Glenn" when={ago(60 * 190)} />
+            <Fresh title="Today’s menus, all three restaurants" detail="Published by Conrad Caguimbal" when={atToday(370)} />
+            <Fresh title="Last photo post" detail="Happy Hour: Jeremy on Guitar · 12 photos" when={ago(60 * 21)} />
+            <Fresh title="Apartment availability" detail="8 available · synced with the business office" when={ago(118)} />
+            <Fresh title="News" detail="Walk to End Alzheimer’s · 14 photos" when={ago(60 * 28)} />
           </ul>
         </Card>
       </div>
 
       <div className="sx-grid g-3">
-        <Card title="Enquiries by source" sub={`${s.enquiries} this week`}>
-          <HBars items={sources.map((x) => ({ label: x.k, value: Math.max(1, Math.round(s.enquiries * x.share)) }))} />
+        <Card title="Enquiries by source" sub={`This month · ${enq} enquiries`} action={<Delta v={pctChange(enq, enqPrev)} label="vs last month" />}>
+          <HBars items={enquirySources.map((s, i) => ({ label: s.label, value: s.value, note: s.value > enquirySourcesPrev[i] ? `+${s.value - enquirySourcesPrev[i]}` : undefined }))} />
         </Card>
-        <Card title="Visibility" sub="How often you are found and recommended">
-          <div style={{ display: "grid", gap: 14 }}>
-            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <Score v={s.geo} />
-              <div>
-                <b>AI search score</b>
-                <p className="sx-note" style={{ margin: 0 }}>
-                  Recommended in 4 of 8 tracked answers; 3 wrong facts have fixes ready. <Link href={`/staff/geo${q}`}>See answers</Link>
-                </p>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <span className="sx-score" style={{ width: 92, height: 92, background: "#f3f2ec" }}>
-                <b>{s.seoPos.toFixed(1)}</b>
-              </span>
-              <div>
-                <b>Average Google position</b>
-                <p className="sx-note" style={{ margin: 0 }}>
-                  For “assisted living” and “memory care” searches in your towns. <Link href={`/staff/seo${q}`}>See rankings</Link>
-                </p>
-              </div>
-            </div>
-          </div>
+
+        <Card title="Trip sign-ups" sub="Capped outings in the next 7 days" action={<Link className="sx-btn sx-btn-sm" href="/staff/calendar">Calendar</Link>}>
+          <ul className="sx-trips">
+            {trips.map((e) => {
+              const full = (e.taken ?? 0) >= (e.cap ?? 0);
+              return (
+                <li key={e.id}>
+                  <div className="top">
+                    <b>{e.title.replace(/^Bus Trip: /, "")}</b>
+                    <span>
+                      {e.taken}/{e.cap}
+                    </span>
+                  </div>
+                  <Meter v={((e.taken ?? 0) / (e.cap ?? 1)) * 100} tone={full ? "var(--terra)" : "var(--green)"} label={`${e.taken} of ${e.cap} seats taken`} />
+                  <small>
+                    {dayShort(e.d)}, {fmtTime(e.start)} · {e.room}
+                    {full ? ` · Full, ${e.waitlist} on the waitlist` : ` · ${(e.cap ?? 0) - (e.taken ?? 0)} seats left`}
+                  </small>
+                </li>
+              );
+            })}
+          </ul>
         </Card>
-        <Card title="Today across the organisation" sub="Live">
-          <ul className="sx-feed">
-            {feed()
-              .filter((f) => !c || f.where === nameOf(c))
-              .map((f) => (
-                <li key={f.when + f.who}>
-                  <time>{f.when}</time>
-                  <i className={f.tone} />
+
+        <Card title="Today at Prairie City Landing" sub={`${todays.length} events · plus ${harborToday} in Harbor`} action={<Link className="sx-btn sx-btn-sm" href="/calendar" target="_blank">On the website</Link>}>
+          <ul className="sx-today">
+            {upcoming.slice(0, 9).map((e) => {
+              const endM = e.end ?? e.start + 60;
+              const cls = endM < now ? "past" : e.start <= now ? "now" : "";
+              return (
+                <li key={e.id} className={cls}>
+                  <time>{fmtTime(e.start)}</time>
                   <span>
-                    <b>{f.who}</b> {f.what} <small style={{ color: "var(--sx-ink-3)" }}>· {f.where}</small>
+                    <span className="sx-dot" style={{ background: cats[e.cat].color }} aria-hidden="true" />
+                    {e.title}
+                    <small>
+                      {e.room}
+                      {e.end ? ` · ${fmtRange(e.start, e.end)}` : ""}
+                      {cls === "now" ? " · On now" : ""}
+                    </small>
                   </span>
                 </li>
-              ))}
+              );
+            })}
           </ul>
+          {upcoming.length > 9 && <p className="sx-note">+ {upcoming.length - 9} more later today</p>}
+          {earlier > 0 && upcoming.length < todays.length && <p className="sx-note">{earlier} earlier today</p>}
         </Card>
       </div>
 
-      {!c && (
-        <Card title="Communities at a glance" sub="This week" action={<Link className="sx-link" href="/staff/communities">All communities →</Link>} pad={false}>
-          <div className="sx-table-wrap">
-            <table className="sx-table">
-              <thead>
-                <tr>
-                  <th>Community</th>
-                  <th className="num">Families reached</th>
-                  <th className="num">Posts</th>
-                  <th className="num">Opened</th>
-                  <th className="num">Tours</th>
-                  <th className="num">Enquiries</th>
-                  <th className="num">Visits</th>
-                  <th>Website</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.map((x) => (
-                  <tr key={x.slug}>
-                    <td>
-                      <Link href={`/staff/dashboard?c=${x.slug}`} className="sx-link">
-                        {nameOf(x.slug)}
-                      </Link>
-                    </td>
-                    <td className="num">
-                      {x.familiesReached} / {x.families}
-                    </td>
-                    <td className="num">{x.posts}</td>
-                    <td className="num">{x.openRate}%</td>
-                    <td className="num">{x.tours}</td>
-                    <td className="num">{x.enquiries}</td>
-                    <td className="num">{fmt(x.visits)}</td>
-                    <td>
-                      <Badge tone={x.fresh === "fresh" ? "good" : x.fresh === "due" ? "warn" : "bad"}>{x.freshNote}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
+      <Card title="Recent activity" sub="What the team has posted, sent and approved">
+        <ul className="sx-feed">
+          {activity.map((a, i) => (
+            <li key={i}>
+              <Avatar who={a.who} />
+              <div>
+                <p>
+                  <b>{staffPeople[a.who].name}</b> {a.text}
+                  {a.tone === "wait" && (
+                    <>
+                      {" "}
+                      <Badge tone="warn">Waiting for approval</Badge>
+                    </>
+                  )}
+                </p>
+                <time>{ago(a.mins)}</time>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </>
+  );
+}
+
+function Fresh({ title, detail, when }: { title: string; detail: string; when: string }) {
+  return (
+    <li className="sx-fresh">
+      <span className="ok">
+        <Icon name="check" />
+      </span>
+      <b>{title}</b>
+      <Badge tone="good">{when}</Badge>
+      <small>{detail}</small>
+    </li>
   );
 }

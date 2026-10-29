@@ -1,37 +1,22 @@
 import type { Metadata } from "next";
-import { PageHead, Card, Badge } from "@/components/staff/ui";
-import { MenuEditor } from "@/components/staff/Editors";
-import { Icon } from "@/components/Icon";
-import { getWeekMenu, community, dietLabels } from "@/data/community";
-import { scope } from "@/data/staff";
+import { MenuEditor } from "@/components/staff/MenuEditor";
+import { PageHead } from "@/components/staff/ui";
+import { menuFor, venueOrder, venues } from "@/data/menus";
+import { atToday } from "@/data/staff";
+import { addDays, fromIso, iso, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Menus" };
 
-export default async function MenusPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c } = await searchParams;
-  const s = scope(c ?? "larkmoor-house");
+export default function MenusPage() {
+  const t = today();
+  const dates = Array.from({ length: 7 }, (_, i) => addDays(t, i));
+  const tg = fromIso("2026-11-26");
+  if (tg > dates[dates.length - 1]) dates.push(tg);
+  const menus = venueOrder.map((v) => ({ venue: venues[v], days: dates.map((d) => menuFor(v, d)) }));
   return (
     <>
-      <PageHead title="Menus" sub={`${s.label} · week 2 of the fall cycle · ${community.weekLabel}`}>
-        <button className="sx-btn" type="button">
-          <Icon name="layers" /> Copy from the menu library
-        </button>
-        <button className="sx-btn sx-btn-primary" type="button">
-          <Icon name="send" /> Publish changes
-        </button>
-      </PageHead>
-      <Card
-        title="This week’s menu"
-        sub="Click a dish to edit it; tap a tag to mark it. Changes publish to the dining page, the family digest and the printed menu card."
-        action={<Badge tone="good">Published {s.list[0].menuUpdated}</Badge>}
-      >
-        <p className="sx-note" style={{ marginTop: 0 }}>
-          {Object.entries(dietLabels)
-            .map(([k, v]) => `${k} ${v.toLowerCase()}`)
-            .join(" · ")}
-        </p>
-        <MenuEditor menu={getWeekMenu()} />
-      </Card>
+      <PageHead title="Menus" sub="Daily specials and soups for all three restaurants. Publishing updates the website dining page and the digital signage in the Lobby, Natoma Café and The Rendezvous." />
+      <MenuEditor menus={menus} todayIso={iso(t)} lastPublished={atToday(370)} />
     </>
   );
 }

@@ -1,102 +1,99 @@
 import type { Metadata } from "next";
-import { PageHead, Card, Kpi, Badge, HBars } from "@/components/staff/ui";
 import { Icon } from "@/components/Icon";
-import { tours, enquiries, scope, sources, nameOf } from "@/data/staff";
+import { Avatar, Badge, Card, HBars, Kpi, PageHead } from "@/components/staff/ui";
+import { ago, dayLabel, enquiries, enquirySources, followUps, funnel, staffPeople, tours } from "@/data/staff";
+import { fmtTime, nowMinutes } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Tours & enquiries" };
 
-export default async function ToursPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c } = await searchParams;
-  const s = scope(c);
-  const t = tours().filter((x) => !c || x.where === nameOf(c));
-  const e = enquiries().filter((x) => !c || x.where === nameOf(c));
+const statusTone = { New: "accent", Contacted: "info", "Tour booked": "good", Nurturing: "neutral" } as const;
+
+export default function ToursPage() {
+  const now = nowMinutes();
+  const upcoming = tours.filter((t) => t.days > 0 || t.time + 60 > now);
+  const byDay = upcoming.reduce<Record<number, typeof tours>>((m, t) => ((m[t.days] ??= []).push(t), m), {});
+  const thisWeek = tours.filter((t) => t.days < 7).length;
+  const max = funnel[0].value;
+
   return (
     <>
-      <PageHead title="Tours and enquiries" sub={`${s.label} · every enquiry routed to the right person, with where it came from`}>
-        <button className="sx-btn sx-btn-primary" type="button">
-          <Icon name="plus" /> Log a call
-        </button>
+      <PageHead title="Tours & enquiries" sub="Every enquiry from the website, Google, AI search and referral partners, in one list for Cynthia Bazin.">
+        <a className="sx-btn" href="/contact" target="_blank"><Icon name="globe" /> Tour booking page</a>
       </PageHead>
       <div className="sx-kpis">
-        <Kpi label="Tours this week" value={s.tours} delta={Math.round(((s.tours - s.toursPrev) / s.toursPrev) * 100)} />
-        <Kpi label="New enquiries" value={s.enquiries} delta={14} />
-        <Kpi label="Median first reply" value="28 min" delta={-41} invert note="was 47 min" />
-        <Kpi label="Enquiry to tour" value="38%" delta={9} />
-        <Kpi label="Tour to move-in" value="27%" note="last 90 days" />
+        <Kpi label="Tours, next 7 days" value={thisWeek} note={`${tours.length} in the next two weeks`} />
+        <Kpi label="New enquiries" value={enquiries.filter((e) => e.status === "New").length} note="waiting for a first reply" />
+        <Kpi label="Average first reply" value="38 min" delta={-41} invert note="vs last month" />
+        <Kpi label="Enquiry to tour" value={`${Math.round((funnel[1].value / funnel[0].value) * 100)}%`} note="last 90 days" />
       </div>
+
       <div className="sx-grid g-21">
-        <Card title="Upcoming tours" sub="Reminders go by text the day before" pad={false}>
+        <Card title="Upcoming tours" sub="This week and next · lunch is on us">
+          {Object.entries(byDay).map(([d, list]) => (
+            <div key={d}>
+              <h3 className="tour-day">{dayLabel(Number(d))}</h3>
+              {list.map((t) => (
+                <div className="tour" key={t.who}>
+                  <time>{fmtTime(t.time)}</time>
+                  <div>
+                    <b>{t.who}</b> <span className="sx-hint">for {t.for}</span>
+                    <small>{t.interest} · {t.source}{t.lunch ? " · Lunch in the Cypress Room" : ""}</small>
+                    {t.note && <small>“{t.note}”</small>}
+                  </div>
+                  <span className="sx-name"><Avatar who={t.with} size={28} /><span className="sx-hint">{staffPeople[t.with].name.split(" ")[0]}</span></span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </Card>
+        <div className="sx-grid">
+          <Card title="Conversion" sub="Last 90 days">
+            <div className="funnel">
+              {funnel.map((f, i) => (
+                <div className="funnel-row" key={f.label}>
+                  <span>{f.label}</span>
+                  <span className="funnel-bar" style={{ width: `${Math.max(12, (f.value / max) * 100)}%`, background: ["var(--green)", "var(--sky)", "var(--olive)", "var(--terra-deep)"][i] }}>{f.value}</span>
+                  <small>{i ? `${Math.round((f.value / funnel[i - 1].value) * 100)}%` : ""}</small>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card title="Follow-ups due">
+            <ul className="sx-list">
+              {followUps.map((f) => (
+                <li key={f.who}>
+                  <b>{f.who}</b> {f.overdue ? <Badge tone="bad">Overdue</Badge> : <Badge tone={f.due === 0 ? "warn" : "neutral"}>{dayLabel(f.due)}</Badge>}
+                  <br /><span className="sx-hint">{f.what}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      </div>
+
+      <div className="sx-grid g-21">
+        <Card title="New enquiries" pad={false}>
           <div className="sx-table-wrap">
             <table className="sx-table">
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Who</th>
-                  <th>Community</th>
-                  <th>Came from</th>
-                  <th>Host</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Name</th><th>Source</th><th>Interested in</th><th>Status</th><th>Received</th></tr></thead>
               <tbody>
-                {t.map((x) => (
-                  <tr key={x.when + x.who}>
-                    <td style={{ whiteSpace: "nowrap" }}>{x.when}</td>
-                    <td>
-                      <b>{x.who}</b>
-                      <br />
-                      <small style={{ color: "var(--sx-ink-3)" }}>{x.forWhom}</small>
-                    </td>
-                    <td>{x.where}</td>
-                    <td>
-                      <Badge tone={x.source.includes("ChatGPT") ? "accent" : "neutral"}>{x.source}</Badge>
-                    </td>
-                    <td>{x.host}</td>
-                    <td>{x.status.startsWith("Awaiting") ? <Badge tone="warn">{x.status}</Badge> : <Badge tone="good">{x.status}</Badge>}</td>
+                {enquiries.map((e) => (
+                  <tr key={e.name}>
+                    <td><b>{e.name}</b><small>“{e.msg}”</small></td>
+                    <td>{e.source}</td>
+                    <td>{e.interest}</td>
+                    <td><Badge tone={statusTone[e.status]}>{e.status}</Badge></td>
+                    <td style={{ whiteSpace: "nowrap" }}>{ago(e.mins)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </Card>
-        <Card title="Where enquiries come from" sub="Last 30 days">
-          <HBars items={sources.map((x) => ({ label: x.k, value: Math.round(s.enquiries * 4.2 * x.share) }))} />
+        <Card title="Where enquiries come from" sub="This month">
+          <HBars items={enquirySources.map((s) => ({ label: s.label, value: s.value }))} color="var(--sky)" />
         </Card>
       </div>
-      <Card title="New enquiries" sub="Routed automatically by community, care type and language" pad={false}>
-        <div className="sx-table-wrap">
-          <table className="sx-table">
-            <thead>
-              <tr>
-                <th>Received</th>
-                <th>Who and what</th>
-                <th>Community</th>
-                <th>Source</th>
-                <th>Routed to</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {e.map((x) => (
-                <tr key={x.who}>
-                  <td style={{ whiteSpace: "nowrap" }}>{x.when}</td>
-                  <td>
-                    <b>{x.who}</b>
-                    <br />
-                    <small style={{ color: "var(--sx-ink-3)" }}>{x.about}</small>
-                  </td>
-                  <td>{x.where}</td>
-                  <td>{x.source}</td>
-                  <td>{x.routed}</td>
-                  <td>
-                    <Badge tone={x.status === "New" ? "info" : "good"}>{x.status}</Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
     </>
   );
 }

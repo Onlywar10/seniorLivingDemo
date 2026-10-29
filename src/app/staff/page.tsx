@@ -1,30 +1,35 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { SignIn } from "@/components/staff/SignIn";
+import { site } from "@/data/site";
 import "./staff.css";
 
-export const metadata: Metadata = { title: { absolute: "Sign in · Larkmoor Staff" } };
+export const metadata: Metadata = { title: { absolute: "Sign in · Prairie City Landing Team" }, robots: { index: false, follow: false } };
 
 export default function StaffSignIn() {
   return (
     <div className="sx-login" data-no-translate>
       <div className="sx-login-photo">
-        <Image src="/photos/building-garden.jpg" alt="" fill priority sizes="50vw" />
+        <Image src="/img/courtyard-aerial.jpg" alt="" fill priority sizes="(max-width: 860px) 100vw, 50vw" />
+        <div className="sx-login-quote">
+          <p>“Each gives to each, and like the star gets back its gift in tenfold pay.”</p>
+          <span>Joaquin Miller</span>
+        </div>
       </div>
-      <div className="sx-login-panel">
+      <main className="sx-login-panel">
         <div className="sx-brand sx-brand-lg">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <rect width="64" height="64" fill="#4F6353" />
-            <path d="M46 16c-16 0-27 8-29 24 0 2 0 4 1 6 8-14 17-19 25-22-8 5-16 12-22 26 3 1 6 1 9 1 14-1 21-14 20-30-1-2-2-4-4-5z" fill="#D6C28C" />
-          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/brand/dots.png" alt="" width={52} height={52} />
           <span>
-            <b>Larkmoor</b>
-            <span>Staff sign in</span>
+            <b>Prairie City Landing</b>
+            <span>Team sign in</span>
           </span>
         </div>
         <SignIn />
-        <p className="sx-login-foot">Larkmoor Senior Living · for staff of our six communities. Trouble signing in? Call the central office on (503) 555-0100.</p>
-      </div>
+        <p className="sx-login-foot">
+          For the Prairie City Landing team. Trouble signing in? Ask the front desk at {site.phone}, ext. 100, or email it@tenfoldseniorliving.com.
+        </p>
+      </main>
     </div>
   );
 }

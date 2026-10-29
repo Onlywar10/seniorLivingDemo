@@ -1,86 +1,81 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, type ReactNode } from "react";
-import { communities } from "@/data/group";
-import { user } from "@/data/staff";
+import { usePathname } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
+import { approvals, threads, user } from "@/data/staff";
 import { Icon } from "../Icon";
+import { XIcon } from "./ui";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
+type Item = { href: string; label: string; icon?: IconName; x?: "dash" | "repeat" | "trend" | "door" | "key" | "clipboard"; badge?: number };
 
-const nav: { group: string; items: { href: string; label: string; icon: IconName; badge?: string }[] }[] = [
+const unread = threads.filter((t) => t.unread).length;
+
+const nav: { group: string; items: Item[] }[] = [
   {
     group: "Overview",
     items: [
-      { href: "/staff/dashboard", label: "Home", icon: "home" },
-      { href: "/staff/communities", label: "Communities", icon: "building" },
-      { href: "/staff/scorecard", label: "Monthly scorecard", icon: "star" },
+      { href: "/staff/dashboard", label: "Dashboard", x: "dash" },
+      { href: "/staff/scorecard", label: "Monthly scorecard", icon: "chart" },
     ],
   },
   {
     group: "Publish",
     items: [
       { href: "/staff/publish", label: "Post once", icon: "send" },
-      { href: "/staff/approvals", label: "Approvals", icon: "check", badge: "5" },
+      { href: "/staff/approvals", label: "Approvals", icon: "check", badge: approvals.length },
       { href: "/staff/calendar", label: "Calendar", icon: "calendar" },
-      { href: "/staff/menus", label: "Menus", icon: "list" },
+      { href: "/staff/menus", label: "Menus", icon: "fork" },
       { href: "/staff/photo-post", label: "Photo post", icon: "image" },
-      { href: "/staff/library", label: "Content library", icon: "layers" },
-      { href: "/staff/studio", label: "Design studio", icon: "wand" },
     ],
   },
   {
     group: "Families",
     items: [
-      { href: "/staff/messages", label: "Messages", icon: "sms", badge: "2" },
+      { href: "/staff/messages", label: "Messages", icon: "sms", badge: unread },
       { href: "/staff/families", label: "Families & contacts", icon: "users" },
     ],
   },
   {
     group: "Growth",
     items: [
-      { href: "/staff/tours", label: "Tours & enquiries", icon: "calendar" },
-      { href: "/staff/apartments", label: "Apartments & waitlist", icon: "building" },
+      { href: "/staff/tours", label: "Tours & enquiries", x: "door" },
+      { href: "/staff/apartments", label: "Apartments & waitlist", x: "key" },
       { href: "/staff/seo", label: "Search (SEO)", icon: "search" },
-      { href: "/staff/geo", label: "AI search (GEO)", icon: "spark" },
+      { href: "/staff/geo", label: "AI search (GEO)", icon: "sparkle" },
     ],
   },
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const router = useRouter();
-  const params = useSearchParams();
-  const c = params.get("c") ?? "";
   const [open, setOpen] = useState(false);
-  const q = c ? `?c=${c}` : "";
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <div className={`sx ${open ? "nav-open" : ""}`} data-no-translate>
-      <aside className="sx-side" aria-label="Staff navigation">
+      <a className="sx-skip" href="#sx-main">
+        Skip to content
+      </a>
+      <aside className="sx-side" id="sx-nav" aria-label="Staff navigation">
         <div className="sx-brand">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <rect width="64" height="64" fill="#4F6353" />
-            <path d="M46 16c-16 0-27 8-29 24 0 2 0 4 1 6 8-14 17-19 25-22-8 5-16 12-22 26 3 1 6 1 9 1 14-1 21-14 20-30-1-2-2-4-4-5z" fill="#D6C28C" />
-          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/brand/dots.png" alt="" width={38} height={38} />
           <span>
-            <b>Larkmoor</b>
-            <span>Staff</span>
+            <b>Prairie City Landing</b>
+            <span>Team</span>
           </span>
+          <button type="button" className="sx-close" aria-label="Close menu" onClick={() => setOpen(false)}>
+            <Icon name="x" />
+          </button>
         </div>
-        <label className="sx-switch">
-          <span className="vh">Community</span>
-          <Icon name="building" />
-          <select value={c} onChange={(e) => router.push(`${path}${e.target.value ? `?c=${e.target.value}` : ""}`)}>
-            <option value="">All communities (6)</option>
-            {communities.map((m) => (
-              <option key={m.slug} value={m.slug}>
-                {m.name}, {m.city}
-              </option>
-            ))}
-          </select>
-        </label>
         <nav className="sx-nav">
           {nav.map((g) => (
             <div key={g.group}>
@@ -88,10 +83,15 @@ export function Shell({ children }: { children: ReactNode }) {
               <ul>
                 {g.items.map((it) => (
                   <li key={it.href}>
-                    <Link href={it.href + q} onClick={() => setOpen(false)} aria-current={path === it.href ? "page" : undefined}>
-                      <Icon name={it.icon} />
+                    <Link href={it.href} onClick={() => setOpen(false)} aria-current={path === it.href ? "page" : undefined}>
+                      {it.icon ? <Icon name={it.icon} /> : <XIcon name={it.x!} />}
                       <span>{it.label}</span>
-                      {it.badge && <span className="sx-nav-badge">{it.badge}</span>}
+                      {!!it.badge && (
+                        <span className="sx-nav-badge">
+                          {it.badge}
+                          <span className="vh"> waiting</span>
+                        </span>
+                      )}
                     </Link>
                   </li>
                 ))}
@@ -100,8 +100,10 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="sx-user">
-          <span className="sx-avatar">{user.initials}</span>
-          <span>
+          <span className="sx-avatar" style={{ background: "var(--terra-deep)" }} aria-hidden="true">
+            {user.initials}
+          </span>
+          <span className="sx-user-t">
             <b>{user.name}</b>
             <span>{user.role}</span>
           </span>
@@ -112,23 +114,32 @@ export function Shell({ children }: { children: ReactNode }) {
       </aside>
       <div className="sx-main">
         <div className="sx-top">
-          <button type="button" className="sx-burger" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <button type="button" className="sx-burger" aria-label="Open menu" aria-expanded={open} aria-controls="sx-nav" onClick={() => setOpen(true)}>
             <Icon name="menu" />
           </button>
-          <span className="sx-top-title">Larkmoor Staff</span>
+          <Link href="/staff/dashboard" className="sx-top-brand" aria-label="Dashboard">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/img/brand/dots.png" alt="" width={28} height={28} />
+            <span>Prairie City Landing</span>
+          </Link>
           <div className="sx-top-right">
-            <Link href={`/staff/messages${q}`} className="sx-bell" aria-label="2 unread replies">
-              <Icon name="bell" />
-              <i />
+            <Link href="/staff/publish" className="sx-btn sx-btn-primary sx-top-post" aria-label="New post">
+              <Icon name="plus" /> <span>Post</span>
             </Link>
-            <Link href="/" className="sx-site" target="_blank">
-              <Icon name="globe" /> View website
+            <Link href="/staff/messages" className="sx-bell" aria-label={`Messages: ${unread} unread replies`}>
+              <Icon name="bell" />
+              {unread > 0 && <i />}
+            </Link>
+            <Link href="/" className="sx-site" target="_blank" rel="noopener" aria-label="View website (opens in a new tab)">
+              <Icon name="globe" /> <span>View website</span>
             </Link>
           </div>
         </div>
-        <div className="sx-page">{children}</div>
+        <main className="sx-page" id="sx-main">
+          {children}
+        </main>
       </div>
-      {open && <button type="button" className="sx-scrim" aria-label="Close menu" onClick={() => setOpen(false)} />}
+      {open && <button type="button" className="sx-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setOpen(false)} />}
     </div>
   );
 }

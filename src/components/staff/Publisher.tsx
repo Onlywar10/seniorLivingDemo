@@ -1,141 +1,238 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { communities } from "@/data/group";
-import { stats, languages } from "@/data/staff";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../Icon";
 import { Badge } from "./ui";
+import { fmtTime, fromIso, dayName, monthName } from "@/lib/clock";
 
-type Kind = "event" | "menu" | "photo" | "paper";
+type Kind = "event" | "menu" | "photo" | "pdf";
+type Aud = "everyone" | "harbor";
+type Chan = "web" | "sms" | "email" | "flyer" | "facebook" | "gbp";
 
-const photos = ["/photos/dancing.jpg", "/photos/gardening.jpg", "/photos/dining-group.jpg", "/photos/painting.jpg", "/photos/tea.jpg", "/photos/knitting.jpg"];
+export interface PublisherProps {
+  rooms: string[];
+  families: number;
+  harborFamilies: number;
+  smsReachable: number;
+  emailReachable: number;
+  digest: string;
+  wine: { date: string; start: number; cap: number; taken: number };
+  todayIso: string;
+}
 
-const kinds: { k: Kind; label: string; icon: "calendar" | "list" | "image" | "upload" }[] = [
+const kinds: { k: Kind; label: string; icon: "calendar" | "fork" | "image" | "doc" }[] = [
   { k: "event", label: "Event", icon: "calendar" },
-  { k: "menu", label: "Menu", icon: "list" },
-  { k: "photo", label: "Photo or news", icon: "image" },
-  { k: "paper", label: "Paper calendar", icon: "upload" },
+  { k: "menu", label: "Menu change", icon: "fork" },
+  { k: "photo", label: "Photo", icon: "image" },
+  { k: "pdf", label: "PDF or flyer", icon: "doc" },
 ];
 
-const ocrRows = [
-  ["Mon", "9:30", "Chair yoga with Bev", "Wellness Room"],
-  ["Mon", "2:30", "Word games & trivia", "Library"],
-  ["Tue", "10:30", "Larkmoor Singers", "Garden Room"],
-  ["Tue", "4:00", "Happy hour with Del Mercer", "Bistro"],
-  ["Wed", "10:00", "Shopping bus", "Front Lobby"],
-  ["Thu", "5:30", "Family night supper & concert", "Main Dining Room"],
-];
+const chanInfo: Record<Chan, { label: string; icon: "globe" | "sms" | "mail" | "printer" | "facebook" | "pin" }> = {
+  web: { label: "Website", icon: "globe" },
+  sms: { label: "Family text message", icon: "sms" },
+  email: { label: "Weekly email digest", icon: "mail" },
+  flyer: { label: "Large-print flyer", icon: "printer" },
+  facebook: { label: "Facebook", icon: "facebook" },
+  gbp: { label: "Google Business Profile", icon: "pin" },
+};
 
-export function Publisher({ initial }: { initial?: string }) {
+const esDays = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const esMonths = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const esTitles: Record<string, string> = {
+  "Bus Trip: Wine Tasting at Wise Villa Winery & Lunch": "Excursión: cata de vinos en Wise Villa Winery y almuerzo",
+  "Thanksgiving dinner in the Cypress Room": "Cena de Acción de Gracias en el Cypress Room",
+  "Pumpkin carving in the Courtyard": "Tallado de calabazas en el patio",
+  "Healthy Happy Hour with Jason & Cynthia!": "¡Hora feliz saludable con Jason y Cynthia!",
+};
+
+const toMin = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+export function Publisher(p: PublisherProps) {
+  const presets: Record<Kind, { title: string; date: string; time: string; room: string; cap: string; desc: string; photo: string; chans: Chan[] }> = useMemo(
+    () => ({
+      event: {
+        title: "Bus Trip: Wine Tasting at Wise Villa Winery & Lunch",
+        date: p.wine.date,
+        time: toHHMM(p.wine.start),
+        room: "Lobby",
+        cap: String(p.wine.cap),
+        desc: "A tasting of Wise Villa’s Tempranillo and estate whites in the Lincoln foothills, then lunch at the winery. The bus leaves from the Lobby.",
+        photo: "/img/vineyard.jpg",
+        chans: ["web", "sms", "email", "flyer", "facebook", "gbp"],
+      },
+      menu: {
+        title: "Thanksgiving dinner in the Cypress Room",
+        date: "2026-11-26",
+        time: "11:00",
+        room: "Cypress Dining Room",
+        cap: "",
+        desc: "Herb-roasted turkey with sage pan gravy, honey-glazed ham or wild mushroom Wellington, with all the trimmings and pumpkin, pecan or apple desserts. 11:00 am–3:00 pm, by reservation.",
+        photo: "/img/turkey.jpg",
+        chans: ["web", "sms", "email", "flyer"],
+      },
+      photo: {
+        title: "Pumpkin carving in the Courtyard",
+        date: p.todayIso,
+        time: "14:00",
+        room: "Courtyard",
+        cap: "",
+        desc: "Our residents brought their best ideas to the Courtyard this afternoon. Vote for your favorite on Facebook on Friday!",
+        photo: "/img/pumpkins.jpg",
+        chans: ["web", "sms", "email", "facebook"],
+      },
+      pdf: {
+        title: "Healthy Happy Hour with Jason & Cynthia!",
+        date: "2026-11-18",
+        time: "15:00",
+        room: "The Rendezvous",
+        cap: "",
+        desc: "Music, nutritious snacks and choreography with Jason and Cynthia. Mocktail recipes to take home.",
+        photo: "/img/cocktail.jpg",
+        chans: ["web", "sms", "email", "flyer"],
+      },
+    }),
+    [p.wine, p.todayIso]
+  );
+
   const [kind, setKind] = useState<Kind>("event");
-  const [title, setTitle] = useState("Family night: supper and the Larkmoor Singers");
-  const [date, setDate] = useState("Thursday");
-  const [time, setTime] = useState("5:30 pm");
-  const [place, setPlace] = useState("Main Dining Room");
-  const [text, setText] = useState("Supper with your family member, then a short concert from the house choir. Children very welcome. RSVP at the front desk or online.");
-  const [photo, setPhoto] = useState(photos[2]);
-  const [aud, setAud] = useState<string[]>([initial || "larkmoor-house"]);
-  const [wing, setWing] = useState("Everyone");
-  const [translate, setTranslate] = useState(true);
-  const [ocr, setOcr] = useState<"idle" | "reading" | "done">("idle");
+  const [f, setF] = useState(presets.event);
+  const [aud, setAud] = useState<Aud>("everyone");
+  const [chans, setChans] = useState<Set<Chan>>(new Set(presets.event.chans));
+  const [file, setFile] = useState<{ url: string; name: string; pdf: boolean } | null>(null);
+  const [lang, setLang] = useState<"en" | "es">("en");
   const [stage, setStage] = useState<"edit" | "sending" | "done">("edit");
-  const [tab, setTab] = useState(0);
+  const [step, setStep] = useState(0);
 
-  const families = useMemo(() => {
-    const base = stats.filter((s) => aud.includes(s.slug)).reduce((n, s) => n + s.familiesReached, 0);
-    return wing === "Everyone" ? base : Math.round(base * 0.18);
-  }, [aud, wing]);
-  const where = aud.length === 1 ? communities.find((c) => c.slug === aud[0])!.name : `${aud.length} communities`;
+  useEffect(() => () => { if (file) URL.revokeObjectURL(file.url); }, [file]);
 
   const pick = (k: Kind) => {
     setKind(k);
-    if (k === "menu") {
-      setTitle("Thursday dinner: herb-roasted pork loin");
-      setText("Herb-roasted pork loin with apple chutney and mashed potatoes (soft diet available). Pan-seared salmon with lemon rice (low sodium). Vegetable lasagne (vegetarian). Lemon pudding.");
-      setTime("4:45 – 6:15 pm");
-      setPlace("Main Dining Room");
-      setPhoto(photos[2]);
-    } else if (k === "photo") {
-      setTitle("Garden club planted 200 tulip bulbs");
-      setText("Nine residents and two grandchildren planted the new raised beds this afternoon. Come and see them flower in April.");
-      setTime("Today");
-      setPlace("The courtyard");
-      setPhoto(photos[1]);
-    } else if (k === "event") {
-      setTitle("Family night: supper and the Larkmoor Singers");
-      setText("Supper with your family member, then a short concert from the house choir. Children very welcome. RSVP at the front desk or online.");
-      setTime("5:30 pm");
-      setPlace("Main Dining Room");
-      setPhoto(photos[2]);
-    } else {
-      setOcr("idle");
-    }
+    setF(presets[k]);
+    setChans(new Set(presets[k].chans));
+    setFile(k === "pdf" ? { url: "", name: "healthy-happy-hour-nov-18.pdf", pdf: true } : null);
+    setAud("everyone");
+  };
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const toggle = (c: Chan) => setChans((s) => { const n = new Set(s); if (n.has(c)) n.delete(c); else n.add(c); return n; });
+
+  const d = fromIso(f.date || p.todayIso);
+  const start = toMin(f.time);
+  const whenEn = `${dayName(d).slice(0, 3)}, ${monthName(d).slice(0, 3)} ${d.getUTCDate()} at ${fmtTime(start)}`;
+  const whenEs = `${esDays[d.getUTCDay()]} ${d.getUTCDate()} de ${esMonths[d.getUTCMonth()]} a las ${fmtTime(start)}`;
+  const cap = Number(f.cap) || 0;
+  const taken = kind === "event" ? Math.min(cap, p.wine.taken) : 0;
+  const left = Math.max(0, cap - taken);
+  const img = file && !file.pdf ? file.url : f.photo;
+  const harbor = aud === "harbor";
+  const families = harbor ? p.harborFamilies : p.families;
+  const sms = families;
+  const emails = harbor ? 19 : p.emailReachable;
+  const titleEs = esTitles[f.title] ?? f.title;
+  const needsApproval = chans.has("facebook") && (kind === "photo" || (!!file && !file.pdf));
+
+  const shortT = f.title.replace(/^Bus Trip: /, "");
+  const smsEn =
+    kind === "photo"
+      ? `PCL: New photos! ${f.title}. ${f.desc.split(". ")[0]}. See them: prairiecitylanding.com/news`
+      : kind === "menu"
+        ? `PCL: ${f.title}, ${whenEn}. Families welcome. Reserve with Mickei at (916) 458-0303 ext. 160.`
+        : `PCL: ${shortT}, ${whenEn}, ${f.room}.${cap ? ` ${left} of ${cap} seats left.` : ""} Reply YES to save a seat.`;
+  const smsEs =
+    kind === "photo"
+      ? `PCL: ¡Fotos nuevas! ${titleEs}. Véalas en prairiecitylanding.com/news`
+      : kind === "menu"
+        ? `PCL: ${titleEs}, ${whenEs}. Familias bienvenidas. Reserve con Mickei al (916) 458-0303 ext. 160.`
+        : `PCL: ${titleEs.replace(/^Excursión: /, "")}, ${whenEs}, ${f.room}.${cap ? ` Quedan ${left} de ${cap} lugares.` : ""} Responda SÍ para reservar.`;
+  const smsText = lang === "en" ? smsEn : smsEs;
+  const segs = Math.ceil(smsText.length / 160);
+
+  const publish = () => {
+    setStage("sending");
+    setStep(0);
+    const n = [...chans].length;
+    for (let i = 1; i <= n; i++) window.setTimeout(() => setStep(i), i * 260);
+    window.setTimeout(() => { setStage("done"); window.scrollTo({ top: 0, behavior: "smooth" }); }, n * 260 + 500);
   };
 
   if (stage === "done") {
-    const langs = languages.filter((l) => l.k !== "English");
+    const delivered = sms - (harbor ? 0 : 3);
+    const failed = sms - delivered;
+    const where = kind === "menu" ? "dining page and today’s menu boards" : kind === "photo" ? "news page and home page" : "activity calendar and home page";
     return (
       <div className="sx-card sx-card-body went">
         <div className="went-head">
           <Icon name="check" />
           <div>
-            <h2>Posted once. Published everywhere.</h2>
+            <h2>Published. Here’s where it went.</h2>
             <p>
-              “{title}” · {where} · just now
+              “{f.title}” · {harbor ? "Harbor families" : "everyone"} · just now
             </p>
           </div>
         </div>
-        <p className="went-line">
-          Published to the website · Sent to {families} families by text and email · Ready to print.
-        </p>
         <ul className="went-list">
-          <li>
-            <Icon name="globe" />
-            <b>Website</b>
-            <span>
-              Live on the {kind === "menu" ? "dining" : kind === "photo" ? "news" : "activities"} page and the home page of {where}. Google Business Profile post scheduled for 6 pm.
-            </span>
-          </li>
-          <li>
-            <Icon name="sms" />
-            <b>Family text</b>
-            <span>
-              {Math.round(families * 0.81)} texts delivered, {Math.round(families * 0.81 * 0.62)} opened so far
-            </span>
-          </li>
-          <li>
-            <Icon name="mail" />
-            <b>Family email digest</b>
-            <span>Added to Monday’s digest for {Math.round(families * 0.74)} families; sent now to those who chose “as it happens”.</span>
-          </li>
-          <li>
-            <Icon name="printer" />
-            <b>Large-print flyer</b>
-            <span>Ready to print at the front desk: letter size, 22 pt. Added to this month’s printed calendar.</span>
-          </li>
-          {translate && (
+          {chans.has("web") && (
             <li>
-              <Icon name="translate" />
-              <b>Translated automatically</b>
-              <span>{langs.map((l) => `${l.k} (${Math.round((l.n / 221) * families)})`).join(" · ")}</span>
+              <Icon name="globe" />
+              <b>Website <Badge tone="good">Live</Badge></b>
+              <span>On the {where}{cap ? `, with online sign-up (${left} seats left)` : ""}. Sitemap updated and Google notified.</span>
+            </li>
+          )}
+          {chans.has("sms") && (
+            <li>
+              <Icon name="sms" />
+              <b>{sms} families texted</b>
+              <span>
+                {delivered} delivered · {failed} failed{failed ? " (landline numbers, sent by email instead)" : ""} · {harbor ? 2 : 28} in Spanish, Russian, Tagalog, Vietnamese or Chinese
+              </span>
+            </li>
+          )}
+          {chans.has("email") && (
+            <li>
+              <Icon name="mail" />
+              <b>Email digest <Badge tone="info">Queued</Badge></b>
+              <span>In this week’s digest to {emails} families, sending {p.digest}.</span>
+            </li>
+          )}
+          {chans.has("flyer") && (
+            <li>
+              <Icon name="printer" />
+              <b>Large-print flyer</b>
+              <span>Sent to the front desk printer (letter, 24 pt). Shirley’s team will post it by the elevators and in the Lobby.</span>
+            </li>
+          )}
+          {chans.has("facebook") && (
+            <li className={needsApproval ? "wait" : ""}>
+              <Icon name={needsApproval ? "clock" : "facebook"} />
+              <b>Facebook {needsApproval ? <Badge tone="warn">Waiting for Cheryl</Badge> : <Badge tone="good">Posted</Badge>}</b>
+              <span>{needsApproval ? "Posts with resident photos go to Cheryl Martin for approval before they go public. She’s been notified." : "Posted to facebook.com/PrairieCityLanding."}</span>
+            </li>
+          )}
+          {chans.has("gbp") && (
+            <li>
+              <Icon name="pin" />
+              <b>Google Business Profile <Badge tone="good">Posted</Badge></b>
+              <span>Event post shows on Google Search and Maps until {dayName(d).slice(0, 3)}, {monthName(d).slice(0, 3)} {d.getUTCDate()}.</span>
             </li>
           )}
           <li>
-            <Icon name="spark" />
+            <Icon name="sparkle" />
             <b>Search and AI</b>
-            <span>Event details published as structured data, so Google and AI assistants can answer “what’s on at {where}?”.</span>
+            <span>Published with structured data, so Google and AI assistants can answer “what’s on at Prairie City Landing?”</span>
           </li>
         </ul>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link className="sx-btn sx-btn-primary" href="/larkmoor-house/activities" target="_blank">
+        <div className="btn-row" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link className="sx-btn sx-btn-primary" href={kind === "menu" ? "/dining" : kind === "photo" ? "/news" : "/calendar"} target="_blank">
             <Icon name="globe" /> See it on the website
           </Link>
           <Link className="sx-btn" href="/staff/messages">
             Track delivery
           </Link>
-          <button className="sx-btn" type="button" onClick={() => setStage("edit")}>
+          <button className="sx-btn" type="button" onClick={() => { setStage("edit"); pick("event"); }}>
             <Icon name="plus" /> Post something else
           </button>
         </div>
@@ -143,12 +240,10 @@ export function Publisher({ initial }: { initial?: string }) {
     );
   }
 
-  const tabs = ["Website", "Family text", "Email digest", "Print flyer"];
-
   return (
     <div className="pub">
-      <section className="sx-card">
-        <div className="sx-card-body sx-form">
+      <section className="sx-card" aria-label="What you’re posting">
+        <form className="sx-card-body sx-form" onSubmit={(e) => { e.preventDefault(); publish(); }}>
           <div className="pub-type" role="group" aria-label="What are you posting?">
             {kinds.map((k) => (
               <button key={k.k} type="button" aria-pressed={kind === k.k} onClick={() => pick(k.k)}>
@@ -157,252 +252,221 @@ export function Publisher({ initial }: { initial?: string }) {
               </button>
             ))}
           </div>
-
-          {kind === "paper" ? (
-            <>
-              <button type="button" className="pub-drop" onClick={() => { setOcr("reading"); window.setTimeout(() => { setOcr("done"); setTitle("Family night supper & concert"); setTime("5:30 pm"); setPlace("Main Dining Room"); }, 1600); }}>
-                <Icon name="upload" />
-                <b>{ocr === "idle" ? "Drop a photo or PDF of the paper calendar" : ocr === "reading" ? "Reading the calendar…" : "November-calendar.jpg"}</b>
-                <span>{ocr === "idle" ? "Or take a picture with your phone. We read the times, names and rooms for you." : ocr === "reading" ? "Finding dates, times and rooms" : "23 activities found across 7 days"}</span>
+          <label>
+            Title
+            <input value={f.title} onChange={set("title")} required />
+          </label>
+          <div className="sx-row3">
+            <label>
+              Date
+              <input type="date" value={f.date} onChange={set("date")} />
+            </label>
+            <label>
+              Time
+              <input type="time" value={f.time} onChange={set("time")} step={300} />
+            </label>
+            <label>
+              Max people
+              <input type="number" min={0} inputMode="numeric" value={f.cap} onChange={set("cap")} placeholder="No limit" />
+            </label>
+          </div>
+          <label>
+            Room or departure point
+            <select value={f.room} onChange={set("room")}>
+              {p.rooms.map((r) => (
+                <option key={r}>{r}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Description
+            <textarea value={f.desc} onChange={set("desc")} rows={3} />
+          </label>
+          <fieldset style={{ border: 0, padding: 0, margin: 0 }} className="sx-form">
+            <legend className="sx-lbl" style={{ marginBottom: 6 }}>Who is it for?</legend>
+            <div className="sx-seg" role="group" aria-label="Audience">
+              <button type="button" aria-pressed={aud === "everyone"} onClick={() => setAud("everyone")}>
+                Everyone · {p.families} families
               </button>
-              {ocr === "done" && (
-                <div className="pub-ocr">
-                  <b>
-                    <Icon name="check" /> 23 activities read from the photo. Check them, then publish.
-                  </b>
-                  <table className="sx-table">
-                    <tbody>
-                      {ocrRows.map((r) => (
-                        <tr key={r.join()}>
-                          {r.map((c) => (
-                            <td key={c}>{c}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <span className="sx-note" style={{ margin: 0 }}>
-                    + 17 more. 2 need a room: Friday 2:00, Sunday 3:00.
-                  </span>
-                </div>
+              <button type="button" aria-pressed={aud === "harbor"} onClick={() => setAud("harbor")}>
+                Harbor families · {p.harborFamilies}
+              </button>
+            </div>
+          </fieldset>
+          <label className="pub-file">
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={(e) => {
+                const fl = e.target.files?.[0];
+                if (!fl) return;
+                setFile({ url: URL.createObjectURL(fl), name: fl.name, pdf: fl.type === "application/pdf" });
+              }}
+            />
+            <span className="sx-thumb">
+              {file?.pdf ? (
+                <span style={{ display: "grid", placeItems: "center", height: "100%" }}><Icon name="doc" /></span>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               )}
-            </>
-          ) : (
-            <>
-              <label>
-                {kind === "menu" ? "Menu headline" : "Title"}
-                <input value={title} onChange={(e) => setTitle(e.target.value)} />
-              </label>
-              <div className="sx-row3">
-                <label>
-                  Day
-                  <select value={date} onChange={(e) => setDate(e.target.value)}>
-                    {["Today", "Tomorrow", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
-                      <option key={d}>{d}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Time
-                  <input value={time} onChange={(e) => setTime(e.target.value)} />
-                </label>
-                <label>
-                  Place
-                  <input value={place} onChange={(e) => setPlace(e.target.value)} />
-                </label>
-              </div>
-              <label>
-                {kind === "menu" ? "Dishes and dietary tags" : "Description"}
-                <textarea value={text} onChange={(e) => setText(e.target.value)} />
-              </label>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Photo</span>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginTop: 4 }}>
-                  {photos.map((p) => (
-                    <button key={p} type="button" onClick={() => setPhoto(p)} aria-pressed={photo === p} style={{ position: "relative", aspectRatio: "1", border: photo === p ? "3px solid var(--sx-gold)" : "1px solid var(--sx-line)", padding: 0, cursor: "pointer", overflow: "hidden" }}>
-                      <Image src={p} alt="" fill sizes="80px" style={{ objectFit: "cover" }} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          <div>
-            <span style={{ fontWeight: 600, fontSize: 14 }}>Publish to</span>
-            <div className="pub-aud" style={{ marginTop: 4 }}>
-              {communities.map((m) => (
-                <label key={m.slug}>
-                  <input type="checkbox" checked={aud.includes(m.slug)} onChange={(e) => setAud(e.target.checked ? [...aud, m.slug] : aud.filter((x) => x !== m.slug).length ? aud.filter((x) => x !== m.slug) : aud)} />
-                  {m.name}
+            </span>
+            <span>
+              <b>{file ? file.name : "Attach a photo or PDF"}</b>
+              <span>{file ? "Tap to change. Photos are resized and checked for consent." : "Using the photo from our library. Tap to choose your own."}</span>
+            </span>
+          </label>
+          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend className="sx-lbl" style={{ marginBottom: 4 }}>Publish to</legend>
+            <div className="pub-chan">
+              {(Object.keys(chanInfo) as Chan[]).map((c) => (
+                <label key={c} className="sx-switch">
+                  <input type="checkbox" checked={chans.has(c)} onChange={() => toggle(c)} />
+                  {chanInfo[c].label}
                 </label>
               ))}
             </div>
-          </div>
-          <div className="sx-row">
-            <label>
-              Families
-              <select value={wing} onChange={(e) => setWing(e.target.value)}>
-                <option>Everyone</option>
-                <option>Memory care families only</option>
-                <option>First floor families only</option>
-              </select>
-            </label>
-            <label className="sx-check" style={{ alignSelf: "end", minHeight: 38 }}>
-              <input type="checkbox" checked={translate} onChange={(e) => setTranslate(e.target.checked)} /> Translate for each family’s language
-            </label>
-          </div>
+          </fieldset>
+          {needsApproval && (
+            <div className="sx-callout info">
+              <Icon name="info" />
+              <p>The Facebook post includes resident photos, so it will go to Cheryl Martin for approval. Everything else publishes now.</p>
+            </div>
+          )}
           <div className="pub-foot">
             <p>
-              Goes to the website, {families} families by text and email, and the print queue.
+              {chans.size} places · {chans.has("sms") ? `${families} families` : "no texts"}
             </p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button className="sx-btn" type="button">
-                Send for approval
-              </button>
-              <button
-                className="sx-btn sx-btn-gold sx-btn-lg"
-                type="button"
-                disabled={stage === "sending" || (kind === "paper" && ocr !== "done")}
-                onClick={() => {
-                  setStage("sending");
-                  window.setTimeout(() => setStage("done"), 1100);
-                }}
-              >
-                <Icon name="send" /> {stage === "sending" ? "Publishing…" : "Publish everywhere"}
-              </button>
+            <button type="submit" className="sx-btn sx-btn-terra sx-btn-lg" disabled={stage === "sending" || chans.size === 0}>
+              <Icon name="send" /> {stage === "sending" ? `Publishing… ${step}/${chans.size}` : "Publish everywhere"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section aria-label="Previews" className="prev-grid">
+        <div className={`prev ${chans.has("web") ? "" : "off"}`}>
+          <div className="prev-h">
+            <Icon name="globe" /> Website calendar <span>{chans.has("web") ? <Badge tone="good">On</Badge> : <Badge>Off</Badge>}</span>
+          </div>
+          <div className="prev-b">
+            <div className="pv-web">
+              <div className="pv-web-bar">
+                <span>prairiecitylanding.com/{kind === "menu" ? "dining" : kind === "photo" ? "news" : "calendar"}</span>
+                <span>{harbor ? "Harbor" : "All events"}</span>
+              </div>
+              <div className="pv-web-day">{dayName(d)}, {monthName(d)} {d.getUTCDate()}</div>
+              <div className="pv-web-card" style={harbor ? { borderLeftColor: "var(--c-harbor)" } : kind === "menu" ? { borderLeftColor: "var(--olive)" } : undefined}>
+                <div className="pv-web-img">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+                </div>
+                <div className="pv-web-t">
+                  <time>{fmtTime(start)}</time>
+                  <b>{f.title}</b>
+                  <span>{f.room}</span>
+                  {cap > 0 && <span className="seats">{left} of {cap} seats left · Sign up</span>}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="sx-card">
-        <header className="sx-card-head">
-          <div>
-            <h2>Preview</h2>
-            <p>The same post, everywhere it goes</p>
+        <div className={`prev ${chans.has("sms") ? "" : "off"}`}>
+          <div className="prev-h">
+            <Icon name="sms" /> Family text
+            <span className="sx-seg" role="group" aria-label="Text language">
+              <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
+              <button type="button" aria-pressed={lang === "es"} onClick={() => setLang("es")}>ES</button>
+            </span>
           </div>
-          <Badge tone="good">Live preview</Badge>
-        </header>
-        <div className="sx-card-body">
-          <div className="sx-tabs" role="tablist" style={{ marginBottom: 12 }}>
-            {["All four", ...tabs].map((t, i) => (
-              <button key={t} type="button" role="tab" aria-selected={tab === i} onClick={() => setTab(i)}>
-                {t}
-              </button>
-            ))}
+          <div className="prev-b">
+            <div className="pv-phone">
+              <div className="pv-phone-scr">
+                <div className="pv-phone-top">
+                  <b>Prairie City Landing</b>
+                  (916) 458-0303
+                </div>
+                <div className="pv-bubble">
+                  {kind === "photo" && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img} alt="" />
+                  )}
+                  {smsText}
+                </div>
+                <div className="pv-meta">
+                  {smsText.length} characters · {segs} text{segs > 1 ? "s" : ""} · to {families} families
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="prev-grid" style={tab ? { gridTemplateColumns: "1fr" } : undefined}>
-            {(tab === 0 || tab === 1) && (
-              <div className="prev">
-                <div className="prev-h">
-                  <Icon name="globe" /> Website <Badge tone="neutral">{where}</Badge>
-                </div>
-                <div className="prev-b pv-web">
-                  <div className="pv-web-bar">
-                    <span>larkmoorhouse.com/{kind === "menu" ? "dining" : kind === "photo" ? "news" : "activities"}</span>
-                    <span>Updated just now</span>
+        </div>
+
+        <div className={`prev ${chans.has("email") ? "" : "off"}`}>
+          <div className="prev-h">
+            <Icon name="mail" /> Weekly email digest <span className="sx-hint">{p.digest}</span>
+          </div>
+          <div className="prev-b">
+            <div className="pv-mail">
+              <div className="pv-mail-h">
+                <span><b>From:</b> Prairie City Landing</span>
+                <span><b>Subject:</b> Your week at Prairie City Landing</span>
+              </div>
+              <div className="pv-mail-banner">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/img/brand/dots.png" alt="" width={22} height={22} />
+                This week at PCL
+              </div>
+              <div className="pv-mail-body">
+                <p>Hello from Folsom! Here’s what’s coming up for your loved one.</p>
+                <div className="pv-mail-item hl">
+                  <div className="pv-mail-img">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
                   </div>
-                  <div className="pv-web-card">
-                    <div className="pv-web-img">
-                      <Image src={photo} alt="" fill sizes="120px" />
-                    </div>
-                    <div className="pv-web-t">
-                      <time>
-                        {date} · {time}
-                      </time>
-                      <b>{title}</b>
-                      <span>{place}</span>
-                      <div style={{ color: "#4e5851", marginTop: 3 }}>{text.slice(0, 90)}…</div>
-                    </div>
+                  <div>
+                    <b>{f.title}</b>
+                    <br />
+                    <small>{whenEn} · {f.room}</small>
+                  </div>
+                </div>
+                <div className="pv-mail-item">
+                  <div className="pv-mail-img">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/img/turkey.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+                  </div>
+                  <div>
+                    <b>Thanksgiving dinner</b>
+                    <br />
+                    <small>Thu, Nov 26 · Cypress Room · by reservation</small>
                   </div>
                 </div>
               </div>
-            )}
-            {(tab === 0 || tab === 2) && (
-              <div className="prev">
-                <div className="prev-h">
-                  <Icon name="sms" /> Family text <Badge tone="neutral">{families} families</Badge>
-                </div>
-                <div className="prev-b">
-                  <div className="pv-phone">
-                    <div className="pv-phone-top">Larkmoor House</div>
-                    <div className="pv-bubble">
-                      <b>{title}</b>, {/^To(day|morrow)$/.test(date) ? date.toLowerCase() : date} {time}, {place}. {text.split(".")[0]}. More: lrkmr.co/fn
-                    </div>
-                    {translate && (
-                      <div className="pv-bubble" lang="es">
-                        <b>{kind === "menu" ? "Cena del jueves" : kind === "photo" ? "El club de jardinería plantó 200 tulipanes" : "Noche familiar: cena y el coro de Larkmoor"}</b>, {date === "Thursday" ? "jueves" : date.toLowerCase()} {time}. Más: lrkmr.co/fn
-                      </div>
-                    )}
-                    <p className="pv-meta">{translate ? "Sent in English and in each family’s language" : "Sent in English"}</p>
-                  </div>
-                </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={`prev ${chans.has("flyer") ? "" : "off"}`}>
+          <div className="prev-h">
+            <Icon name="printer" /> Large-print flyer <span className="sx-hint">Letter · 24 pt</span>
+          </div>
+          <div className="prev-b">
+            <div className="pv-flyer">
+              <div className="pv-flyer-top">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/img/brand/dots.png" alt="" width={14} height={14} /> Prairie City Landing
               </div>
-            )}
-            {(tab === 0 || tab === 3) && (
-              <div className="prev">
-                <div className="prev-h">
-                  <Icon name="mail" /> Email digest <Badge tone="neutral">Monday 7 am</Badge>
-                </div>
-                <div className="prev-b">
-                  <div className="pv-mail">
-                    <div className="pv-mail-h">
-                      <span>
-                        From: <b>Larkmoor House</b>
-                      </span>
-                      <span>Subject: This week at Larkmoor: family night, menus and photos</span>
-                    </div>
-                    <div className="pv-mail-banner">This week at {where}</div>
-                    <div className="pv-mail-body">
-                      <div className="pv-mail-item hl">
-                        <div className="pv-mail-img">
-                          <Image src={photo} alt="" fill sizes="60px" />
-                        </div>
-                        <div>
-                          <b>{title}</b>
-                          <br />
-                          {date} {time} · {place}
-                        </div>
-                      </div>
-                      <div className="pv-mail-item">
-                        <div className="pv-mail-img">
-                          <Image src="/photos/dining-three.jpg" alt="" fill sizes="60px" />
-                        </div>
-                        <div>
-                          <b>This week’s menus</b>
-                          <br />
-                          Sunday roast, Friday fish tacos
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="pv-flyer-img">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
               </div>
-            )}
-            {(tab === 0 || tab === 4) && (
-              <div className="prev">
-                <div className="prev-h">
-                  <Icon name="printer" /> Large-print flyer <Badge tone="neutral">Letter, 22 pt</Badge>
-                </div>
-                <div className="prev-b">
-                  <div className="pv-flyer">
-                    <div className="pv-flyer-top">{where}</div>
-                    <div className="pv-flyer-img">
-                      <Image src={photo} alt="" fill sizes="240px" />
-                    </div>
-                    <div className="pv-flyer-t">
-                      <b>{title}</b>
-                      <span>
-                        {date} · {time}
-                      </span>
-                      <small>{place}</small>
-                    </div>
-                    <div className="pv-flyer-foot">Ask at the front desk · (503) 555-0142</div>
-                  </div>
-                </div>
+              <div className="pv-flyer-t">
+                <b>{f.title.replace(/^Bus Trip: /, "")}</b>
+                <span>{dayName(d)}, {monthName(d)} {d.getUTCDate()} · {fmtTime(start)}</span>
+                <small>{f.room}{cap ? ` · Limited to ${cap} · Sign up at the front desk` : ""}</small>
               </div>
-            )}
+              <div className="pv-flyer-foot">Questions? Ask Toni Glenn, ext. 140 · (916) 458-0303</div>
+            </div>
           </div>
         </div>
       </section>

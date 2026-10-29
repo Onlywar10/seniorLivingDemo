@@ -1,53 +1,75 @@
 import Link from "next/link";
-import { community } from "@/data/community";
-import { pillars } from "./SiteHeader";
+import { site } from "@/data/site";
+import { Logo, Dots } from "./Logo";
+import { Icon } from "./Icon";
+
+const cols = [
+  { title: "Living Options", links: [["Independent Living", "/living/independent-living"], ["Assisted Living Services", "/living/assisted-living"], ["Harbor Memory Care", "/living/harbor-memory-care"], ["Floor Plans & Pricing", "/floor-plans"], ["Care Assessment", "/care-assessment"], ["Cost Comparison", "/cost-comparison"]] },
+  { title: "Life Here", links: [["Activity Calendar", "/calendar"], ["Dining & Menus", "/dining"], ["Events & Adventures", "/events-adventures"], ["Fitness", "/fitness"], ["Amazing Spaces", "/spaces"], ["Stay Connected", "/stay-connected"]] },
+  { title: "About", links: [["Our Team", "/team"], ["Purpose & Values", "/about"], ["All Are Welcome", "/all-are-welcome"], ["News", "/news"], ["Senior Living Guides", "/guides"], ["FAQs", "/faq"], ["Careers", "/careers"], ["Info & Directions", "/contact"]] },
+];
 
 export function Footer() {
   return (
-    <footer className="site-footer">
-      <div className="wrap footer-grid">
-        <div>
-          <p className="footer-name">{community.name}</p>
+    <footer className="footer">
+      <Dots size={420} style={{ right: -120, top: -80, opacity: 0.16 }} />
+      <div className="wrap">
+        <div className="footer-top">
+          <div>
+            <Logo light />
+            <div className="footer-contact">
+              <a href={site.mapsUrl} target="_blank" rel="noreferrer">
+                <Icon name="pin" /> {site.addressLine}
+              </a>
+              <a href={site.phoneHref}>
+                <Icon name="phone" /> {site.phone}
+              </a>
+              <a href={`mailto:${site.email}`}>
+                <Icon name="mail" /> {site.email}
+              </a>
+              <a href={site.facebook} target="_blank" rel="noreferrer">
+                <Icon name="facebook" /> Prairie City Landing on Facebook
+              </a>
+            </div>
+          </div>
+          {cols.map((c) => (
+            <div key={c.title}>
+              <h2>{c.title}</h2>
+              <ul>
+                {c.links.map(([label, href]) => (
+                  <li key={href}>
+                    <Link href={href}>{label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="footer-family">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/brand/tenfold-white.png" alt="Tenfold Senior Living" width={116} height={52} />
           <p>
-            {community.address}
-            <br />
-            <a href={community.phoneHref}>{community.phone}</a> · front desk 6 am – 10 pm, nurse 24 hours
-          </p>
-          <p className="footer-lic">{community.licenceLine}</p>
-          <p className="footer-lic">
-            One of six <Link href="/">Larkmoor Senior Living</Link> communities in Oregon and Washington.
+            Prairie City Landing is owned, designed, built and operated by {site.operator}.<br />
+            Our sister community:{" "}
+            <a href={site.sister.url} target="_blank" rel="noreferrer">
+              {site.sister.name}
+            </a>
+            , {site.sister.city}.
           </p>
         </div>
-        <ul className="footer-links" aria-label="Sections">
-          {pillars.map((p) => (
-            <li key={p.href}>
-              <Link href={p.href}>{p.label}</Link>
-            </li>
-          ))}
-          <li>
-            <Link href="/larkmoor-house/inspection-record">State inspection record</Link>
-          </li>
-          <li>
-            <Link href="/larkmoor-house/tour">Book a tour</Link>
-          </li>
-        </ul>
-        <ul className="footer-links" aria-label="About this site">
-          <li>
-            <Link href="/accessibility">Accessibility statement</Link>
-          </li>
-          <li>
-            <Link href="/larkmoor-house/stay-connected">Stay connected: calendar and menus by text or email</Link>
-          </li>
-          <li>
-            <Link href="/larkmoor-house/events">Open house and family events</Link>
-          </li>
-          <li>
-            <Link href="/staff">Staff sign in</Link>
-          </li>
-        </ul>
-      </div>
-      <div className="wrap footer-note">
-        © {new Date().getFullYear()} Larkmoor Senior Living · <Link href="/accessibility">Accessibility</Link> · Equal housing opportunity
+        <div className="footer-bottom">
+          <span>
+            <span className="licence">{site.licence}</span> · © 2026 {site.operator} · Equal Housing Opportunity
+          </span>
+          <nav aria-label="Footer">
+            <Link href="/accessibility">Accessibility</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/careers">Careers</Link>
+            <Link href="/staff">
+              <Icon name="lock" /> Staff sign in
+            </Link>
+          </nav>
+        </div>
       </div>
     </footer>
   );

@@ -1,36 +1,41 @@
 import type { Metadata } from "next";
-import { PageHead, Card, Badge } from "@/components/staff/ui";
+import { Icon } from "@/components/Icon";
 import { Approvals } from "@/components/staff/Approvals";
-import { nameOf } from "@/data/staff";
+import { Avatar, Badge, Card, PageHead } from "@/components/staff/ui";
+import { ago, approvals, approvedRecently, staffPeople } from "@/data/staff";
 
 export const metadata: Metadata = { title: "Approvals" };
 
-const rules = [
-  { what: "Calendar, menus, photos", who: "Publish immediately", tone: "good" as const },
-  { what: "News posts and flyers", who: "Executive Director approves", tone: "warn" as const },
-  { what: "Rates and apartment prices", who: "Executive Director + VP Sales", tone: "warn" as const },
-  { what: "Staff profiles", who: "HR, then Executive Director", tone: "warn" as const },
-  { what: "Urgent notices", who: "Send immediately; ED and nurse on duty can send", tone: "bad" as const },
-];
-
-export default async function ApprovalsPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c } = await searchParams;
+export default function ApprovalsPage() {
   return (
     <>
-      <PageHead title="Approvals" sub="Items your teams have submitted that need a manager’s sign-off before they publish." />
+      <PageHead title="Approvals" sub="Nothing with a resident’s photo, a price or a holiday menu goes public until a manager has seen it." />
+      <Approvals items={approvals.map((a) => ({ ...a, when: ago(a.mins) }))} />
       <div className="sx-grid g-21">
-        <Approvals where={c ? nameOf(c) : undefined} />
-        <Card title="Who approves what" sub="Set once for the organisation">
-          <ul className="sx-list">
-            {rules.map((r) => (
-              <li key={r.what} className="sx-fresh">
-                <b>{r.what}</b>
-                <Badge tone={r.tone}>{r.tone === "good" ? "No approval" : r.tone === "bad" ? "Bypasses approval" : "Approval"}</Badge>
-                <small>{r.who}</small>
+        <Card title="Recently decided">
+          <ul className="sx-feed">
+            {approvedRecently.map((r) => (
+              <li key={r.title}>
+                <Avatar who={r.by} />
+                <div>
+                  <p>
+                    <b>{r.title}</b> <span className="muted">from {staffPeople[r.by].name}</span>{" "}
+                    {r.ok ? <Badge tone="good"><Icon name="check" /> Approved by Cheryl</Badge> : <Badge tone="warn">Changes requested</Badge>}
+                  </p>
+                  {r.note && <p className="sx-hint">{r.note}</p>}
+                  <time>{ago(r.mins)}</time>
+                </div>
               </li>
             ))}
           </ul>
-          <p className="sx-note">Average time to approval this month: 41 minutes.</p>
+        </Card>
+        <Card title="Who approves what">
+          <ul className="sx-list">
+            <li><b>Resident photos on Facebook or the website</b><br /><span className="sx-hint">Cheryl Martin · checks photo consent is on file</span></li>
+            <li><b>Pricing and availability</b><br /><span className="sx-hint">Cheryl Martin · prepared by Douglas Wigner</span></li>
+            <li><b>Holiday and special-event menus</b><br /><span className="sx-hint">Cheryl Martin · prepared by Conrad Caguimbal</span></li>
+            <li><b>Everyday events, menus and family texts</b><br /><span className="sx-hint">Publish straight away, no approval needed</span></li>
+          </ul>
         </Card>
       </div>
     </>

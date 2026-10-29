@@ -17,7 +17,7 @@ interface Prefs {
 
 const Ctx = createContext<Prefs>({ text: "md", contrast: false, lang: "en", setText: () => {}, setContrast: () => {}, setLang: () => {} });
 
-const KEY = "larkmoor.prefs";
+const KEY = "pcl.prefs";
 
 /** Reader preferences: text size, high contrast and site language. Remembered per browser. */
 export function PrefsProvider({ children }: { children: ReactNode }) {

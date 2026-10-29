@@ -1,164 +1,187 @@
 import type { Metadata } from "next";
-import { PageHead, Card, Kpi, LineChart, Badge, fmt, pct } from "@/components/staff/ui";
 import { Icon } from "@/components/Icon";
-import { keywords, seoTrend, gbp, vitals, attention, weekTicks, scope } from "@/data/staff";
+import { Badge, Card, Delta, Kpi, LineChart, Spark, fmt, pctChange } from "@/components/staff/ui";
+import { ago, gbp, rankings, reviewsRecent, searchWeekly, topPages, vitals } from "@/data/staff";
+import { addDays, shortDate, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Search (SEO)" };
 
-export default async function Seo({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c } = await searchParams;
-  const s = scope(c);
-  const kw = keywords(c);
-  const k = c ? 0.18 : 1;
-  const clicks = seoTrend.clicks.map((v) => Math.round(v * k));
-  const impr = seoTrend.impressions.map((v) => Math.round(v * k));
-  const issues = c ? attention.filter((a) => a.where === s.label) : attention;
+export default function Seo() {
+  const t = today();
+  const weeks = searchWeekly.clicks.map((_, i) => shortDate(addDays(t, (i - 11) * 7)));
+  const c = searchWeekly.clicks, im = searchWeekly.impressions;
+  const last4 = (a: number[]) => a.slice(-4).reduce((n, v) => n + v, 0);
+  const prev4 = (a: number[]) => a.slice(-8, -4).reduce((n, v) => n + v, 0);
+  const ctr = (last4(c) / last4(im)) * 100;
+  const avgPos = 3.4;
+
   return (
     <>
-      <PageHead title="Search (SEO)" sub={`${s.label} · Google Search and Google Business Profile, last 28 days`}>
-        <button className="sx-btn" type="button">
-          <Icon name="download" /> Export report
-        </button>
-      </PageHead>
+      <header className="sx-head">
+        <div>
+          <h1>Search (SEO)</h1>
+          <p>How Prairie City Landing shows up on Google. Last 28 days, compared with the 28 days before.</p>
+        </div>
+        <div className="sx-head-actions">
+          <Badge tone="good"><Icon name="check" /> Google Search Console connected</Badge>
+        </div>
+      </header>
 
       <div className="sx-kpis">
-        <Kpi label="Clicks from Google" value={fmt(clicks[11] * 4)} delta={pct(clicks[11], clicks[7])} spark={clicks} />
-        <Kpi label="Impressions" value={fmt(impr[11] * 4)} delta={pct(impr[11], impr[7])} spark={impr} />
-        <Kpi label="Average position" value={s.seoPos.toFixed(1)} delta={-18} invert note="lower is better" />
-        <Kpi label="Business Profile views" value={fmt(Math.round(gbp.views * k))} delta={pct(gbp.views, gbp.viewsPrev)} />
-        <Kpi label="Calls from Google" value={fmt(Math.round(gbp.calls * k))} delta={pct(gbp.calls, gbp.callsPrev)} />
-        <Kpi label="Direction requests" value={fmt(Math.round(gbp.directions * k))} delta={pct(gbp.directions, gbp.directionsPrev)} />
+        <Kpi label="Clicks from Google" value={fmt(last4(c))} delta={pctChange(last4(c), prev4(c))} note="vs previous 28 days" spark={c} />
+        <Kpi label="Impressions" value={fmt(last4(im))} delta={pctChange(last4(im), prev4(im))} note="times PCL appeared in results" spark={im} />
+        <Kpi label="Click-through rate" value={`${ctr.toFixed(1)}%`} delta={0.3} deltaSuffix=" pts" note="local average is 2.1%" />
+        <Kpi label="Average position" value={avgPos.toFixed(1)} delta={-1.6} deltaSuffix="" invert note="across tracked searches" />
       </div>
 
-      <div className="sx-grid g-21">
-        <Card title="Rankings for the searches that matter" sub="Position in Google, this week vs four weeks ago" pad={false}>
-          <div className="sx-table-wrap">
-            <table className="sx-table">
-              <thead>
-                <tr>
-                  <th>Search</th>
-                  <th className="num">Position</th>
-                  <th className="num">Change</th>
-                  <th className="num">Monthly searches</th>
-                  <th className="num">Clicks</th>
-                  <th className="num">Impressions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {kw.map((r) => (
-                  <tr key={r.q}>
-                    <td>
-                      <b>{r.q}</b>
-                    </td>
-                    <td className="num">
-                      <Badge tone={r.pos <= 3 ? "good" : r.pos <= 6 ? "accent" : "warn"}>#{r.pos}</Badge>
-                    </td>
-                    <td className="num">{r.prev - r.pos > 0 ? <span className="sx-delta up">▲ {r.prev - r.pos}</span> : <span className="sx-delta flat">■ 0</span>}</td>
-                    <td className="num">{fmt(r.vol)}</td>
-                    <td className="num">{fmt(Math.round(r.clicks * (c ? 1 : 1.9)))}</td>
-                    <td className="num">{fmt(Math.round(r.impr * (c ? 1 : 1.9)))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-        <Card title="Google Business Profile" sub="Last 28 days">
-          <ul className="sx-list">
-            <li className="sx-fresh">
-              <b>Rating</b>
-              <span>
-                ★ {gbp.rating} · {gbp.reviews} reviews
-              </span>
-              <small>{gbp.newReviews} new reviews this month, all answered within a day</small>
-            </li>
-            <li className="sx-fresh">
-              <b>Website clicks</b>
-              <span>{fmt(Math.round(gbp.website * k))}</span>
-              <small>
-                <span className="sx-delta up">▲ {pct(gbp.website, gbp.websitePrev)}%</span> since weekly posts started
-              </small>
-            </li>
-            <li className="sx-fresh">
-              <b>Posts this month</b>
-              <span>{c ? 9 : 52}</span>
-              <small>Published automatically from the calendar and news</small>
-            </li>
-            <li className="sx-fresh">
-              <b>Photos</b>
-              <span>{c ? 64 : 388}</span>
-              <small>Newest from this morning</small>
-            </li>
-          </ul>
-        </Card>
-      </div>
-
-      <div className="sx-grid g-21">
-        <Card title="Clicks and impressions" sub="Weekly, all tracked searches">
-          <div className="sx-legend">
-            <span>
-              <i style={{ background: "var(--c1)" }} /> Clicks
-            </span>
-            <span>
-              <i style={{ background: "var(--c2)" }} /> Impressions ÷ 20
-            </span>
-          </div>
-          <LineChart
-            labels={weekTicks()}
-            series={[
-              { name: "Clicks", values: clicks, color: "var(--c1)" },
-              { name: "Impr. ÷ 20", values: impr.map((v) => Math.round(v / 20)), color: "var(--c2)" },
-            ]}
-          />
-        </Card>
-        <Card title="Page speed and site health" action={<Badge tone="good">All passing</Badge>}>
-          <ul className="sx-list">
-            {vitals.map((v) => (
-              <li key={v.k} className="sx-fresh">
-                <span>{v.k}</span>
-                <b style={{ color: "var(--sx-good)" }}>{v.v}</b>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
-
-      <Card title="Pages that need attention" sub={`${issues.length} to fix · sorted by impact`} pad={false}>
+      <Card title="Google rankings" sub="Where prairiecitylanding.com ranks for the searches families actually type. Trend shows the last 12 weeks." pad={false}>
         <div className="sx-table-wrap">
           <table className="sx-table">
             <thead>
               <tr>
-                <th>Community</th>
-                <th>Page</th>
-                <th>Issue</th>
-                <th>Suggested fix</th>
-                <th />
+                <th>Search</th>
+                <th className="num">Position</th>
+                <th>Change</th>
+                <th>12-week trend</th>
+                <th className="num">Monthly searches</th>
+                <th>Ranking page</th>
               </tr>
             </thead>
             <tbody>
-              {issues.length ? (
-                issues.map((a) => (
-                  <tr key={a.where + a.page}>
-                    <td>
-                      <b>{a.where}</b>
-                    </td>
-                    <td>{a.page}</td>
-                    <td>
-                      <Badge tone={a.sev === "high" ? "bad" : a.sev === "med" ? "warn" : "neutral"}>{a.sev === "high" ? "High" : a.sev === "med" ? "Medium" : "Low"}</Badge> {a.issue}
-                    </td>
-                    <td>{a.fix}</td>
-                    <td>
-                      <button className="sx-btn" type="button">
-                        Fix
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5}>Nothing needs attention. Every page is current and passing.</td>
+              {rankings.map((r) => (
+                <tr key={r.q}>
+                  <td>
+                    <b>{r.q}</b>
+                  </td>
+                  <td className="num">
+                    <b style={{ fontSize: 17 }}>{r.pos}</b>
+                    {r.pos <= 3 && <small>Top 3</small>}
+                  </td>
+                  <td>{r.change === 0 ? <Delta v={0} /> : <Delta v={r.change} suffix="" label={r.change === 1 ? "place" : "places"} />}</td>
+                  <td style={{ color: r.change > 0 ? "var(--green)" : "var(--slate)" }}>
+                    <Spark values={r.hist} invert w={90} h={26} />
+                  </td>
+                  <td className="num">{fmt(r.volume)}</td>
+                  <td>
+                    <a className="sx-link" href={r.url} target="_blank" rel="noopener">
+                      {r.url}
+                    </a>
+                  </td>
                 </tr>
-              )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <div className="sx-grid g-2">
+        <Card title="Clicks" sub="Weekly clicks from Google search">
+          <LineChart label={`Weekly clicks from Google, rising from ${c[0]} to ${c[c.length - 1]} over 12 weeks`} labels={weeks} series={[{ name: "Clicks", values: c, color: "var(--green)", area: true }]} height={200} every={2} />
+        </Card>
+        <Card title="Impressions" sub="Weekly appearances in Google results">
+          <LineChart
+            label={`Weekly impressions, rising from ${fmt(im[0])} to ${fmt(im[im.length - 1])} over 12 weeks`}
+            labels={weeks}
+            series={[{ name: "Impressions", values: im, color: "var(--sky)", area: true }]}
+            height={200}
+            every={2}
+            yFmt={(n) => (n >= 1000 ? `${n / 1000}k` : String(n))}
+          />
+        </Card>
+      </div>
+
+      <div className="sx-grid g-21">
+        <Card title="Google Business Profile" sub="Prairie City Landing · 645 Willard Drive, Folsom · last 28 days">
+          <div className="sx-kpis" style={{ marginBottom: 14, gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))" }}>
+            <Kpi label="Profile views" value={fmt(gbp.views)} delta={pctChange(gbp.views, gbp.viewsPrev)} />
+            <Kpi label="Calls" value={gbp.calls} delta={pctChange(gbp.calls, gbp.callsPrev)} />
+            <Kpi label="Direction requests" value={gbp.directions} delta={pctChange(gbp.directions, gbp.directionsPrev)} />
+            <Kpi label="Website clicks" value={gbp.clicks} delta={pctChange(gbp.clicks, gbp.clicksPrev)} />
+          </div>
+          <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
+            <span className="sx-bignum">{gbp.rating}</span>
+            <span>
+              <span style={{ color: "var(--butter)", letterSpacing: 2 }} aria-hidden="true">
+                ★★★★★
+              </span>
+              <br />
+              <span className="sx-hint">
+                {gbp.reviews} Google reviews · {gbp.newReviews} new this month, all answered
+              </span>
+            </span>
+          </div>
+          <ul className="sx-list">
+            {reviewsRecent.map((r) => (
+              <li key={r.name}>
+                <b>{r.name}</b> <span aria-label={`${r.stars} stars`}>{"★".repeat(r.stars)}</span> <span className="sx-hint">· {ago(r.mins)}</span>
+                <p style={{ margin: "3px 0 0", color: "var(--sx-ink-2)" }}>“{r.text}”</p>
+                <span className="sx-hint">
+                  <Icon name="check" /> Replied by Cheryl Martin
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <div className="sx-grid">
+          <Card title="Site health" action={<Badge tone="good">Healthy</Badge>}>
+            <ul className="sx-list">
+              {vitals.map((v) => (
+                <li key={v.k} className="sx-fresh">
+                  <span className="ok">
+                    <Icon name="check" />
+                  </span>
+                  <b>{v.k}</b>
+                  <b>{v.v}</b>
+                  <small>{v.note} · mobile, real visitors</small>
+                </li>
+              ))}
+              <li className="sx-fresh">
+                <span className="ok"><Icon name="check" /></span>
+                <b>Pages indexed</b>
+                <b>66 of 66</b>
+                <small>Sitemap updated automatically when anything is published</small>
+              </li>
+              <li className="sx-fresh">
+                <span className="ok"><Icon name="check" /></span>
+                <b>Structured data</b>
+                <b>0 errors</b>
+                <small>Events, menus, FAQs and local business details</small>
+              </li>
+              <li className="sx-fresh">
+                <span className="ok"><Icon name="check" /></span>
+                <b>Mobile and accessibility</b>
+                <b>100</b>
+                <small>Lighthouse accessibility score, home page</small>
+              </li>
+            </ul>
+          </Card>
+        </div>
+      </div>
+
+      <Card title="Pages with the most search traffic" sub="Clicks from Google, last 28 days" pad={false}>
+        <div className="sx-table-wrap">
+          <table className="sx-table">
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th className="num">Clicks</th>
+                <th>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topPages.map((p) => (
+                <tr key={p.url}>
+                  <td>
+                    <b>{p.title}</b>
+                    <small>{p.url}</small>
+                  </td>
+                  <td className="num">{fmt(p.clicks)}</td>
+                  <td>
+                    <Delta v={p.change} />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

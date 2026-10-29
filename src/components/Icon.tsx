@@ -138,6 +138,49 @@ const paths: Record<string, React.ReactNode> = {
   sms: <path d="M4 5h16v11H9l-5 4zM8 10h.01M12 10h.01M16 10h.01" />,
   translate: <path d="M3 5h10M8 3v2M5 5c.8 3.5 3 6 6 7.5M11 5c-.8 3.5-3 6-6 7.5M13 21l4-10 4 10M14.5 17.5h5" />,
   wand: <path d="M4 20l11-11M14 4v3M19 9h-3M17.5 5.5l-2 2M18 14v2M10 4h2" />,
+  heart: <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />,
+  paw: (
+    <>
+      <circle cx="7" cy="9" r="1.8" />
+      <circle cx="10.5" cy="5.5" r="1.8" />
+      <circle cx="14.5" cy="5.5" r="1.8" />
+      <circle cx="18" cy="9" r="1.8" />
+      <path d="M8 17c0-3 2-5.5 4.5-5.5S17 14 17 17c0 2-1.6 3-3 3-1 0-1.5-.6-1.5-.6S12 20 11 20c-1.6 0-3-1-3-3z" />
+    </>
+  ),
+  wine: <path d="M8 3h8l-.5 6a3.5 3.5 0 0 1-7 0zM12 12.5V20M8.5 20h7" />,
+  coffee: <path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3.5c0 1 1 1.5 1 2.5M12 3.5c0 1 1 1.5 1 2.5" />,
+  fork: <path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11M17 3c-2 0-3 2.5-3 6s1.5 4 3 4v8" />,
+  bus: (
+    <>
+      <rect x="4" y="3" width="16" height="15" rx="3" />
+      <path d="M4 11h16M8 18v3M16 18v3M8 14.5h.01M16 14.5h.01" />
+    </>
+  ),
+  dumbbell: <path d="M3 10v4M6 7v10M18 7v10M21 10v4M6 12h12" />,
+  music: <path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />,
+  sun: <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />,
+  facebook: <path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H7v4h3v8h4v-8h3l1-4h-4V8z" />,
+  access: (
+    <>
+      <circle cx="12" cy="4.5" r="1.8" />
+      <path d="M5 8l7 1.5L19 8M12 9.5V14l-3 7M12 14l3 7" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </>
+  ),
+  sparkle: <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />,
+  cookie: <path d="M21 12.5A9 9 0 1 1 11.5 3a3 3 0 0 0 3.5 3.5 3 3 0 0 0 3.5 3.5 3 3 0 0 0 2.5 2.5zM8.5 9.5h.01M12 15h.01M8 15h.01M15.5 13.5h.01" />,
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6M12 7.5v.5" />
+    </>
+  ),
 };
 
 export function Icon({ name, className = "" }: { name: keyof typeof paths; className?: string }) {

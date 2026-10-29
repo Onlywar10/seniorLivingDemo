@@ -1,124 +1,113 @@
 import type { Metadata } from "next";
-import { PageHead, Card, Kpi, LineChart, Badge, Score } from "@/components/staff/ui";
 import { Icon } from "@/components/Icon";
-import { engines, geoTrend, geoAnswers, wrongFacts, weekTicks, scope } from "@/data/staff";
+import { GeoFixes } from "@/components/staff/GeoFixes";
+import { Badge, Card, Delta, LineChart, Score } from "@/components/staff/ui";
+import { ago, answers, engines, geoTrend, wrongFacts } from "@/data/staff";
+import { addDays, shortDate, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "AI search (GEO)" };
 
-const color = ["var(--c1)", "var(--c3)", "var(--c6)", "var(--c5)"];
+const engineColor = Object.fromEntries(engines.map((e) => [e.k, e.color]));
+const accTone = { accurate: "good", partly: "warn", wrong: "bad" } as const;
+const accLabel = { accurate: "Accurate", partly: "Partly right", wrong: "Wrong" };
 
-export default async function Geo({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c } = await searchParams;
-  const s = scope(c);
-  const answers = geoAnswers(c);
-  const wrong = wrongFacts(c);
-  const adj = s.geo - 72;
-  const gain = Math.round(engines.reduce((t, e) => t + geoTrend[e][11] - geoTrend[e][0], 0) / engines.length);
-  const mentioned = answers.filter((a) => a.mentioned).length;
-  const recommended = answers.filter((a) => a.recommended).length;
-  const accurate = answers.filter((a) => a.accurate === "yes").length;
+export default function Geo() {
+  const t = today();
+  const weeks = geoTrend.map((_, i) => shortDate(addDays(t, (i - 11) * 7)));
+  const score = geoTrend[geoTrend.length - 1];
+  const prompts = [...new Set(answers.map((a) => a.prompt))];
+  const acc = answers.filter((a) => a.accuracy === "accurate").length;
+  const rec = answers.filter((a) => a.recommended).length;
+  const open = wrongFacts.filter((w) => w.status !== "fixed").length;
+
   return (
     <>
-      <PageHead title="AI search (GEO)" sub={`${s.label} · what ChatGPT, Google AI Overviews, Perplexity and Gemini tell families. Checked every morning at 5 am.`}>
-        <button className="sx-btn" type="button">
-          <Icon name="plus" /> Track a question
-        </button>
-      </PageHead>
+      <header className="sx-head">
+        <div>
+          <h1>AI search (GEO)</h1>
+          <p>What ChatGPT, Google AI Overviews, Perplexity and Gemini tell families about Prairie City Landing. We ask 48 questions every day and check the answers against the website.</p>
+        </div>
+        <div className="sx-head-actions">
+          <span className="sx-hint">Last checked {ago(60 * 2)}</span>
+        </div>
+      </header>
 
       <div className="sx-grid g-12">
-        <Card title="AI visibility score" sub="Mentioned, recommended and accurate, across 4 engines">
-          <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
-            <Score v={s.geo} size={120} />
+        <Card title="AI visibility score" sub="How often PCL is named, recommended and described correctly (0–100)">
+          <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+            <Score v={score} size={112} label="AI visibility score" />
             <div>
-              <p style={{ margin: 0 }}>
-                <span className="sx-delta up">▲ {gain} points</span> in 12 weeks
+              <Delta v={score - geoTrend[geoTrend.length - 5]} suffix=" pts" label="in 4 weeks" />
+              <p className="sx-note" style={{ marginTop: 6 }}>
+                Up from {geoTrend[0]} twelve weeks ago, when the live calendar, daily menus and FAQ went up.
               </p>
-              <p className="sx-note">Since the calendar, menus, prices and visiting hours were published as structured, dated pages.</p>
             </div>
           </div>
+          <ul className="sx-list" style={{ marginTop: 10 }}>
+            <li><b>{acc} of {answers.length}</b> answers below are fully accurate</li>
+            <li><b>{rec} of {answers.length}</b> recommend Prairie City Landing</li>
+            <li><b>{open}</b> wrong facts still being corrected</li>
+          </ul>
         </Card>
-        <div className="sx-kpis">
-          <Kpi label="Answers that mention you" value={`${mentioned} of ${answers.length}`} note="tracked family questions" />
-          <Kpi label="Answers that recommend you" value={`${recommended} of ${answers.length}`} delta={50} />
-          <Kpi label="Accurate and current" value={`${accurate} of ${answers.length}`} note={`${answers.length - accurate} answers have wrong or old facts`} />
-          <Kpi label="Families from AI search" value={c ? "4" : "19"} delta={58} note="enquiries this month" />
-        </div>
+        <Card title="Visibility over time" sub="Weekly score across all four AI engines">
+          <LineChart label={`AI visibility score rising from ${geoTrend[0]} to ${score} over 12 weeks`} labels={weeks} series={[{ name: "Score", values: geoTrend, color: "var(--terra-deep)", area: true }]} height={230} every={2} />
+        </Card>
       </div>
 
       <div className="eng-scores">
-        {engines.map((e, i) => {
-          const v = geoTrend[e][11] + adj;
-          return (
-            <div key={e}>
-              <Score v={v} size={64} />
-              <span>
-                <b>{e}</b>
-                <small>
-                  <span className="sx-delta up">▲ {geoTrend[e][11] - geoTrend[e][7]}</span> in 4 weeks
-                </small>
-              </span>
-              <span style={{ width: 10, height: 10, background: color[i], marginLeft: "auto" }} />
-            </div>
-          );
-        })}
+        {engines.map((e) => (
+          <div key={e.k}>
+            <Score v={e.score} size={64} label={`${e.k} visibility`} />
+            <span>
+              <b>{e.k}</b>
+              <small>
+                <Delta v={e.score - e.prev} suffix=" pts" /> in 12 weeks
+              </small>
+            </span>
+          </div>
+        ))}
       </div>
 
-      <Card title="Visibility over time" sub="Score by engine, weekly">
-        <LineChart labels={weekTicks()} max={100} yFmt={(n) => String(n)} series={engines.map((e, i) => ({ name: e.replace("Google AI Overviews", "AI Overviews"), values: geoTrend[e].map((v) => v + adj), color: color[i] }))} />
+      <Card title="Facts AI is getting wrong, and how we’re fixing them" sub="Each fix is a page on the website that AI engines can read and cite." id="wrong">
+        <GeoFixes facts={wrongFacts.map((w) => ({ ...w, when: ago(w.mins) }))} />
       </Card>
 
-      <div className="sx-grid g-2">
-        <Card title="What AI is saying" sub="The real answers to questions families ask" action={<Badge tone="info">8 questions tracked</Badge>}>
-          {answers.map((a) => (
-            <article key={a.engine + a.prompt} className="geo-ans">
-              <div className="geo-q">
-                <span className={`eng eng-${a.engine.split(" ")[0]}`}>{a.engine}</span>
-                <span>“{a.prompt}”</span>
-              </div>
-              <p className={`geo-a ${a.accurate}`}>{a.answer}</p>
-              <div className="geo-flags">
-                <Badge tone={a.accurate === "yes" ? "good" : a.accurate === "partly" ? "warn" : "bad"}>{a.accurate === "yes" ? "Accurate" : a.accurate === "partly" ? "Partly accurate" : "Inaccurate"}</Badge>
-                <Badge tone={a.current ? "good" : "warn"}>{a.current ? "Current" : "Out of date"}</Badge>
-                {a.mentioned && <Badge tone="neutral">Mentioned</Badge>}
-                {a.recommended && <Badge tone="accent">★ Recommended</Badge>}
-                <span>Sources: {a.cites.join(", ")}</span>
-                <span>· {a.checked}</span>
-              </div>
-            </article>
-          ))}
-        </Card>
-        <Card title="Facts AI is getting wrong" sub="With the fix, ready to go" action={<Badge tone="bad">{wrong.filter((w) => !w.status.startsWith("Fixed")).length} open</Badge>}>
-          {wrong.map((w) => (
-            <article key={w.claim} className="wrong">
-              <div className="geo-q">
-                <span className={`eng eng-${w.engine.split(" ")[0]}`}>{w.engine}</span>
-                <Badge tone={w.status.startsWith("Fixed") ? "good" : w.status === "Submitted" ? "info" : "warn"}>{w.status}</Badge>
-              </div>
-              <span className="wrong-claim">
-                Says: <s>{w.claim}</s>
-              </span>
-              <span className="wrong-truth">Actually: {w.truth}</span>
-              <span className="sx-note" style={{ margin: 0 }}>
-                Where it comes from: {w.source}
-              </span>
-              <div className="wrong-fix">
-                <Icon name="wand" />
-                <span>{w.fix}</span>
-              </div>
-              {!w.status.startsWith("Fixed") && (
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button className="sx-btn sx-btn-primary" type="button">
-                    Apply fix
-                  </button>
-                  <button className="sx-btn" type="button">
-                    Review first
-                  </button>
+      <Card title="What AI says about us" sub="Latest answers to the questions families ask most">
+        {prompts.map((p) => (
+          <div key={p}>
+            <h3 className="tour-day" style={{ marginTop: 14 }}>“{p}”</h3>
+            {answers
+              .filter((a) => a.prompt === p)
+              .map((a) => (
+                <div className="geo-ans" key={a.engine + p}>
+                  <div className="geo-q">
+                    <span className="eng" style={{ background: engineColor[a.engine] }}>
+                      {a.engine}
+                    </span>
+                    <Badge tone={accTone[a.accuracy]}>{accLabel[a.accuracy]}</Badge>
+                    {a.recommended ? (
+                      <Badge tone="good">
+                        <Icon name="star" /> {a.position ? `Recommended #${a.position}` : "Names PCL"}
+                      </Badge>
+                    ) : (
+                      <Badge tone="neutral">Not recommended</Badge>
+                    )}
+                  </div>
+                  <blockquote className={`geo-a ${a.accuracy}`}>{a.text}</blockquote>
+                  <div className="geo-flags">
+                    {a.cites && (
+                      <span>
+                        <Icon name="link" /> Cites {a.cites}
+                      </span>
+                    )}
+                    {a.competitors.length > 0 && <span>Also mentions: {a.competitors.join("; ")}</span>}
+                    <span>Checked {ago(a.mins)}</span>
+                  </div>
                 </div>
-              )}
-            </article>
-          ))}
-        </Card>
-      </div>
+              ))}
+          </div>
+        ))}
+      </Card>
     </>
   );
 }
