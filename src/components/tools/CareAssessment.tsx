@@ -1,10 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/i18n/Link";
 import { useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { living, money, plans, pricing, site, type LivingKey } from "@/data/site";
+import { money, type LivingKey } from "@/data/shared";
+import type { Community } from "@/data/communities";
+import { useCommunity } from "@/lib/community";
+import { firstName, keyPeople } from "@/data/communities/copy/living";
+import { toolsCopy } from "@/data/communities/copy/tools";
+import { useT } from "@/i18n/client";
+import type { T } from "@/i18n/translate";
 
 type Who = "self" | "mother" | "father" | "partner" | "other";
 interface Opt {
@@ -26,6 +32,8 @@ interface Names {
   who: Who;
   name: string; // "you", "your mother", "Margaret"
   Name: string;
+  /** The visitor typed a first name (so it is not translated). */
+  own?: boolean;
 }
 
 const WHO: { v: Who; label: string }[] = [
@@ -153,33 +161,50 @@ const QUESTIONS: Q[] = [
   },
 ];
 
-const WANTS: Record<string, string> = {
-  fitness: "More than 25 fitness classes a week with Jason Cherry, our full-time Fitness Director",
-  trips: "Events & Adventures outings every week, from wineries to Gold Rush-era mine tours",
-  dining: "Three restaurants downstairs: The Cypress Room, Natoma Café and The Rendezvous",
-  arts: "Art Studio classes with visiting artists, plus live music on the calendar every week",
-  garden: "Raised planters and a cutting garden in the courtyard",
-  pets: "Dogs and cats welcome, with their own outdoor area in the courtyard",
-  faith: "Religious services in the Theatre, and faith gatherings on the calendar",
-  chores: "Weekly housekeeping, all maintenance and handyman services included",
-};
+/** Photo and price line for each recommendation, from the community's pricing. */
+function resultFor(c: Community): Record<LivingKey, { photo: string; alt: string; from: string; interest: string }> {
+  const { pricing } = c;
+  return {
+    independent: { photo: "/img/friends-laugh.jpg", alt: "Residents laughing together over coffee", from: `From ${money(pricing.independentRange[0])} a month`, interest: "independent" },
+    assisted: { photo: "/img/care-chat.jpg", alt: "A Care Partner chatting with a resident on her sofa", from: `Your apartment, plus a ${money(pricing.assistedBase)} monthly base support fee and personal care by care plan`, interest: "assisted" },
+    harbor: { photo: "/img/harbor-couple.jpg", alt: "A couple enjoying time together in Harbor", from: `From ${money(pricing.harbor[0].from)} a month`, interest: "harbor" },
+  };
+}
 
-const RESULT: Record<LivingKey, { photo: string; alt: string; from: string; interest: string }> = {
-  independent: { photo: "/img/friends-laugh.jpg", alt: "Residents laughing together over coffee", from: `From ${money(pricing.independentRange[0])} a month`, interest: "independent" },
-  assisted: { photo: "/img/care-chat.jpg", alt: "A Care Partner chatting with a resident on her sofa", from: `Your apartment, plus a ${money(pricing.assistedBase)} monthly base support fee and personal care by care plan`, interest: "assisted" },
-  harbor: { photo: "/img/harbor-couple.jpg", alt: "A couple enjoying time together in Harbor", from: `From ${money(pricing.harbor[0].from)} a month`, interest: "harbor" },
-};
+/** "Things you'll love", by answer: the community's own copy, with the restaurants named from its venues. */
+function wantsFor(c: Community): Record<string, string> {
+  const names = c.venueOrder.map((k) => c.venues[k].name);
+  const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names.join("");
+  return { ...toolsCopy[c.slug].wants, dining: `Three restaurants downstairs: ${list}` };
+}
 
 function names(who: Who, first: string): Names {
   const f = first.trim();
   if (who === "self") return { who, name: "you", Name: "You" };
-  if (f) return { who, name: f, Name: f };
+  if (f) return { who, name: f, Name: f, own: true };
   const map: Record<Who, string> = { self: "you", mother: "your mother", father: "your father", partner: "your partner", other: "your loved one" };
   const n = map[who];
   return { who, name: n, Name: n.charAt(0).toUpperCase() + n.slice(1) };
 }
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * Translates a sentence that mentions the person. "You" sentences are looked up as they are; for anyone else the
+ * sentence is looked up with {name} / {Name} in place of the person ("Where is {name} living right now?"), and the
+ * (translated) name is put back. Falls back to the English sentence when there is no template.
+ */
+function say(t: T, N: Names, build: (n: Names) => string): string {
+  if (N.who === "self") return t(build(N));
+  const tpl = build({ ...N, name: "{name}", Name: "{Name}" });
+  const out = t(tpl);
+  if (out === tpl) return build(N);
+  const nm = N.own ? N.name : t(N.name);
+  return out.split("{Name}").join(cap(nm)).split("{name}").join(nm);
+}
+
 export function CareAssessment() {
+  const { t } = useT();
   const [step, setStep] = useState(0); // 0 = who, 1..N = questions, N+1 = result
   const [who, setWho] = useState<Who | null>(null);
   const [first, setFirst] = useState("");
@@ -212,28 +237,28 @@ export function CareAssessment() {
         <div className="ca-bar">
           <span style={{ width: `${(Math.min(step, total) / total) * 100}%` }} />
         </div>
-        <p className="ca-step">{done ? "All done" : `Question ${step + 1} of ${total}`}</p>
+        <p className="ca-step">{done ? t("All done") : t(`Question ${step + 1} of ${total}`)}</p>
       </div>
 
       {step === 0 && (
         <div className="ca-card" key="who">
-          <p className="ca-topic">Getting started</p>
+          <p className="ca-topic">{t("Getting started")}</p>
           <h2 ref={head} tabIndex={-1}>
-            Who are you exploring for?
+            {t("Who are you exploring for?")}
           </h2>
           <fieldset className="ca-opts">
-            <legend className="vh">Who are you exploring for?</legend>
+            <legend className="vh">{t("Who are you exploring for?")}</legend>
             {WHO.map((o) => (
               <label key={o.v} className={`ca-opt ${who === o.v ? "on" : ""}`}>
                 <input type="radio" name="ca-who" checked={who === o.v} onChange={() => setWho(o.v)} />
                 <span className="ca-mark" aria-hidden="true" />
-                {o.label}
+                {t(o.label)}
               </label>
             ))}
           </fieldset>
           {who && who !== "self" && (
             <div className="field ca-name">
-              <label htmlFor="ca-first">Their first name (optional)</label>
+              <label htmlFor="ca-first">{t("Their first name (optional)")}</label>
               <input id="ca-first" value={first} onChange={(e) => setFirst(e.target.value)} autoComplete="off" maxLength={30} />
             </div>
           )}
@@ -242,18 +267,18 @@ export function CareAssessment() {
 
       {q && (
         <div className="ca-card" key={q.id}>
-          <p className="ca-topic">{q.topic}</p>
+          <p className="ca-topic">{t(q.topic)}</p>
           <h2 ref={head} tabIndex={-1}>
-            {q.ask(N)}
+            {say(t, N, q.ask)}
           </h2>
-          {q.help && <p className="ca-help">{q.help}</p>}
+          {q.help && <p className="ca-help">{t(q.help)}</p>}
           <fieldset className={`ca-opts ${q.multi ? "ca-opts-multi" : ""}`}>
-            <legend className="vh">{q.ask(N)}</legend>
+            <legend className="vh">{say(t, N, q.ask)}</legend>
             {q.opts.map((o) => (
               <label key={o.v} className={`ca-opt ${picked.includes(o.v) ? "on" : ""}`}>
                 <input type={q.multi ? "checkbox" : "radio"} name={`ca-${q.id}`} checked={picked.includes(o.v)} onChange={() => choose(o.v)} />
                 <span className={`ca-mark ${q.multi ? "sq" : ""}`} aria-hidden="true" />
-                {o.label}
+                {t(o.label)}
               </label>
             ))}
           </fieldset>
@@ -265,10 +290,10 @@ export function CareAssessment() {
       {!done && (
         <div className="ca-nav">
           <button type="button" className="btn btn-ghost" onClick={() => move(step - 1)} disabled={step === 0}>
-            <Icon name="left" /> Back
+            <Icon name="left" />{t(" Back")}
           </button>
           <button type="button" className="btn btn-green" onClick={() => move(step + 1)} disabled={!canNext} aria-disabled={!canNext}>
-            {step === QUESTIONS.length ? "See my recommendation" : q?.multi && picked.length === 0 ? "Skip" : "Next"} <Icon name="right" />
+            {t(step === QUESTIONS.length ? "See my recommendation" : q?.multi && picked.length === 0 ? "Skip" : "Next")} <Icon name="right" />
           </button>
         </div>
       )}
@@ -294,9 +319,17 @@ function score(ans: Record<string, string[]>) {
 }
 
 function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, string[]>; headRef: React.RefObject<HTMLHeadingElement | null>; onRestart: () => void }) {
+  const { t } = useT();
+  const c = useCommunity();
+  const { living, plans, site } = c;
+  const people = keyPeople(c);
+  const contact = people.relations && !people.relations.unnamed ? people.relations : null;
+  const assessor = people.residentServices && !people.residentServices.unnamed ? people.residentServices : null;
+  const contactFirst = firstName(contact);
   const { rec, care, memory } = score(ans);
   const L = living[rec];
-  const R = RESULT[rec];
+  const R = resultFor(c)[rec];
+  const WANTS = wantsFor(c);
   const self = N.who === "self";
   const echoes = QUESTIONS.filter((q) => !q.multi && q.id !== "when")
     .map((q) => q.opts.find((o) => o.v === (ans[q.id] ?? [])[0])?.echo)
@@ -309,46 +342,46 @@ function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, 
   const headline =
     rec === "independent" ? (
       <>
-        <em>Independent Living</em> looks like a wonderful fit
+        <em>{t("Independent Living")}</em>{t(" looks like a wonderful fit")}
       </>
     ) : rec === "assisted" ? (
       <>
-        <em>Assisted Living Services</em> could make every day easier
+        <em>{t("Assisted Living Services")}</em>{t(" could make every day easier")}
       </>
     ) : (
       <>
-        <em>Harbor Memory Care</em> may be the right place
+        <em>{t("Harbor Memory Care")}</em>{t(" may be the right place")}
       </>
     );
 
-  const why =
+  const why = say(t, N, (n) =>
     rec === "independent"
-      ? `${self ? "You sound" : `${N.Name} sounds`} independent and ready to enjoy more of life, with none of the chores. Independent Living means a real apartment home, three restaurants, a calendar full of things to do, and our team on site 24 hours, just in case.`
+      ? `${self ? "You sound" : `${n.Name} sounds`} independent and ready to enjoy more of life, with none of the chores. Independent Living means a real apartment home, three restaurants, a calendar full of things to do, and our team on site 24 hours, just in case.`
       : rec === "assisted"
-        ? `${self ? "You’d have your own apartment and your own routine" : `${N.Name} would have an apartment and a routine of their own`}, with a Care Partner close by for the parts of the day that have become harder${care >= 5 ? ", from medications to bathing" : ""}. Assisted Living Services are delivered discreetly in every apartment, so nobody ever has to move to get more help.`
-        : `${self ? "You’d" : `${N.Name} would`} live in Harbor, our secured, home-like memory care neighborhood with its own courtyard and its own team. Harbor is built around what residents can still do and love${memory >= 4 ? "" : ", and families tell us the peace of mind comes quickly"}: weekly outings, music, gardening and purposeful roles in everyday life.`;
+        ? `${self ? "You’d have your own apartment and your own routine" : `${n.Name} would have an apartment and a routine of their own`}, with a Care Partner close by for the parts of the day that have become harder${care >= 5 ? ", from medications to bathing" : ""}. Assisted Living Services are delivered discreetly in every apartment, so nobody ever has to move to get more help.`
+        : `${self ? "You’d" : `${n.Name} would`} live in Harbor, our secured, home-like memory care neighborhood with its own courtyard and its own team. Harbor is built around what residents can still do and love${memory >= 4 ? "" : ", and families tell us the peace of mind comes quickly"}: weekly outings, music, gardening and purposeful roles in everyday life.`);
 
   return (
     <div className="ca-result">
       <div className="ca-res-hero">
         <div className="ca-res-photo">
-          <Image src={R.photo} alt={R.alt} fill sizes="(max-width: 860px) 100vw, 40vw" />
+          <Image src={R.photo} alt={t(R.alt)} fill sizes="(max-width: 860px) 100vw, 40vw" />
         </div>
         <div className="ca-res-text">
-          <p className="ca-topic">{self ? "Our suggestion for you" : `Our suggestion for ${N.name}`}</p>
+          <p className="ca-topic">{say(t, N, (n) => `Our suggestion for ${n.name}`)}</p>
           <h2 ref={headRef} tabIndex={-1}>
             {headline}
           </h2>
           <p className="ca-why">{why}</p>
           <p className="ca-from">
-            <Icon name="home" /> {R.from}
+            <Icon name="home" /> {t(R.from)}
           </p>
           <div className="btn-row">
             <Link href={`/tour?interest=${R.interest}`} className="btn btn-lg">
-              <Icon name="calendar" /> Schedule a Tour
+              <Icon name="calendar" />{t(" Schedule a Tour")}
             </Link>
             <a href={site.phoneHref} className="btn btn-ghost btn-lg">
-              <Icon name="phone" /> Call Cynthia
+              <Icon name="phone" />{t(contactFirst ? ` Call ${contactFirst}` : " Call us")}
             </a>
           </div>
         </div>
@@ -356,48 +389,49 @@ function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, 
 
       <div className="ca-res-grid">
         <div className="ca-res-box">
-          <h3>What you told us</h3>
+          <h3>{t("What you told us")}</h3>
           <ul className="ca-echo">
             {echoes.map((e) => (
               <li key={e}>
                 <Icon name="check" />
-                {e.charAt(0).toUpperCase() + e.slice(1)}
+                {t(cap(e))}
               </li>
             ))}
           </ul>
           {when && (
             <p className="ca-when">
               {when === "later"
-                ? "You’re just exploring, which is the best time to start. There’s no rush and no pressure."
-                : `You’re hoping to move ${QUESTIONS.find((q) => q.id === "when")!.opts.find((o) => o.v === when)!.echo}. ${
-                    openNow > 0 ? `We have ${openNow} ${rec === "harbor" ? "Harbor room" : "apartment"}${openNow === 1 ? "" : "s"} available right now.` : "Ask Cynthia about the waitlist; spaces open up regularly."
-                  }`}
+                ? t("You’re just exploring, which is the best time to start. There’s no rush and no pressure.")
+                : `${t(`You’re hoping to move ${QUESTIONS.find((q) => q.id === "when")!.opts.find((o) => o.v === when)!.echo}.`)} ${t(
+                    openNow > 0 ? `We have ${openNow} ${rec === "harbor" ? "Harbor room" : "apartment"}${openNow === 1 ? "" : "s"} available right now.` : `Ask ${contactFirst ?? "us"} about the waitlist; spaces open up regularly.`,
+                  )}`}
             </p>
           )}
         </div>
         <div className="ca-res-box">
-          <h3>{rec === "harbor" ? "Life in Harbor" : `What ${L.name} includes`}</h3>
+          <h3>{t(rec === "harbor" ? "Life in Harbor" : `What ${L.name} includes`)}</h3>
           <ul className="ca-echo">
             {L.points.slice(0, 5).map((p) => (
               <li key={p}>
                 <Icon name="spark" />
-                {p}
+                {t(p)}
               </li>
             ))}
           </ul>
         </div>
         {(wants.length > 0 || social === "more" || social === "lonely") && (
           <div className="ca-res-box ca-res-wide">
-            <h3>{self ? "Things you’ll love" : `Things ${N.name} will love`}</h3>
+            <h3>{self ? t("Things you’ll love") : say(t, N, (n) => `Things ${n.name} will love`)}</h3>
             {(social === "more" || social === "lonely") && (
               <p>
-                {self ? "You mentioned wanting more company." : `You mentioned ${N.name} ${social === "lonely" ? "is often lonely" : "would like more company"}.`} Here, friends are as close as the Rendezvous: morning coffee, happy hour, Monday trivia and the Friday Activity Meeting, where residents shape next week’s calendar.
+                {self ? t("You mentioned wanting more company.") : say(t, N, (n) => `You mentioned ${n.name} ${social === "lonely" ? "is often lonely" : "would like more company"}.`)}
+                {t(toolsCopy[c.slug].social)}
               </p>
             )}
             {wants.length > 0 && (
               <ul className="ca-wants">
                 {wants.map((w) => (
-                  <li key={w}>{w}</li>
+                  <li key={w}>{t(w)}</li>
                 ))}
               </ul>
             )}
@@ -407,17 +441,31 @@ function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, 
 
       <div className="ca-next">
         <p>
-          <strong>Next step:</strong> this is a starting point, not a medical evaluation. Before move-in, <span data-no-translate>Jan McLennon</span>, our Resident Services Director, completes a full pre-move-in assessment with {self ? "you" : `${N.name} and your family`} and builds a care plan with your healthcare providers. To talk it through now, call <span data-no-translate>Cynthia Bazin</span> at <a href={site.phoneHref}>{site.phone}</a>.
+          <strong>{t("Next step:")}</strong>
+          {t(" this is a starting point, not a medical evaluation. Before move-in, ")}
+          {assessor ? (
+            <>
+              <span data-no-translate>{assessor.name}</span>
+              {t(`, our ${assessor.role}, completes a full pre-move-in assessment with `)}
+            </>
+          ) : (
+            t("our Resident Services Director completes a full pre-move-in assessment with ")
+          )}
+          {self ? t("you") : say(t, N, (n) => `${n.name} and your family`)}
+          {t(" and builds a care plan with your healthcare providers. To talk it through now, call ")}
+          {contact && <span data-no-translate>{contact.name}</span>}
+          {contact && t(" at ")}
+          <a href={site.phoneHref}>{site.phone}</a>.
         </p>
         <div className="btn-row">
           <Link href="/floor-plans" className="link-arrow">
-            See floor plans & pricing <Icon name="arrow" />
+            {t("See floor plans & pricing ")}<Icon name="arrow" />
           </Link>
           <Link href="/cost-comparison" className="link-arrow">
-            Compare costs <Icon name="arrow" />
+            {t("Compare costs ")}<Icon name="arrow" />
           </Link>
           <button type="button" className="ca-restart" onClick={onRestart}>
-            Start over
+            {t("Start over")}
           </button>
         </div>
       </div>

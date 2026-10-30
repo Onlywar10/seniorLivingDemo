@@ -1,26 +1,32 @@
 import type { Metadata } from "next";
 import { Icon } from "@/components/Icon";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, Delta, Kpi, LineChart, Spark, fmt, pctChange } from "@/components/staff/ui";
-import { ago, gbp, rankings, reviewsRecent, searchWeekly, topPages, vitals } from "@/data/staff";
+import { ago, siteHref } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 import { addDays, shortDate, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Search (SEO)" };
 
-export default function Seo() {
+export default async function Seo() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <PickCommunity screen="Search (SEO)" />;
+  const { s, c: com } = sc;
+  const { gbp, rankings, reviewsRecent, searchWeekly, topPages, vitals } = s;
   const t = today();
   const weeks = searchWeekly.clicks.map((_, i) => shortDate(addDays(t, (i - 11) * 7)));
   const c = searchWeekly.clicks, im = searchWeekly.impressions;
   const last4 = (a: number[]) => a.slice(-4).reduce((n, v) => n + v, 0);
   const prev4 = (a: number[]) => a.slice(-8, -4).reduce((n, v) => n + v, 0);
   const ctr = (last4(c) / last4(im)) * 100;
-  const avgPos = 3.4;
+  const avgPos = s.seo.avgPos;
 
   return (
     <>
       <header className="sx-head">
         <div>
           <h1>Search (SEO)</h1>
-          <p>How Prairie City Landing shows up on Google. Last 28 days, compared with the 28 days before.</p>
+          <p>How {s.brand.name} shows up on Google. Last 28 days, compared with the 28 days before.</p>
         </div>
         <div className="sx-head-actions">
           <Badge tone="good"><Icon name="check" /> Google Search Console connected</Badge>
@@ -29,12 +35,12 @@ export default function Seo() {
 
       <div className="sx-kpis">
         <Kpi label="Clicks from Google" value={fmt(last4(c))} delta={pctChange(last4(c), prev4(c))} note="vs previous 28 days" spark={c} />
-        <Kpi label="Impressions" value={fmt(last4(im))} delta={pctChange(last4(im), prev4(im))} note="times PCL appeared in results" spark={im} />
-        <Kpi label="Click-through rate" value={`${ctr.toFixed(1)}%`} delta={0.3} deltaSuffix=" pts" note="local average is 2.1%" />
-        <Kpi label="Average position" value={avgPos.toFixed(1)} delta={-1.6} deltaSuffix="" invert note="across tracked searches" />
+        <Kpi label="Impressions" value={fmt(last4(im))} delta={pctChange(last4(im), prev4(im))} note={`times ${s.brand.short} appeared in results`} spark={im} />
+        <Kpi label="Click-through rate" value={`${ctr.toFixed(1)}%`} delta={s.seo.ctrDelta} deltaSuffix=" pts" note="local average is 2.1%" />
+        <Kpi label="Average position" value={avgPos.toFixed(1)} delta={s.seo.avgPosDelta} deltaSuffix="" invert note="across tracked searches" />
       </div>
 
-      <Card title="Google rankings" sub="Where prairiecitylanding.com ranks for the searches families actually type. Trend shows the last 12 weeks." pad={false}>
+      <Card title="Google rankings" sub={`Where ${s.brand.domain} ranks for the searches families actually type. Trend shows the last 12 weeks.`} pad={false}>
         <div className="sx-table-wrap">
           <table className="sx-table">
             <thead>
@@ -63,7 +69,7 @@ export default function Seo() {
                   </td>
                   <td className="num">{fmt(r.volume)}</td>
                   <td>
-                    <a className="sx-link" href={r.url} target="_blank" rel="noopener">
+                    <a className="sx-link" href={siteHref(s.slug, r.url)} target="_blank" rel="noopener">
                       {r.url}
                     </a>
                   </td>
@@ -91,7 +97,7 @@ export default function Seo() {
       </div>
 
       <div className="sx-grid g-21">
-        <Card title="Google Business Profile" sub="Prairie City Landing · 645 Willard Drive, Folsom · last 28 days">
+        <Card title="Google Business Profile" sub={`${com.site.name} · ${com.site.address.street}, ${com.site.address.city} · last 28 days`}>
           <div className="sx-kpis" style={{ marginBottom: 14, gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))" }}>
             <Kpi label="Profile views" value={fmt(gbp.views)} delta={pctChange(gbp.views, gbp.viewsPrev)} />
             <Kpi label="Calls" value={gbp.calls} delta={pctChange(gbp.calls, gbp.callsPrev)} />
@@ -110,17 +116,17 @@ export default function Seo() {
               </span>
             </span>
           </div>
-          <ul className="sx-list">
+          {reviewsRecent.length > 0 && <ul className="sx-list">
             {reviewsRecent.map((r) => (
               <li key={r.name}>
                 <b>{r.name}</b> <span aria-label={`${r.stars} stars`}>{"★".repeat(r.stars)}</span> <span className="sx-hint">· {ago(r.mins)}</span>
                 <p style={{ margin: "3px 0 0", color: "var(--sx-ink-2)" }}>“{r.text}”</p>
                 <span className="sx-hint">
-                  <Icon name="check" /> Replied by Cheryl Martin
+                  <Icon name="check" /> Replied by {s.people[s.roles.gbpReplies].name}
                 </span>
               </li>
             ))}
-          </ul>
+          </ul>}
         </Card>
 
         <div className="sx-grid">
@@ -139,7 +145,7 @@ export default function Seo() {
               <li className="sx-fresh">
                 <span className="ok"><Icon name="check" /></span>
                 <b>Pages indexed</b>
-                <b>66 of 66</b>
+                <b>{s.seo.pagesIndexed} of {s.seo.pagesIndexed}</b>
                 <small>Sitemap updated automatically when anything is published</small>
               </li>
               <li className="sx-fresh">

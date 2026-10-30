@@ -3,13 +3,13 @@
 .din-menus, .din-lunch { position: relative; }
 
 /* Thanksgiving band */
-.din-tg { background: linear-gradient(110deg, var(--terra-deep), #8f3e29); color: #fbeee8; padding: clamp(28px, 4vw, 44px) 0; position: relative; overflow: hidden; }
+.din-tg { background: linear-gradient(110deg, var(--terra-deep), #922628); color: #f9eaea; padding: clamp(28px, 4vw, 44px) 0; position: relative; overflow: hidden; }
 .din-tg-inner { display: grid; grid-template-columns: 220px 1fr auto; gap: clamp(20px, 3vw, 40px); align-items: center; }
 .din-tg-photo { position: relative; aspect-ratio: 1; border-radius: 999px 999px 999px 40px; overflow: hidden; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5); }
 .din-tg-photo img { object-fit: cover; }
 .din-tg h2 { color: #fff; font-size: clamp(1.6rem, 3vw, 2.3rem); margin-bottom: 10px; }
 .din-tg h2 em { color: var(--butter); }
-.din-tg p { color: #fbeee8; }
+.din-tg p { color: #f9eaea; }
 .din-tg .eyebrow { color: var(--butter); }
 .din-tg-count { margin: 0; text-align: center; font-family: var(--font-display), serif; line-height: 1; font-size: 0.95rem; }
 .din-tg-count b { display: block; font-size: 3.6rem; font-weight: 400; color: #fff; margin-bottom: 6px; }
@@ -24,7 +24,7 @@
 .din-day.is-today { border-color: var(--butter); }
 .din-day.is-past:not([aria-pressed="true"]) { opacity: 0.7; }
 .din-day[aria-pressed="true"] { background: var(--green-deep); border-color: var(--green-deep); color: #fff; }
-.din-day[aria-pressed="true"] .din-day-date { color: #d6e2d5; }
+.din-day[aria-pressed="true"] .din-day-date { color: #d6dde1; }
 .din-day-holiday { border-color: var(--terra); background: var(--terra-tint); margin-left: 6px; }
 .din-day-holiday .din-day-dow { color: var(--terra-deep); }
 .din-day-holiday[aria-pressed="true"] { background: var(--terra-deep); border-color: var(--terra-deep); }
@@ -63,7 +63,7 @@
 .din-special, .din-soup { border-radius: 16px; padding: 16px 18px; }
 .din-special { background: var(--butter-tint); border: 1px solid #e7dfb6; }
 .din-soup { background: var(--green-tint); }
-.din-venue.is-holiday .din-special { background: var(--terra-tint); border-color: #f0c9bb; grid-column: 1 / -1; }
+.din-venue.is-holiday .din-special { background: var(--terra-tint); border-color: #ebc0c0; grid-column: 1 / -1; }
 .din-special-label { display: flex; gap: 6px; align-items: center; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6f6420; margin: 0 0 6px; }
 .din-soup .din-special-label { color: var(--green-deep); }
 .din-venue.is-holiday .din-special-label { color: var(--terra-deep); }
@@ -97,7 +97,7 @@
 .din-hh-ph img { object-fit: cover; }
 .din-hh-ph-1 { inset: 0 22% 14% 0; border-radius: 26px 26px 26px 110px; }
 .din-hh-ph-2 { right: 0; bottom: 0; width: 46%; height: 52%; border-radius: 20px; border: 6px solid var(--green-deep); }
-.din-hh-lede { font-size: 1.1rem; color: #e3ebe2; }
+.din-hh-lede { font-size: 1.1rem; color: #e2e7eb; }
 .din-hh-list { list-style: none; display: grid; gap: 8px; margin: 22px 0 24px; }
 .din-hh-list li { display: grid; grid-template-columns: 110px 1fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.08); }
 .din-hh-list li.is-today { background: var(--butter); color: var(--green-ink); }

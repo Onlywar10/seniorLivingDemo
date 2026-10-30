@@ -3,10 +3,15 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { useT } from "@/i18n/client";
+import { useCommunity } from "@/lib/community";
 
-export interface GuideItem { title: string; pages: number; photo: string; lede: string; points: string[] }
+export interface GuideItem { title: string; pages: number | null; photo: string; lede: string; points: string[] }
 
 export function GuideLibrary({ guides }: { guides: GuideItem[] }) {
+  const { t, href } = useT();
+  const c = useCommunity();
+  const host = c.team.find((m) => m.role === "Community Relations Director");
   const [open, setOpen] = useState<number | null>(null);
   const [who, setWho] = useState<{ name: string; email: string } | null>(null);
   const [sent, setSent] = useState<number[]>([]);
@@ -40,21 +45,23 @@ export function GuideLibrary({ guides }: { guides: GuideItem[] }) {
           <li key={x.title} className="card inf-guide">
             <div className="inf-guide-cover">
               <Image src={x.photo} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 960px) 50vw, 33vw" />
-              <span className="inf-guide-badge">
-                <Icon name="doc" /> {x.pages} pages
-              </span>
+              {x.pages != null && (
+                <span className="inf-guide-badge">
+                  <Icon name="doc" /> {x.pages}{t(" pages")}
+                </span>
+              )}
             </div>
             <div className="card-pad inf-guide-body">
-              <h3>{x.title}</h3>
-              <p className="small muted">{x.lede}</p>
+              <h3>{t(x.title)}</h3>
+              <p className="small muted">{t(x.lede)}</p>
               <button type="button" className="btn btn-sm btn-green" onClick={() => request(i)}>
                 {sent.includes(i) ? (
                   <>
-                    <Icon name="eye" /> Read it again
+                    <Icon name="eye" /> {t("Read it again")}
                   </>
                 ) : (
                   <>
-                    <Icon name="download" /> Get the free guide
+                    <Icon name="download" /> {t("Get the free guide")}
                   </>
                 )}
               </button>
@@ -66,30 +73,40 @@ export function GuideLibrary({ guides }: { guides: GuideItem[] }) {
       <dialog ref={dlg} className="inf-dialog" aria-labelledby="inf-dlg-h" onClose={() => setOpen(null)}>
         {g && (
           <div className="inf-dlg-inner">
-            <button type="button" className="inf-dlg-x" aria-label="Close" onClick={() => setOpen(null)}>
+            <button type="button" className="inf-dlg-x" aria-label={t("Close")} onClick={() => setOpen(null)}>
               <Icon name="x" />
             </button>
             {!isSent ? (
               <>
-                <p className="eyebrow">Free guide · {g.pages} pages</p>
-                <h2 id="inf-dlg-h">{g.title}</h2>
-                <p className="muted small">Tell us where to send it. We’ll email the full guide right away, and you can start reading here.</p>
+                <p className="eyebrow">
+                  {g.pages != null ? (
+                    <>
+                      {t("Free guide · ")}
+                      {g.pages}
+                      {t(" pages")}
+                    </>
+                  ) : (
+                    t("Free guide")
+                  )}
+                </p>
+                <h2 id="inf-dlg-h">{t(g.title)}</h2>
+                <p className="muted small">{t("Tell us where to send it. We’ll email the full guide right away, and you can start reading here.")}</p>
                 <form className="form-grid" onSubmit={submit}>
                   <div className="field full">
-                    <label htmlFor="gd-name">Your name</label>
+                    <label htmlFor="gd-name">{t("Your name")}</label>
                     <input id="gd-name" name="name" autoComplete="name" required defaultValue={who?.name} />
                   </div>
                   <div className="field full">
-                    <label htmlFor="gd-email">Email</label>
+                    <label htmlFor="gd-email">{t("Email")}</label>
                     <input id="gd-email" name="email" type="email" autoComplete="email" required defaultValue={who?.email} />
                   </div>
                   <label className="check full">
                     <input type="checkbox" name="news" defaultChecked />
-                    <span>Also send me occasional news and event invitations from Prairie City Landing. Unsubscribe any time.</span>
+                    <span>{t(`Also send me occasional news and event invitations from ${c.site.name}. Unsubscribe any time.`)}</span>
                   </label>
                   <div className="full">
                     <button className="btn" type="submit">
-                      Send me the guide <Icon name="send" />
+                      {t("Send me the guide")} <Icon name="send" />
                     </button>
                   </div>
                 </form>
@@ -99,32 +116,36 @@ export function GuideLibrary({ guides }: { guides: GuideItem[] }) {
                 <div className="success">
                   <Icon name="mail" />
                   <div>
-                    <b>We’ve emailed it to you.</b>
+                    <b>{t("We’ve emailed it to you.")}</b>
                     <p className="small">
-                      “{g.title}” is on its way to {who?.email}. If you don’t see it in a few minutes, check your promotions or spam folder.
+                      “{t(g.title)}{t("” is on its way to ")}
+                      {who?.email}
+                      {t(". If you don’t see it in a few minutes, check your promotions or spam folder.")}
                     </p>
                   </div>
                 </div>
-                <p className="eyebrow">In brief</p>
-                <h2 id="inf-dlg-h">{g.title}</h2>
-                <p className="inf-reading-lede">{g.lede}</p>
-                <h3>Inside the guide</h3>
+                <p className="eyebrow">{t("In brief")}</p>
+                <h2 id="inf-dlg-h">{t(g.title)}</h2>
+                <p className="inf-reading-lede">{t(g.lede)}</p>
+                <h3>{t("Inside the guide")}</h3>
                 <ul className="inf-reading-list">
                   {g.points.map((p) => (
                     <li key={p}>
-                      <Icon name="check" /> {p}
+                      <Icon name="check" /> {t(p)}
                     </li>
                   ))}
                 </ul>
                 <p className="small muted">
-                  Questions as you read? Cynthia Bazin, our Community Relations Director, is happy to talk them through at (916) 458-0303, ext. 110.
+                  {host && !host.unnamed
+                    ? t(`Questions as you read? ${host.name}, our ${host.role}, is happy to talk them through at ${c.site.phone}${host.ext ? `, ext. ${host.ext}` : ""}.`)
+                    : t(`Questions as you read? Our Community Relations team is happy to talk them through at ${c.site.phone}.`)}
                 </p>
                 <div className="btn-row">
-                  <a className="btn" href="/tour">
-                    Schedule a tour
+                  <a className="btn" href={href("/tour")}>
+                    {t("Schedule a tour")}
                   </a>
                   <button type="button" className="btn btn-ghost" onClick={() => setOpen(null)}>
-                    Back to the guides
+                    {t("Back to the guides")}
                   </button>
                 </div>
               </div>

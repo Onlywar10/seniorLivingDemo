@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Icon } from "@/components/Icon";
+import { Overview } from "@/components/staff/Overview";
 import { Card, Delta, PageHead, fmt, pctChange } from "@/components/staff/ui";
-import { enquirySources, enquirySourcesPrev, highlights, scoreRows, scorecardMonths, topPosts } from "@/data/staff";
+import { scorecardMonths } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 
 export const metadata: Metadata = { title: "Monthly scorecard" };
 
 const show = (v: number, f?: string) => (f === "pct" ? `${v}%` : f === "dec" ? (v % 1 ? v.toFixed(1) : v.toFixed(1)) + (v > 10 ? "%" : "") : fmt(v));
 
-export default function ScorecardPage() {
+export default async function ScorecardPage() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <Overview screen="scorecard" />;
+  const { s } = sc;
+  const { enquirySources, enquirySourcesPrev, highlights, scoreRows, topPosts } = s;
   const m = scorecardMonths();
   const hit = scoreRows.filter((r) => r.now >= r.target).length;
   const maxSrc = Math.max(...enquirySources.map((s) => s.value), ...enquirySourcesPrev);
   return (
     <>
-      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`Prairie City Landing compared with ${m.prev} and this month’s targets. Shared with Cheryl Martin and Tenfold Senior Living.`}>
+      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`${s.brand.name} compared with ${m.prev} and this month’s targets. Shared with ${s.people[s.roles.approver].name} and Tenfold Senior Living.`}>
         <button type="button" className="sx-btn"><Icon name="download" /> Download PDF</button>
         <button type="button" className="sx-btn sx-btn-primary"><Icon name="mail" /> Email to the team</button>
       </PageHead>

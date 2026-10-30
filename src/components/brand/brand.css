@@ -13,7 +13,7 @@
 .br-person-card { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: clamp(22px, 3vw, 34px); }
 .tone-green .br-person-name { color: #fff; }
 .tone-green .br-person-role { color: var(--butter); }
-.tone-green .br-person .br-person-bio { color: #d8e2d6; }
+.tone-green .br-person .br-person-bio { color: #d7dde1; }
 
 /* ---------- Living tabs ---------- */
 .br-ltabs { background: var(--paper); border-bottom: 1px solid var(--rule-2); position: relative; z-index: 2; }
@@ -26,7 +26,7 @@
 .br-tour { position: relative; padding: clamp(80px, 10vw, 140px) 0; overflow: hidden; background: var(--green-ink); }
 .br-tour-photo { position: absolute; inset: 0; }
 .br-tour-photo img { object-fit: cover; }
-.br-tour-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(31, 54, 36, 0.15), rgba(31, 54, 36, 0.55)); }
+.br-tour-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(32, 45, 53, 0.15), rgba(32, 45, 53, 0.55)); }
 .br-tour-inner { position: relative; display: flex; justify-content: flex-end; }
 .br-tour-card { position: relative; z-index: 1; background: var(--cream); border-radius: 28px 28px 28px 96px; padding: clamp(28px, 4vw, 52px); max-width: 560px; box-shadow: var(--shadow-lg); }
 .br-tour-card h2 { margin-bottom: 12px; }
@@ -67,7 +67,7 @@
 .br-gal-cards .br-gal-ph { aspect-ratio: 4 / 3; height: auto; }
 .br-gal-ph img { object-fit: cover; transition: transform 0.9s var(--ease); }
 .br-gal-btn:hover .br-gal-ph img { transform: scale(1.04); }
-.br-gal-mosaic .br-gal-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 16px 14px; border-radius: 0 0 var(--radius) var(--radius); background: linear-gradient(transparent, rgba(20, 34, 24, 0.78)); color: #fff; display: grid; gap: 2px; }
+.br-gal-mosaic .br-gal-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 16px 14px; border-radius: 0 0 var(--radius) var(--radius); background: linear-gradient(transparent, rgba(21, 28, 33, 0.78)); color: #fff; display: grid; gap: 2px; }
 .br-gal-cap b { font-family: var(--font-display), serif; font-weight: 400; font-size: 1.12rem; line-height: 1.25; }
 .br-gal-cap span { font-size: 0.82rem; opacity: 0.9; }
 .br-gal-cards .br-gal-cap { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 16px 2px 6px; }
@@ -78,7 +78,7 @@
 @media (max-width: 560px) { .br-gal-mosaic { grid-auto-rows: 160px; } .br-gal-cards { grid-template-columns: 1fr; } }
 
 .br-lightbox { border: 0; padding: 0; background: transparent; width: min(1100px, 100% - 32px); max-width: none; max-height: calc(100vh - 32px); overflow: visible; }
-.br-lightbox::backdrop { background: rgba(18, 28, 21, 0.86); }
+.br-lightbox::backdrop { background: rgba(18, 24, 28, 0.86); }
 .br-lb-inner { background: var(--cream); border-radius: 22px; overflow: hidden; display: grid; }
 .br-lb-ph { position: relative; height: min(68vh, 640px); background: #111; }
 .br-lb-ph img { object-fit: contain; }
@@ -119,7 +119,7 @@
 .br-stat b { display: block; font-family: var(--font-display), serif; font-weight: 400; font-size: clamp(2rem, 3.6vw, 2.8rem); line-height: 1; color: var(--terra-deep); }
 .br-stat span { display: block; font-size: 0.9rem; color: var(--ink-2); margin-top: 6px; max-width: 15ch; }
 .tone-green .br-stat b { color: var(--butter); }
-.tone-green .br-stat span { color: #d8e2d6; }
+.tone-green .br-stat span { color: #d7dde1; }
 
 .br-price-tbl { width: 100%; background: var(--paper); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
 .br-price-tbl th, .br-price-tbl td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--rule-2); }
@@ -147,12 +147,12 @@
 .br-link-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: clamp(14px, 2vw, 22px); }
 .br-link-card { position: relative; display: grid; align-content: end; min-height: 300px; border-radius: var(--radius); overflow: hidden; text-decoration: none; color: #fff; isolation: isolate; }
 .br-link-card img { object-fit: cover; z-index: -2; transition: transform 0.9s var(--ease); }
-.br-link-card::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(transparent 35%, rgba(20, 34, 24, 0.85)); }
+.br-link-card::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(transparent 35%, rgba(21, 28, 33, 0.85)); }
 .br-link-card:hover { color: #fff; }
 .br-link-card:hover img { transform: scale(1.05); }
 .br-link-card div { padding: 22px; }
 .br-link-card h3 { color: #fff; font-size: 1.45rem; margin-bottom: 6px; }
-.br-link-card p { margin: 0 0 10px; font-size: 0.95rem; color: #e7eee5; }
+.br-link-card p { margin: 0 0 10px; font-size: 0.95rem; color: #e5eaee; }
 .br-link-card span.go { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; font-size: 0.92rem; color: var(--butter); }
 
 /* ---------- Living overview ---------- */
@@ -173,7 +173,7 @@
 
 /* ---------- Harbor ---------- */
 .br-turn { display: grid; grid-template-columns: auto auto 1fr; gap: clamp(16px, 3vw, 36px); align-items: center; }
-.br-turn s { font-family: var(--font-display), serif; font-size: clamp(1.6rem, 3.6vw, 2.8rem); color: #a9b7a8; text-decoration-color: var(--terra); text-decoration-thickness: 3px; }
+.br-turn s { font-family: var(--font-display), serif; font-size: clamp(1.6rem, 3.6vw, 2.8rem); color: #a9b1b6; text-decoration-color: var(--terra); text-decoration-thickness: 3px; }
 .br-turn .icon { width: 40px; height: 40px; color: var(--butter); }
 .br-turn strong { font-family: var(--font-display), serif; font-weight: 400; font-style: italic; font-size: clamp(2rem, 4.6vw, 3.6rem); color: #fff; line-height: 1.1; }
 @media (max-width: 640px) { .br-turn { grid-template-columns: 1fr; gap: 6px; } .br-turn .icon { transform: rotate(90deg); } }
@@ -291,3 +291,6 @@
 .br-dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--rule-2); flex-wrap: wrap; }
 .br-dl > div:last-child { border-bottom: 0; }
 .br-dl dd { margin: 0; font-weight: 600; white-space: nowrap; color: var(--terra-deep); }
+
+/* Published portraits use the monogram's circle */
+.br-mono-photo, .inf-mono-photo { object-fit: cover; object-position: 50% 22%; background: var(--sand, #e2e6df); }

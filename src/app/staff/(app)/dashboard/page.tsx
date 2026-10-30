@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { Overview } from "@/components/staff/Overview";
 import { Avatar, Badge, Card, Delta, HBars, Kpi, LineChart, Meter, fmt, pctChange } from "@/components/staff/ui";
-import { cats, eventsBetween, eventsOn, isHarbor } from "@/data/calendar";
-import { activity, ago, atToday, community, dailyVisits, enquirySources, enquirySourcesPrev, staffPeople, user, weekKpis } from "@/data/staff";
+import { cats, isHarbor } from "@/data/shared";
+import { ago, atToday, dailyVisits, siteHref, staffPeople, user } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 import { dayShort, fmtRange, fmtTime, greeting, iso, longDate, nowMinutes, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <Overview screen="dashboard" />;
+  const { s, c } = sc;
+  const { activity, community, enquirySources, enquirySourcesPrev, weekKpis } = s;
+  const { eventsBetween, eventsOn } = c;
+  const approver = s.people[s.roles.approver];
   const t = today();
   const now = nowMinutes();
   const todays = eventsOn(t).filter((e) => !isHarbor(e) || e.cat !== "harbor");
@@ -19,8 +27,8 @@ export default function Dashboard() {
   const later = todays.filter((e) => (e.end ?? e.start + 60) >= now);
   const upcoming = later.length >= 3 ? later : todays.slice(-6);
   const earlier = todays.length - upcoming.length;
-  const visits = dailyVisits(30);
-  const prev = dailyVisits(30, 30);
+  const visits = dailyVisits(30, 0, s.visitScale);
+  const prev = dailyVisits(30, 30, s.visitScale);
   const total = visits.reduce((n, v) => n + v.v, 0);
   const prevTotal = prev.reduce((n, v) => n + v.v, 0);
   const enq = enquirySources.reduce((n, s) => n + s.value, 0);
@@ -34,12 +42,12 @@ export default function Dashboard() {
             {greeting()}, <em>{user.first}</em>
           </h1>
           <p>
-            {longDate(t)} · {todays.length} events on today’s calendar · 4 posts waiting for Cheryl
+            {longDate(t)} · {todays.length} events on today’s calendar · {s.approvals.length} posts waiting for {approver.name.split(" ")[0]}
           </p>
         </div>
         <div className="sx-head-actions">
           <Link href="/staff/approvals" className="sx-btn">
-            <Icon name="check" /> Approvals <Badge tone="accent">4</Badge>
+            <Icon name="check" /> Approvals <Badge tone="accent">{s.approvals.length}</Badge>
           </Link>
           <Link href="/staff/publish" className="sx-btn sx-btn-primary">
             <Icon name="send" /> Post once, publish everywhere
@@ -80,11 +88,9 @@ export default function Dashboard() {
 
         <Card title="Website freshness" sub="Everything families see is current" action={<Badge tone="good"><Icon name="check" /> All current</Badge>}>
           <ul className="sx-list">
-            <Fresh title="Activity calendar" detail="Current through November 30 · published by Toni Glenn" when={ago(60 * 190)} />
-            <Fresh title="Today’s menus, all three restaurants" detail="Published by Conrad Caguimbal" when={atToday(370)} />
-            <Fresh title="Last photo post" detail="Happy Hour: Jeremy on Guitar · 12 photos" when={ago(60 * 21)} />
-            <Fresh title="Apartment availability" detail="8 available · synced with the business office" when={ago(118)} />
-            <Fresh title="News" detail="Walk to End Alzheimer’s · 14 photos" when={ago(60 * 28)} />
+            {s.freshness.map((f) => (
+              <Fresh key={f.title} title={f.title} detail={f.detail} when={f.at !== undefined ? atToday(f.at) : ago(f.mins ?? 0)} />
+            ))}
           </ul>
         </Card>
       </div>
@@ -117,7 +123,7 @@ export default function Dashboard() {
           </ul>
         </Card>
 
-        <Card title="Today at Prairie City Landing" sub={`${todays.length} events · plus ${harborToday} in Harbor`} action={<Link className="sx-btn sx-btn-sm" href="/calendar" target="_blank">On the website</Link>}>
+        <Card title={`Today at ${s.brand.name}`} sub={`${todays.length} events · plus ${harborToday} in Harbor`} action={<Link className="sx-btn sx-btn-sm" href={siteHref(s.slug, "/calendar")} target="_blank">On the website</Link>}>
           <ul className="sx-today">
             {upcoming.slice(0, 9).map((e) => {
               const endM = e.end ?? e.start + 60;

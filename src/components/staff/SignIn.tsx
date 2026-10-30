@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { user } from "@/data/staff";
+import { user } from "@/data/staff/people";
 import { Icon } from "../Icon";
 
 export function SignIn() {

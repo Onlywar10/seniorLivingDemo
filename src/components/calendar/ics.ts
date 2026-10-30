@@ -1,17 +1,19 @@
-import type { CalEvent } from "@/data/calendar";
-import { site } from "@/data/site";
+import type { CalEvent } from "@/data/shared";
+
+/** Where the events take place: the community’s name, address and web domain (for event UIDs). */
+export interface IcsPlace { name: string; addressLine: string; domain: string }
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const stamp = (date: string, min: number) => `${date.replace(/-/g, "")}T${pad(Math.floor(min / 60))}${pad(min % 60)}00`;
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 
 /** An iCalendar file for the given events, in Pacific time. */
-export function buildIcs(events: CalEvent[], name: string): string {
+export function buildIcs(events: CalEvent[], name: string, place: IcsPlace): string {
   const now = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Prairie City Landing//Activity Calendar//EN",
+    `PRODID:-//${place.name}//Activity Calendar//EN`,
     "CALSCALE:GREGORIAN",
     `X-WR-CALNAME:${esc(name)}`,
     "X-WR-TIMEZONE:America/Los_Angeles",
@@ -37,12 +39,12 @@ export function buildIcs(events: CalEvent[], name: string): string {
     const desc = [e.desc, e.leader ? `With ${e.leader}` : "", e.room === "Lobby" ? "Departs from the Lobby." : ""].filter(Boolean).join(" ");
     lines.push(
       "BEGIN:VEVENT",
-      `UID:${e.id}@prairiecitylanding.com`,
+      `UID:${e.id}@${place.domain}`,
       `DTSTAMP:${now}`,
       `DTSTART;TZID=America/Los_Angeles:${stamp(e.date, e.start)}`,
       `DTEND;TZID=America/Los_Angeles:${stamp(e.date, e.end ?? e.start + 60)}`,
       `SUMMARY:${esc(e.title)}`,
-      `LOCATION:${esc(`${e.room}, ${site.name}, ${site.addressLine}`)}`,
+      `LOCATION:${esc(`${e.room}, ${place.name}, ${place.addressLine}`)}`,
       ...(desc ? [`DESCRIPTION:${esc(desc)}`] : []),
       "END:VEVENT",
     );
@@ -51,8 +53,8 @@ export function buildIcs(events: CalEvent[], name: string): string {
   return lines.join("\r\n");
 }
 
-export function downloadIcs(events: CalEvent[], name: string, file: string) {
-  const blob = new Blob([buildIcs(events, name)], { type: "text/calendar;charset=utf-8" });
+export function downloadIcs(events: CalEvent[], name: string, file: string, place: IcsPlace) {
+  const blob = new Blob([buildIcs(events, name, place)], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -62,3 +64,10 @@ export function downloadIcs(events: CalEvent[], name: string, file: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** The ICS place for a community's site facts. */
+export const icsPlace = (site: { name: string; addressLine: string; email: string }): IcsPlace => ({
+  name: site.name,
+  addressLine: site.addressLine,
+  domain: site.email.split("@")[1] ?? "tenfoldseniorliving.com",
+});

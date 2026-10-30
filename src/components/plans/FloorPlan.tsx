@@ -1,4 +1,7 @@
-import type { Plan } from "@/data/site";
+import type { Plan } from "@/data/shared";
+import type { T } from "@/i18n/translate";
+
+const same: T = (s) => s;
 
 type Room = Plan["rooms"][number];
 type PlanShape = Pick<Plan, "code" | "rooms" | "sqft" | "kind" | "features">;
@@ -23,6 +26,8 @@ export function roomName(key: string, plan: Pick<Plan, "kind" | "rooms">): strin
       return room && room[3] >= 30 ? "Walk-in closet" : "Closet";
     case "balcony":
       return "Balcony";
+    case "den":
+      return "Den";
     default:
       return key;
   }
@@ -79,6 +84,7 @@ const DOOR_TO: Record<string, { to: string[]; kind: OpeningKind; all?: boolean }
   bath: { to: ["bedroom", "living", "entry", "closet"], kind: "door" },
   closet: { to: ["bedroom", "bedroom2", "living", "entry", "bath"], kind: "door" },
   balcony: { to: ["living"], kind: "slider" },
+  den: { to: ["entry", "living", "bedroom"], kind: "door" },
 };
 
 function openings(rooms: Room[]): Opening[] {
@@ -229,6 +235,8 @@ function Fixtures({ r, plan }: { r: Room; plan: PlanShape }) {
 /**
  * Architectural floor plan drawn from the plan's room layout (100 × 70 grid).
  * Pass `onSelect` to make rooms clickable (used by the virtual tour map).
+ * Works as a Server or Client Component, so it takes the translator `t` as a prop
+ * (from getT() or useT()); `label` is expected already translated.
  */
 export function FloorPlan({
   plan,
@@ -239,6 +247,7 @@ export function FloorPlan({
   compact = false,
   className = "",
   label,
+  t = same,
 }: {
   plan: PlanShape;
   active?: string | null;
@@ -248,6 +257,7 @@ export function FloorPlan({
   compact?: boolean;
   className?: string;
   label?: string;
+  t?: T;
 }) {
   const rooms = plan.rooms;
   const minY = Math.min(0, ...rooms.map((r) => r[2]));
@@ -267,7 +277,7 @@ export function FloorPlan({
       className={`fp-svg ${compact ? "fp-svg-compact" : ""} ${className}`}
       viewBox={vb}
       role={onSelect ? "group" : "img"}
-      aria-label={label ?? `Floor plan of the ${plan.code}`}
+      aria-label={label ?? t(`Floor plan of the ${plan.code}`)}
     >
       <defs>
         <mask id={mid} maskUnits="userSpaceOnUse" x={-pad} y={minY - pad} width={100 + pad * 2} height={70 - minY + pad * 2}>
@@ -286,12 +296,12 @@ export function FloorPlan({
       {balcony && (
         <g
           className={`fp-room fp-room-balcony ${active === "balcony" ? "is-active" : ""} ${canSelect("balcony") ? "is-sel" : ""}`}
-          {...(canSelect("balcony") ? selectProps("balcony", roomName("balcony", plan), onSelect!, active === "balcony") : {})}
+          {...(canSelect("balcony") ? selectProps("balcony", t(`Go to ${roomName("balcony", plan)}`), onSelect!, active === "balcony") : {})}
         >
           <rect x={balcony[1]} y={balcony[2]} width={balcony[3]} height={balcony[4]} className="fp-fill" />
           <rect x={balcony[1] + 0.6} y={balcony[2] + 0.6} width={balcony[3] - 1.2} height={balcony[4] - 0.6} className="fp-rail" />
           <text x={balcony[1] + balcony[3] / 2} y={balcony[2] + balcony[4] / 2 + 1.2} className="fp-lbl">
-            Balcony
+            {t("Balcony")}
           </text>
         </g>
       )}
@@ -307,12 +317,12 @@ export function FloorPlan({
           <g
             key={key}
             className={`fp-room fp-room-${key} ${active === key ? "is-active" : ""} ${sel ? "is-sel" : ""}`}
-            {...(sel ? selectProps(key, roomName(key, plan), onSelect!, active === key) : {})}
+            {...(sel ? selectProps(key, t(`Go to ${roomName(key, plan)}`), onSelect!, active === key) : {})}
           >
             <rect x={x} y={y} width={w} height={h} className="fp-fill" />
             {!compact && <Fixtures r={r} plan={plan} />}
             <text x={x + w / 2} y={cy} className={`fp-lbl ${small ? "fp-lbl-s" : ""}`}>
-              {shortName(key, plan, r)}
+              {t(shortName(key, plan, r))}
             </text>
             {showDims && (
               <text x={x + w / 2} y={cy + 3.6} className="fp-dim">
@@ -387,7 +397,7 @@ export function FloorPlan({
         <g className="fp-north" transform={`translate(97 ${70 + 3.4})`}>
           <text x={0} y={0} className="fp-dim" textAnchor="end">
             {plan.code}
-            {plan.sqft ? ` · ${plan.sqft.toLocaleString("en-US")} sq ft` : ""}
+            {plan.sqft ? t(` · ${plan.sqft.toLocaleString("en-US")} sq ft`) : ""}
           </text>
         </g>
       )}
@@ -395,11 +405,12 @@ export function FloorPlan({
   );
 }
 
-function selectProps(key: string, name: string, onSelect: (k: string) => void, current: boolean) {
+/** `label` is the translated "Go to <room>". */
+function selectProps(key: string, label: string, onSelect: (k: string) => void, current: boolean) {
   return {
     role: "button",
     tabIndex: 0,
-    "aria-label": `Go to ${name}`,
+    "aria-label": label,
     "aria-current": current ? ("true" as const) : undefined,
     onClick: () => onSelect(key),
     onKeyDown: (e: React.KeyboardEvent) => {

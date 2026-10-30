@@ -1,32 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Thread } from "@/data/staff";
+import type { Template, Thread } from "@/data/staff/shared";
 import { Icon } from "../Icon";
 import { Badge, Meter } from "./ui";
 
-type Tpl = { k: string; label: string; text: string };
+type Tpl = Template;
+/** Composer translation previews: a language, how many families read it, and the templates in it. */
+type Translation = { lang: string; code: string; n: number; tpl: Record<string, string> };
 
-const es: Record<string, string> = {
-  event: "Nuevo en el calendario de PCL: {event}. Responda SÍ para reservar un lugar para su ser querido, o llame a la recepción al (916) 458-0303.",
-  photos: "¡Ya están las fotos de {event}! Véalas en nuestro sitio web y en Facebook. Gracias por ser parte de la familia de PCL.",
-  reminder: "Recordatorio: {event}. Las familias siempre son bienvenidas.",
-  change: "Cambio de horario: {event}. Disculpe las molestias. ¿Preguntas? Llame al (916) 458-0303.",
-  harbor: "Noticias de Harbor, de parte de Janelle: {event}. Gracias por confiarnos a su ser querido.",
-};
-const ru: Record<string, string> = {
-  event: "Новое в календаре PCL: {event}. Ответьте ДА, чтобы забронировать место, или позвоните на ресепшн: (916) 458-0303.",
-  photos: "Фотографии с мероприятия «{event}» уже опубликованы на нашем сайте и в Facebook.",
-  reminder: "Напоминание: {event}. Семьи всегда желанные гости.",
-  change: "Изменение в расписании: {event}. Вопросы? Звоните (916) 458-0303.",
-  harbor: "Новости Harbor от Джанель: {event}. Спасибо, что доверяете нам.",
-};
-
-export function Composer({ templates, families, harborFamilies, contacts }: { templates: Tpl[]; families: number; harborFamilies: number; contacts: { resident: string; contact: string }[] }) {
+export function Composer({ templates, families, harborFamilies, contacts, translations, alsoTranslated, defaultEvent }: { templates: Tpl[]; families: number; harborFamilies: number; contacts: { resident: string; contact: string }[]; translations: Translation[]; alsoTranslated: string; defaultEvent: string }) {
   const [aud, setAud] = useState<"all" | "harbor" | "one">("all");
   const [one, setOne] = useState(contacts[0].resident);
   const [tpl, setTpl] = useState("event");
-  const [event, setEvent] = useState("Bus Trip to the Veterans Day Parade, Wed, Nov 11 at 7:30 am from the Lobby");
+  const [event, setEvent] = useState(defaultEvent);
   const t = templates.find((x) => x.k === tpl)!;
   const [text, setText] = useState(t.text.replace("{event}", event));
   const [sent, setSent] = useState<"idle" | "busy" | "done">("idle");
@@ -73,9 +60,10 @@ export function Composer({ templates, families, harborFamilies, contacts }: { te
         <span className="sx-hint">{text.length} characters · {Math.ceil(text.length / 160)} text{text.length > 160 ? "s" : ""}</span>
       </label>
       <div className="tr-prev" aria-label="Automatic translation preview">
-        <div><b><Icon name="translate" /> Spanish · 14 families</b>{(es[tpl] ?? es.event).replace("{event}", event)}</div>
-        <div><b>Russian · 6 families</b>{(ru[tpl] ?? ru.event).replace("{event}", event)}</div>
-        <div><b>Also translated</b><span className="sx-hint">Tagalog (4), Vietnamese (2) and Chinese (2). Families see the English underneath.</span></div>
+        {translations.map((tr, i) => (
+          <div key={tr.code} lang={tr.code}><b lang="en">{i === 0 && <Icon name="translate" />}{i === 0 && " "}{tr.lang} · {tr.n} families</b>{(tr.tpl[tpl] ?? tr.tpl.event).replace("{event}", event)}</div>
+        ))}
+        <div><b>Also translated</b><span className="sx-hint">{alsoTranslated}</span></div>
       </div>
       <div className="pub-foot">
         <p>{aud === "one" ? `To ${one}’s family` : `To ${count} families`} · replies come to this inbox</p>
@@ -89,20 +77,15 @@ export function Composer({ templates, families, harborFamilies, contacts }: { te
   );
 }
 
-export function Inbox({ threads }: { threads: (Omit<Thread, "msgs"> & { when: string; msgs: (Thread["msgs"][number] & { when: string })[] })[] }) {
+const langCode: Record<string, string> = { Spanish: "es", Russian: "ru", Chinese: "zh", Tagalog: "tl", Vietnamese: "vi", Punjabi: "pa" };
+
+export function Inbox({ threads, suggestions, me }: { threads: (Omit<Thread, "msgs"> & { when: string; msgs: (Thread["msgs"][number] & { when: string })[] })[]; suggestions: Record<string, string>; me: string }) {
   const [sel, setSel] = useState(threads[0].id);
   const [read, setRead] = useState<Set<string>>(new Set([threads[0].id]));
   const [replies, setReplies] = useState<Record<string, string[]>>({});
   const [draft, setDraft] = useState("");
   const th = threads.find((x) => x.id === sel)!;
-  const suggestion = useMemo(
-    () =>
-      ({
-        t1: "¡Claro que sí, María! Las familias son bienvenidas y el disfraz es opcional. ¡Nos encantará ver a Rosa como Frida!",
-        t2: "Hi Tom! Dorothy is first on the waitlist. If a seat opens I’ll text you both right away. The trip is free; lunch at the orchard is about $15.",
-      })[sel] ?? "",
-    [sel]
-  );
+  const suggestion = useMemo(() => suggestions[sel] ?? "", [sel, suggestions]);
 
   return (
     <div className="inbox">
@@ -133,15 +116,15 @@ export function Inbox({ threads }: { threads: (Omit<Thread, "msgs"> & { when: st
         {th.msgs.map((m, i) => (
           <div key={i} className={`t-msg ${m.me ? "t-me" : ""}`}>
             {m.text}
-            {m.original && <span className="t-orig" lang={th.lang === "Spanish" ? "es" : "ru"}>{m.me ? "Sent as: " : "Original: "}{m.original}</span>}
-            <small>{m.me ? "Toni Glenn" : m.who} · {m.when}</small>
+            {m.original && <span className="t-orig" lang={langCode[th.lang]}>{m.me ? "Sent as: " : "Original: "}{m.original}</span>}
+            <small>{m.me ? me : m.who} · {m.when}</small>
           </div>
         ))}
         {(replies[sel] ?? []).map((r, i) => (
           <div key={`r${i}`} className="t-msg t-me">
             {r}
             {th.lang !== "English" && <span className="t-orig">Translated to {th.lang} automatically</span>}
-            <small>Toni Glenn · just now · Delivered</small>
+            <small>{me} · just now · Delivered</small>
           </div>
         ))}
         <form className="t-reply sx-form" onSubmit={(e) => { e.preventDefault(); if (!draft.trim()) return; setReplies((r) => ({ ...r, [sel]: [...(r[sel] ?? []), draft] })); setDraft(""); }}>

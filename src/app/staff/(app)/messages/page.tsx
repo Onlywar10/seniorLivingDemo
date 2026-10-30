@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { Composer, Inbox, RateCell } from "@/components/staff/Messaging";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Avatar, Card, Kpi, PageHead } from "@/components/staff/ui";
-import { ago, staffPeople, community, contacts, sends, templates, threads } from "@/data/staff";
+import { ago, staffPeople, user } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 
 export const metadata: Metadata = { title: "Messages" };
 
-export default function MessagesPage() {
+export default async function MessagesPage() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <PickCommunity screen="Messages" />;
+  const { s } = sc;
+  const { community, contacts, sends, templates, threads } = s;
   const tot = sends.reduce((a, s) => ({ sent: a.sent + s.sent, del: a.del + s.delivered, op: a.op + s.opened, rep: a.rep + s.replied }), { sent: 0, del: 0, op: 0, rep: 0 });
   const unread = threads.filter((t) => t.unread).length;
   return (
@@ -20,10 +26,10 @@ export default function MessagesPage() {
 
       <div className="sx-grid g-2">
         <Card title="New message">
-          <Composer templates={templates} families={community.families} harborFamilies={community.harborFamilies} contacts={contacts.map((c) => ({ resident: c.resident, contact: c.contact }))} />
+          <Composer templates={templates} families={community.families} harborFamilies={community.harborFamilies} contacts={contacts.map((c) => ({ resident: c.resident, contact: c.contact }))} translations={s.translations} alsoTranslated={s.alsoTranslated} defaultEvent={s.composerEvent} />
         </Card>
         <Card title="Replies" sub={`${unread} unread · translated automatically`} pad={false}>
-          <Inbox threads={threads.map((t) => ({ ...t, when: ago(t.mins), msgs: t.msgs.map((m) => ({ ...m, when: ago(m.mins) })) }))} />
+          <Inbox threads={threads.map((t) => ({ ...t, when: ago(t.mins), msgs: t.msgs.map((m) => ({ ...m, when: ago(m.mins) })) }))} suggestions={s.suggestions} me={user.name} />
         </Card>
       </div>
 

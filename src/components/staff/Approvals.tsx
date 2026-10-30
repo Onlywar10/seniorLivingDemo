@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { staffPeople, type Approval } from "@/data/staff";
+import { staffPeople } from "@/data/staff/people";
+import type { Approval } from "@/data/staff/shared";
 import { Icon } from "../Icon";
 import { Avatar, Badge } from "./ui";
 
-export function Approvals({ items }: { items: (Approval & { when: string })[] }) {
+export function Approvals({ items, approver }: { items: (Approval & { when: string })[]; approver: string }) {
   const [state, setState] = useState<Record<string, "ok" | "req" | "asking">>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const waiting = items.filter((i) => !state[i.id] || state[i.id] === "asking").length;
@@ -15,7 +16,7 @@ export function Approvals({ items }: { items: (Approval & { when: string })[] })
     <section className="sx-card">
       <header className="sx-card-head">
         <div>
-          <h2>Waiting for Cheryl Martin <Badge tone={waiting ? "accent" : "good"}>{waiting ? `${waiting} waiting` : "All done"}</Badge></h2>
+          <h2>Waiting for {approver} <Badge tone={waiting ? "accent" : "good"}>{waiting ? `${waiting} waiting` : "All done"}</Badge></h2>
           <p>Posts with resident photos, pricing and menus for special days are approved by the Executive Director before they publish.</p>
         </div>
       </header>

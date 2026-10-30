@@ -3,12 +3,14 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
-import type { Plan } from "@/data/site";
+import { useT } from "@/i18n/client";
+import type { Plan } from "@/data/shared";
 import { FloorPlan } from "./FloorPlan";
 import type { Stop } from "./data";
 
 /** Room-by-room tour with a live floor-plan map and tappable hotspots. */
 export function VirtualTour({ plan, stops }: { plan: Plan; stops: Stop[] }) {
+  const { t } = useT();
   const [i, setI] = useState(0);
   const [spot, setSpot] = useState<number | null>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -27,8 +29,8 @@ export function VirtualTour({ plan, stops }: { plan: Plan; stops: Stop[] }) {
     const el = root.current;
     if (!el) return;
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
-      if (t.closest("input, textarea, select")) return;
+      const target = e.target as HTMLElement;
+      if (target.closest("input, textarea, select")) return;
       if (e.key === "ArrowRight") {
         e.preventDefault();
         go(i + 1);
@@ -51,10 +53,10 @@ export function VirtualTour({ plan, stops }: { plan: Plan; stops: Stop[] }) {
   };
 
   return (
-    <div className="vt" ref={root} role="region" aria-roledescription="virtual tour" aria-label={`Virtual tour of the ${plan.code}`}>
+    <div className="vt" ref={root} role="region" aria-roledescription="virtual tour" aria-label={t(`Virtual tour of the ${plan.code}`)}>
       <div className="vt-stage">
         <div className="vt-photo" key={stop.photo + i}>
-          <Image src={stop.photo} alt={stop.alt} fill sizes="(max-width: 980px) 100vw, 68vw" priority={i === 0} />
+          <Image src={stop.photo} alt={t(stop.alt)} fill sizes="(max-width: 980px) 100vw, 68vw" priority={i === 0} />
         </div>
         <div className="vt-shade" aria-hidden="true" />
 
@@ -74,12 +76,12 @@ export function VirtualTour({ plan, stops }: { plan: Plan; stops: Stop[] }) {
                 aria-controls={pid}
                 onClick={() => setSpot(open ? null : k)}
               >
-                <span className="vh">{s.label}</span>
+                <span className="vh">{t(s.label)}</span>
                 <Icon name={open ? "x" : "plus"} />
               </button>
               <div className="vt-pop" id={pid} role="note" hidden={!open}>
-                <b>{s.label}</b>
-                <span>{s.text}</span>
+                <b>{t(s.label)}</b>
+                <span>{t(s.text)}</span>
               </div>
             </div>
           );
@@ -87,18 +89,18 @@ export function VirtualTour({ plan, stops }: { plan: Plan; stops: Stop[] }) {
 
         <div className="vt-top">
           <span className="vt-counter" aria-live="polite">
-            Room {i + 1} of {n} · <strong>{stop.title}</strong>
+            {t("Room ")}{i + 1}{t(" of ")}{n} · <strong>{t(stop.title)}</strong>
           </span>
           <span className="vt-hint">
-            <Icon name="plus" /> Tap the dots to look closer
+            <Icon name="plus" /> {t("Tap the dots to look closer")}
           </span>
         </div>
 
         <div className="vt-nav">
-          <button type="button" className="vt-arrow" onClick={() => go(i - 1)} aria-label={`Previous room: ${stops[(i - 1 + n) % n].title}`}>
+          <button type="button" className="vt-arrow" onClick={() => go(i - 1)} aria-label={t(`Previous room: ${stops[(i - 1 + n) % n].title}`)}>
             <Icon name="left" />
           </button>
-          <button type="button" className="vt-arrow" onClick={() => go(i + 1)} aria-label={`Next room: ${stops[(i + 1) % n].title}`}>
+          <button type="button" className="vt-arrow" onClick={() => go(i + 1)} aria-label={t(`Next room: ${stops[(i + 1) % n].title}`)}>
             <Icon name="right" />
           </button>
         </div>
@@ -107,24 +109,24 @@ export function VirtualTour({ plan, stops }: { plan: Plan; stops: Stop[] }) {
       <aside className="vt-side">
         <div className="vt-map">
           <p className="vt-map-h">
-            <Icon name="pin" /> You are in the <strong>{stop.title.toLowerCase()}</strong>
+            <Icon name="pin" /> {t("You are in the ")}<strong>{t(stop.title.toLowerCase())}</strong>
           </p>
-          <FloorPlan plan={plan} active={mapKey} onSelect={toStop} selectable={selectable} compact label={`Map of the ${plan.code}. Choose a room to go there.`} />
+          <FloorPlan plan={plan} active={mapKey} onSelect={toStop} selectable={selectable} compact label={t(`Map of the ${plan.code}. Choose a room to go there.`)} t={t} />
         </div>
-        <p className="vt-caption">{stop.caption}</p>
+        <p className="vt-caption">{t(stop.caption)}</p>
       </aside>
       <div className="vt-strip">
-        <ol className="vt-rooms" aria-label="Rooms on this tour">
+        <ol className="vt-rooms" aria-label={t("Rooms on this tour")}>
             {stops.map((s, k) => (
               <li key={s.key}>
                 <button type="button" aria-current={k === i ? "step" : undefined} onClick={() => go(k)}>
                   <span className="vt-rooms-n">{k + 1}</span>
-                  {s.title}
+                  {t(s.title)}
                 </button>
               </li>
             ))}
           </ol>
-          <p className="vt-keys">Use the left and right arrow keys to move between rooms.</p>
+          <p className="vt-keys">{t("Use the left and right arrow keys to move between rooms.")}</p>
       </div>
     </div>
   );

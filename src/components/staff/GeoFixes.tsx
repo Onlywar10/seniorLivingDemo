@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { WrongFact } from "@/data/staff";
+import type { WrongFact } from "@/data/staff/shared";
 import { Icon } from "../Icon";
 import { Badge } from "./ui";
 
@@ -9,7 +9,7 @@ const engineColor: Record<string, string> = { ChatGPT: "#2f7a62", "Google AI Ove
 const tone = { fixed: "good", "in progress": "warn", monitoring: "info" } as const;
 const label = { fixed: "Fixed", "in progress": "In progress", monitoring: "Monitoring" };
 
-export function GeoFixes({ facts }: { facts: (WrongFact & { when: string })[] }) {
+export function GeoFixes({ facts }: { facts: (WrongFact & { when: string; fixHref: string })[] }) {
   const [sent, setSent] = useState<Record<string, "busy" | "done">>({});
   return (
     <div>
@@ -37,7 +37,7 @@ export function GeoFixes({ facts }: { facts: (WrongFact & { when: string })[] })
                 <span>
                   <b>Fix: </b>
                   {f.fix}{" "}
-                  <a className="sx-link" href={f.fixUrl} target="_blank" rel="noopener">
+                  <a className="sx-link" href={f.fixHref} target="_blank" rel="noopener">
                     {f.fixUrl}
                   </a>
                 </span>

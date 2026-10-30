@@ -2,17 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
-import { approvals, threads, user } from "@/data/staff";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { user } from "@/data/staff/people";
 import { Icon } from "../Icon";
+import { CommunitySwitcher, useStaffCommunity } from "./StaffCommunity";
 import { XIcon } from "./ui";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
 type Item = { href: string; label: string; icon?: IconName; x?: "dash" | "repeat" | "trend" | "door" | "key" | "clipboard"; badge?: number };
 
-const unread = threads.filter((t) => t.unread).length;
-
-const nav: { group: string; items: Item[] }[] = [
+const navFor = (approvals: number, unread: number): { group: string; items: Item[] }[] => [
   {
     group: "Overview",
     items: [
@@ -24,7 +23,7 @@ const nav: { group: string; items: Item[] }[] = [
     group: "Publish",
     items: [
       { href: "/staff/publish", label: "Post once", icon: "send" },
-      { href: "/staff/approvals", label: "Approvals", icon: "check", badge: approvals.length },
+      { href: "/staff/approvals", label: "Approvals", icon: "check", badge: approvals },
       { href: "/staff/calendar", label: "Calendar", icon: "calendar" },
       { href: "/staff/menus", label: "Menus", icon: "fork" },
       { href: "/staff/photo-post", label: "Photo post", icon: "image" },
@@ -48,8 +47,12 @@ const nav: { group: string; items: Item[] }[] = [
   },
 ];
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({ children, badges }: { children: ReactNode; badges: { approvals: number; unread: number } }) {
   const path = usePathname();
+  const { scope, current, site } = useStaffCommunity();
+  const name = current ? current.name : "Tenfold Senior Living";
+  const unread = badges.unread;
+  const nav = navFor(badges.approvals, unread);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -69,13 +72,14 @@ export function Shell({ children }: { children: ReactNode }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/img/brand/dots.png" alt="" width={38} height={38} />
           <span>
-            <b>Prairie City Landing</b>
+            <b>{name}</b>
             <span>Team</span>
           </span>
           <button type="button" className="sx-close" aria-label="Close menu" onClick={() => setOpen(false)}>
             <Icon name="x" />
           </button>
         </div>
+        <CommunitySwitcher />
         <nav className="sx-nav">
           {nav.map((g) => (
             <div key={g.group}>
@@ -120,7 +124,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <Link href="/staff/dashboard" className="sx-top-brand" aria-label="Dashboard">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/img/brand/dots.png" alt="" width={28} height={28} />
-            <span>Prairie City Landing</span>
+            <span>{name}</span>
           </Link>
           <div className="sx-top-right">
             <Link href="/staff/publish" className="sx-btn sx-btn-primary sx-top-post" aria-label="New post">
@@ -130,13 +134,14 @@ export function Shell({ children }: { children: ReactNode }) {
               <Icon name="bell" />
               {unread > 0 && <i />}
             </Link>
-            <Link href="/" className="sx-site" target="_blank" rel="noopener" aria-label="View website (opens in a new tab)">
+            <Link href={site("/")} className="sx-site" target="_blank" rel="noopener" aria-label="View website (opens in a new tab)">
               <Icon name="globe" /> <span>View website</span>
             </Link>
           </div>
         </div>
         <main className="sx-page" id="sx-main">
-          {children}
+          {/* Remount the screen when the community changes, so editors start from the new community's data. */}
+          <Fragment key={scope}>{children}</Fragment>
         </main>
       </div>
       {open && <button type="button" className="sx-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setOpen(false)} />}

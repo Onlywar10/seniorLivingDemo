@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import { Icon } from "@/components/Icon";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, Kpi, Meter, PageHead } from "@/components/staff/ui";
-import { money, planKindLabel, plans } from "@/data/site";
-import { alerts, community, dayLabel, moves, planUnits, waitlist } from "@/data/staff";
+import { money, planKindLabel } from "@/data/shared";
+import { dayLabel, planRows } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 import { addDays, shortDate, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Apartments & waitlist" };
 
-export default function ApartmentsPage() {
+export default async function ApartmentsPage() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <PickCommunity screen="Apartments & waitlist" />;
+  const { s } = sc;
+  const { alerts, community, moves, waitlist } = s;
   const t = today();
-  const rows = plans.map((p) => ({ ...p, ...planUnits[p.code] }));
+  const rows = planRows(s.slug);
   const units = rows.reduce((n, r) => n + r.units, 0);
   const avail = rows.reduce((n, r) => n + r.available, 0);
   const notice = rows.reduce((n, r) => n + r.notice, 0);
@@ -18,14 +24,14 @@ export default function ApartmentsPage() {
     const r = rows.filter((x) => x.kind === k);
     const u = r.reduce((n, x) => n + x.units, 0), a = r.reduce((n, x) => n + x.available, 0);
     return { k, u, occ: ((u - a) / u) * 100 };
-  });
+  }).filter((k) => k.u > 0); // not every community has every kind of plan
   const date = (days: number) => shortDate(addDays(t, days));
 
   return (
     <>
       <PageHead title="Apartments & waitlist" sub="Availability here updates the floor plans page on the website and sends alerts to people waiting." />
       <div className="sx-kpis">
-        <Kpi label="Occupancy" value={`${occ.toFixed(1)}%`} delta={1.1} deltaSuffix=" pts" note="vs last month" />
+        <Kpi label="Occupancy" value={`${occ.toFixed(1)}%`} delta={s.occupancyDelta} deltaSuffix=" pts" note="vs last month" />
         <Kpi label="Available now" value={avail} note={`of ${units} apartments`} />
         <Kpi label="On notice" value={notice} note="move-outs in the next 30 days" />
         <Kpi label="On the waitlist" value={waitlist.length} note={`${waitlist.filter((w) => w.deposit).length} with a priority deposit`} />

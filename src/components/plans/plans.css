@@ -3,16 +3,16 @@
 /* ---------- Floor plan drawing ---------- */
 .fp-svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font-body), system-ui, sans-serif; }
 .fp-room { --rf: #fffdf8; }
-.fp-room-kitchen { --rf: #f7efe1; }
+.fp-room-kitchen { --rf: #ecefe9; }
 .fp-room-bath { --rf: #edf3f6; }
-.fp-room-closet { --rf: #f4f1ea; }
-.fp-room-entry { --rf: #faf6ee; }
-.fp-room-balcony { --rf: #eaf0e3; }
+.fp-room-closet { --rf: #eff1ed; }
+.fp-room-entry { --rf: #f4f6f2; }
+.fp-room-balcony { --rf: #e4ebef; }
 .fp-fill { fill: var(--rf); transition: fill 0.25s; }
 .fp-wall { fill: none; stroke: var(--green-ink); stroke-width: 0.7; }
 .fp-wall-outer { fill: none; stroke: var(--green-ink); stroke-width: 1.7; }
 .fp-rail { fill: none; stroke: var(--green); stroke-width: 0.45; stroke-dasharray: 1.2 0.8; }
-.fp-fix { fill: none; stroke: #b9ae9c; stroke-width: 0.35; }
+.fp-fix { fill: none; stroke: #a9b0a5; stroke-width: 0.35; }
 .fp-lbl {
   font-size: 3.1px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; text-anchor: middle;
   fill: var(--green-ink); paint-order: stroke; stroke: var(--rf); stroke-width: 1.4px; stroke-linejoin: round;
@@ -38,8 +38,8 @@
 
 /* ---------- Floor plans page ---------- */
 .fp-hero-note { display: inline-flex; align-items: center; gap: 10px; margin: 18px 0 0; font-weight: 600; color: var(--green-deep); font-size: 0.96rem; }
-.fp-live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(71, 112, 76, 0.5); animation: fp-pulse 2.2s infinite; }
-@keyframes fp-pulse { 0% { box-shadow: 0 0 0 0 rgba(71, 112, 76, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(71, 112, 76, 0); } 100% { box-shadow: 0 0 0 0 rgba(71, 112, 76, 0); } }
+.fp-live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(73, 96, 110, 0.5); animation: fp-pulse 2.2s infinite; }
+@keyframes fp-pulse { 0% { box-shadow: 0 0 0 0 rgba(73, 96, 110, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(73, 96, 110, 0); } 100% { box-shadow: 0 0 0 0 rgba(73, 96, 110, 0); } }
 
 .fp-price-grid { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: clamp(16px, 2vw, 24px); }
 .fp-pc { position: relative; background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: clamp(22px, 2.6vw, 34px); display: grid; align-content: start; gap: 14px; border-top: 6px solid var(--green); }
@@ -55,7 +55,7 @@
 
 .fp-couples { position: relative; overflow: hidden; margin-top: clamp(20px, 3vw, 32px); display: grid; grid-template-columns: auto 1fr auto; gap: clamp(16px, 3vw, 36px); align-items: center; background: var(--terra-deep); color: #fff; border-radius: var(--radius); padding: clamp(22px, 3vw, 32px) clamp(22px, 3.4vw, 44px); }
 .fp-couples h3 { color: #fff; margin: 0 0 4px; font-size: 1.5rem; }
-.fp-couples p { margin: 0; color: #fbe7df; }
+.fp-couples p { margin: 0; color: #f8e2e2; }
 .fp-couples-big { font-family: var(--font-display), serif; font-size: clamp(3rem, 6vw, 4.6rem); line-height: 1; color: var(--butter-tint); }
 .fp-couples > *:not(.dots-deco) { position: relative; z-index: 1; }
 .fp-couples .dots-deco { z-index: 0; }
@@ -170,7 +170,7 @@
 .fpd-plan { margin: 22px 0 12px; padding: clamp(18px, 3vw, 36px); background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); }
 .fpd-h3 { margin: 34px 0 14px; }
 .fpd-feats { grid-template-columns: 1fr 1fr; gap: 10px 24px; }
-.fpd-note { display: flex; gap: 12px; align-items: flex-start; margin-top: 26px; padding: 18px 20px; border-radius: 14px; background: var(--terra-tint); color: #6e2e1d; max-width: none; }
+.fpd-note { display: flex; gap: 12px; align-items: flex-start; margin-top: 26px; padding: 18px 20px; border-radius: 14px; background: var(--terra-tint); color: #701b1c; max-width: none; }
 .fpd-note .icon { color: var(--terra-deep); margin-top: 4px; }
 .fpd-side { position: sticky; top: calc(var(--header-h) + 20px); display: grid; gap: 18px; }
 .fpd-card { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 26px; display: grid; gap: 12px; }
@@ -194,15 +194,15 @@
 
 /* ---------- Virtual tour ---------- */
 .vt { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 0; background: var(--green-ink); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg); }
-.vt-stage { position: relative; aspect-ratio: 3 / 2; min-height: 320px; background: #1b2a1f; overflow: hidden; }
+.vt-stage { position: relative; aspect-ratio: 3 / 2; min-height: 320px; background: #1c2429; overflow: hidden; }
 .vt-photo { position: absolute; inset: 0; animation: vt-in 0.6s var(--ease) both; }
 .vt-photo img { object-fit: cover; }
 @keyframes vt-in { from { opacity: 0; transform: scale(1.035); } to { opacity: 1; transform: none; } }
-.vt-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(20, 32, 23, 0.55) 0%, rgba(20, 32, 23, 0) 22%, rgba(20, 32, 23, 0) 72%, rgba(20, 32, 23, 0.5) 100%); }
+.vt-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(21, 27, 31, 0.55) 0%, rgba(21, 27, 31, 0) 22%, rgba(21, 27, 31, 0) 72%, rgba(21, 27, 31, 0.5) 100%); }
 .vt-top { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; color: #fff; pointer-events: none; flex-wrap: wrap; }
-.vt-counter { background: rgba(20, 32, 23, 0.6); backdrop-filter: blur(6px); padding: 7px 14px; border-radius: 999px; font-size: 0.92rem; }
+.vt-counter { background: rgba(21, 27, 31, 0.6); backdrop-filter: blur(6px); padding: 7px 14px; border-radius: 999px; font-size: 0.92rem; }
 .vt-counter strong { font-weight: 600; }
-.vt-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; background: rgba(20, 32, 23, 0.45); padding: 6px 12px; border-radius: 999px; }
+.vt-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; background: rgba(21, 27, 31, 0.45); padding: 6px 12px; border-radius: 999px; }
 .vt-nav { position: absolute; right: 16px; bottom: 16px; display: flex; gap: 10px; }
 .vt-arrow { width: 52px; height: 52px; border-radius: 50%; border: 0; background: #fff; color: var(--green-ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.5); transition: transform 0.2s var(--ease), background 0.2s; }
 .vt-arrow:hover { transform: scale(1.06); background: var(--butter-tint); }
@@ -226,7 +226,7 @@
 .vt-spot.is-open { z-index: 4; }
 @keyframes vt-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-.vt-side { display: grid; align-content: start; gap: 16px; padding: 22px; color: #e6ede5; }
+.vt-side { display: grid; align-content: start; gap: 16px; padding: 22px; color: #e5eaed; }
 .vt-map { background: var(--cream); border-radius: 16px; padding: 14px 14px 10px; }
 .vt-map-h { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 0.86rem; color: var(--ink-2); }
 .vt-map-h .icon { color: var(--terra-deep); }
@@ -234,12 +234,12 @@
 .vt-caption { margin: 0; font-family: var(--font-display), serif; font-size: 1.08rem; line-height: 1.5; color: #fff; }
 .vt-strip { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
 .vt-rooms { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
-.vt-rooms button { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 14px 6px 8px; border-radius: 999px; border: 0; background: none; color: #dfe7de; font: 500 0.96rem/1.2 var(--font-body), sans-serif; text-align: left; cursor: pointer; }
+.vt-rooms button { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 14px 6px 8px; border-radius: 999px; border: 0; background: none; color: #dee3e7; font: 500 0.96rem/1.2 var(--font-body), sans-serif; text-align: left; cursor: pointer; }
 .vt-rooms button:hover { background: rgba(255, 255, 255, 0.08); }
 .vt-rooms button[aria-current="step"] { background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 600; }
 .vt-rooms-n { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 0.78rem; font-weight: 700; background: rgba(255, 255, 255, 0.12); }
 .vt-rooms button[aria-current="step"] .vt-rooms-n { background: var(--terra); color: #fff; }
-.vt-keys { margin: 0; color: #aebcac !important; font-size: 0.82rem; }
+.vt-keys { margin: 0; color: #adb6bb !important; font-size: 0.82rem; }
 .vt :focus-visible { outline-color: var(--butter); }
 
 @media (max-width: 980px) {
@@ -261,3 +261,8 @@
   .fp-seg button { border-radius: 14px; padding: 8px 10px; }
   .fp-couples .dots-deco { display: none; }
 }
+
+/* The community's own furnished 3D floor plan, above the measured drawing */
+.fpd-render { margin: 0 0 20px; }
+.fpd-render img { display: block; width: 100%; height: auto; border-radius: 18px; background: #fff; box-shadow: 0 1px 0 var(--rule-2, #d8ded3); }
+.fpd-render figcaption { margin-top: 8px; }

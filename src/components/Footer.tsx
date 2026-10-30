@@ -1,5 +1,9 @@
-import Link from "next/link";
-import { site } from "@/data/site";
+"use client";
+
+import Link from "@/i18n/Link";
+import { useT } from "@/i18n/client";
+import { useCommunity } from "@/lib/community";
+import { communities, communitySlugs } from "@/data/communities";
 import { Logo, Dots } from "./Logo";
 import { Icon } from "./Icon";
 
@@ -10,6 +14,9 @@ const cols = [
 ];
 
 export function Footer() {
+  const { t } = useT();
+  const { site, slug } = useCommunity();
+  const sisters = communitySlugs.filter((c) => c !== slug);
   return (
     <footer className="footer">
       <Dots size={420} style={{ right: -120, top: -80, opacity: 0.16 }} />
@@ -28,17 +35,17 @@ export function Footer() {
                 <Icon name="mail" /> {site.email}
               </a>
               <a href={site.facebook} target="_blank" rel="noreferrer">
-                <Icon name="facebook" /> Prairie City Landing on Facebook
+                <Icon name="facebook" /> {t(`${site.name} on Facebook`)}
               </a>
             </div>
           </div>
           {cols.map((c) => (
             <div key={c.title}>
-              <h2>{c.title}</h2>
+              <h2>{t(c.title)}</h2>
               <ul>
                 {c.links.map(([label, href]) => (
                   <li key={href}>
-                    <Link href={href}>{label}</Link>
+                    <Link href={href}>{t(label)}</Link>
                   </li>
                 ))}
               </ul>
@@ -47,26 +54,33 @@ export function Footer() {
         </div>
         <div className="footer-family">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/img/brand/tenfold-white.png" alt="Tenfold Senior Living" width={116} height={52} />
+          <Link href="~/" aria-label={t("Tenfold Senior Living home")}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/img/brand/tenfold-white.png" alt={t("Tenfold Senior Living")} width={116} height={52} />
+          </Link>
           <p>
-            Prairie City Landing is owned, designed, built and operated by {site.operator}.<br />
-            Our sister community:{" "}
-            <a href={site.sister.url} target="_blank" rel="noreferrer">
-              {site.sister.name}
-            </a>
-            , {site.sister.city}.
+            {t(`${site.name} is owned, designed, built and operated by `)}
+            <Link href="~/">{site.operator}</Link>.<br />
+            {t(sisters.length > 1 ? "Our sister communities:" : "Our sister community:")}{" "}
+            {sisters.map((c, i) => (
+              <span key={c}>
+                {i > 0 && ", "}
+                <Link href={`~/${c}`}>{communities[c].site.name}</Link>, {communities[c].site.address.city}
+              </span>
+            ))}
+            .
           </p>
         </div>
         <div className="footer-bottom">
           <span>
-            <span className="licence">{site.licence}</span> · © 2026 {site.operator} · Equal Housing Opportunity
+            <span className="licence">{t(site.licence)}</span> · © 2026 {site.operator} · {t("Equal Housing Opportunity")}
           </span>
-          <nav aria-label="Footer">
-            <Link href="/accessibility">Accessibility</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/careers">Careers</Link>
+          <nav aria-label={t("Footer")}>
+            <Link href="/accessibility">{t("Accessibility")}</Link>
+            <Link href="/privacy">{t("Privacy")}</Link>
+            <Link href="/careers">{t("Careers")}</Link>
             <Link href="/staff">
-              <Icon name="lock" /> Staff sign in
+              <Icon name="lock" /> {t("Staff sign in")}
             </Link>
           </nav>
         </div>

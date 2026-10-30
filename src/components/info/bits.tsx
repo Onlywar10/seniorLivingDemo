@@ -1,5 +1,10 @@
-import Link from "next/link";
+"use client";
+import { portraitOf } from "@/data/communities";
+
+import Link from "@/i18n/Link";
+import { useT } from "@/i18n/client";
 import { hash } from "@/lib/clock";
+import { useMaybeCommunity } from "@/lib/community";
 
 const tones = ["var(--green)", "var(--terra-deep)", "var(--slate)", "var(--sky)", "var(--olive)", "var(--brick)"];
 
@@ -13,9 +18,12 @@ export const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-/** Initials on a brand-color disc. */
+/** A team member's published portrait, or their initials on a brand-color disc. */
 export function Monogram({ name, size = 64, tone }: { name: string; size?: number; tone?: string }) {
   const bg = tone ?? tones[hash(name) % tones.length];
+  const photo = portraitOf(name);
+  // eslint-disable-next-line @next/next/no-img-element
+  if (photo) return <img className="inf-mono inf-mono-photo" src={photo} alt="" aria-hidden="true" width={size} height={size} style={{ width: size, height: size }} />;
   return (
     <span className="inf-mono" style={{ width: size, height: size, background: bg, fontSize: size * 0.36 }} aria-hidden="true">
       {initials(name)}
@@ -37,6 +45,8 @@ export function SmsConsent({
   onChange?: (v: boolean) => void;
   name?: string;
 }) {
+  const { t } = useT();
+  const sender = useMaybeCommunity()?.site.name ?? "Tenfold Senior Living";
   const controlled = checked !== undefined;
   return (
     <label className="check inf-sms" htmlFor={id}>
@@ -47,9 +57,11 @@ export function SmsConsent({
         {...(controlled ? { checked, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange?.(e.target.checked) } : {})}
       />
       <span>
-        <b>Yes, you may text me.</b> By checking this box, I agree to receive recurring automated text messages from Prairie City Landing at the
-        mobile number provided, about {purpose}. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help.
-        Consent is not a condition of purchase. See our <Link href="/privacy#sms">SMS Terms and Privacy Policy</Link>.
+        <b>{t("Yes, you may text me.")}</b>
+        {t(` By checking this box, I agree to receive recurring automated text messages from ${sender} at the mobile number provided, about `)}
+        {t(purpose)}
+        {t(". Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase. See our ")}
+        <Link href="/privacy#sms">{t("SMS Terms and Privacy Policy")}</Link>.
       </span>
     </label>
   );

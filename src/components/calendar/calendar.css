@@ -121,7 +121,7 @@
 
 /* dialog */
 .cal-dialog { width: min(600px, calc(100% - 24px)); max-height: calc(100dvh - 32px); border: 0; padding: 0; border-radius: 22px; box-shadow: var(--shadow-lg); background: var(--paper); color: var(--ink); }
-.cal-dialog::backdrop { background: rgba(31, 54, 36, 0.55); backdrop-filter: blur(2px); }
+.cal-dialog::backdrop { background: rgba(32, 45, 53, 0.55); backdrop-filter: blur(2px); }
 .cal-dialog-inner { --cat: var(--green); position: relative; padding: 28px clamp(20px, 4vw, 34px) 26px; border-top: 8px solid var(--cat); }
 .cal-dialog-x { position: absolute; right: 14px; top: 14px; width: 44px; height: 44px; border-radius: 999px; border: 0; background: var(--sand); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .cal-dialog-x:hover { background: var(--sand-2); }
@@ -132,7 +132,7 @@
 .cal-dialog-facts dt { color: var(--cat); display: inline-flex; }
 .cal-dialog-facts dd { margin: 0; font-weight: 500; }
 .cal-dialog-desc { color: var(--ink-2); }
-.cal-dialog-bus { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--terra-tint); color: #6e2c1a; font-weight: 600; }
+.cal-dialog-bus { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--terra-tint); color: #6e1a1b; font-weight: 600; }
 .cal-dialog-bus .icon { width: 22px; height: 22px; margin-top: 1px; }
 .cal-dialog-open { display: flex; gap: 8px; align-items: center; color: var(--green-deep); font-weight: 600; }
 .cal-seats { margin: 18px 0; }
@@ -210,5 +210,5 @@
   .cal-cell .cal-ev-time { font-size: 9pt !important; }
   .cal-month-head span[role="columnheader"] { background: #fff; color: #000; border-bottom: 2px solid #000; font-size: 11pt; }
   .cal-legend { font-size: 10pt; }
-  .cal-print-head::after { content: "Prairie City Landing · 645 Willard Drive, Folsom, CA 95630 · (916) 458-0303 · RCFE License #342700370"; display: block; font-family: var(--font-body), sans-serif; font-size: 10pt; margin-top: 4pt; }
+  .cal-print-sub { display: block; font-family: var(--font-body), sans-serif; font-size: 10pt; margin-top: 4pt; }
 }

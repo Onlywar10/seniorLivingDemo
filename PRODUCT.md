@@ -19,7 +19,7 @@ Next.js 16 (App Router, TypeScript, no Tailwind; global CSS with custom properti
 Prairie City Landing's own website and staff publishing system, as if live: their real calendar, menus, plans and pricing, kept current from one place and published everywhere (website, family texts, email digest, print).
 
 ## Brand Commitments
-Prairie City Landing, "a Tenfold Senior Living Community". Tenfold palette: forest green #47704c, terracotta #ce7056, brick #be4142, olive #968b53, butter #cec489, slate #425968, sky #4c87a2 on warm cream grounds. Libre Baskerville headings, Montserrat text. Confetti-dot crescent mark. Warm, upscale, active, joyful. No demo, sample or sales copy anywhere. Licence line (RCFE License #342700370) on every public page. Site stays noindex.
+Prairie City Landing, "a Tenfold Senior Living Community". Palette as on the Tenfold websites: slate #415a68, brick red #bf4142, gold #d0c588, blue-grey #7591a1 and sage #a3b0a2 on cool sage-tinted grounds. Libre Baskerville headings, Montserrat text. Confetti-dot crescent mark. Warm, upscale, active, joyful. No demo, sample or sales copy anywhere. Licence line (RCFE License #342700370) on every public page. Site stays noindex.
 
 ## Accessibility & Inclusion
 WCAG 2.1 AA. 17px minimum body text, text-size and high-contrast controls, 44px targets, visible focus, English/Spanish, ASL interpreters available, SageCare certified.

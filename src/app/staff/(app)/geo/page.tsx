@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
 import { Icon } from "@/components/Icon";
 import { GeoFixes } from "@/components/staff/GeoFixes";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, Delta, LineChart, Score } from "@/components/staff/ui";
-import { ago, answers, engines, geoTrend, wrongFacts } from "@/data/staff";
+import { ago, siteHref } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 import { addDays, shortDate, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "AI search (GEO)" };
 
-const engineColor = Object.fromEntries(engines.map((e) => [e.k, e.color]));
 const accTone = { accurate: "good", partly: "warn", wrong: "bad" } as const;
 const accLabel = { accurate: "Accurate", partly: "Partly right", wrong: "Wrong" };
 
-export default function Geo() {
+export default async function Geo() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <PickCommunity screen="AI search (GEO)" />;
+  const { s } = sc;
+  const { answers, engines, geoTrend, wrongFacts } = s;
+  const engineColor = Object.fromEntries(engines.map((e) => [e.k, e.color]));
   const t = today();
   const weeks = geoTrend.map((_, i) => shortDate(addDays(t, (i - 11) * 7)));
   const score = geoTrend[geoTrend.length - 1];
@@ -25,7 +31,7 @@ export default function Geo() {
       <header className="sx-head">
         <div>
           <h1>AI search (GEO)</h1>
-          <p>What ChatGPT, Google AI Overviews, Perplexity and Gemini tell families about Prairie City Landing. We ask 48 questions every day and check the answers against the website.</p>
+          <p>What ChatGPT, Google AI Overviews, Perplexity and Gemini tell families about {s.brand.name}. We ask 48 questions every day and check the answers against the website.</p>
         </div>
         <div className="sx-head-actions">
           <span className="sx-hint">Last checked {ago(60 * 2)}</span>
@@ -33,7 +39,7 @@ export default function Geo() {
       </header>
 
       <div className="sx-grid g-12">
-        <Card title="AI visibility score" sub="How often PCL is named, recommended and described correctly (0–100)">
+        <Card title="AI visibility score" sub={`How often ${s.brand.short} is named, recommended and described correctly (0–100)`}>
           <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
             <Score v={score} size={112} label="AI visibility score" />
             <div>
@@ -45,7 +51,7 @@ export default function Geo() {
           </div>
           <ul className="sx-list" style={{ marginTop: 10 }}>
             <li><b>{acc} of {answers.length}</b> answers below are fully accurate</li>
-            <li><b>{rec} of {answers.length}</b> recommend Prairie City Landing</li>
+            <li><b>{rec} of {answers.length}</b> recommend {s.brand.name}</li>
             <li><b>{open}</b> wrong facts still being corrected</li>
           </ul>
         </Card>
@@ -69,7 +75,7 @@ export default function Geo() {
       </div>
 
       <Card title="Facts AI is getting wrong, and how we’re fixing them" sub="Each fix is a page on the website that AI engines can read and cite." id="wrong">
-        <GeoFixes facts={wrongFacts.map((w) => ({ ...w, when: ago(w.mins) }))} />
+        <GeoFixes facts={wrongFacts.map((w) => ({ ...w, when: ago(w.mins), fixHref: siteHref(s.slug, w.fixUrl) }))} />
       </Card>
 
       <Card title="What AI says about us" sub="Latest answers to the questions families ask most">
@@ -87,7 +93,7 @@ export default function Geo() {
                     <Badge tone={accTone[a.accuracy]}>{accLabel[a.accuracy]}</Badge>
                     {a.recommended ? (
                       <Badge tone="good">
-                        <Icon name="star" /> {a.position ? `Recommended #${a.position}` : "Names PCL"}
+                        <Icon name="star" /> {a.position ? `Recommended #${a.position}` : `Names ${s.brand.short}`}
                       </Badge>
                     ) : (
                       <Badge tone="neutral">Not recommended</Badge>

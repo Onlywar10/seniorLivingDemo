@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import { CalendarEditor, type EdEvent } from "@/components/staff/CalendarEditor";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { PageHead } from "@/components/staff/ui";
-import { cats, eventsBetween, isHarbor, rooms } from "@/data/calendar";
+import { cats, isHarbor } from "@/data/shared";
 import { rsvpFor } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 import { WEEKDAYS, addDays, iso, sundayOf, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Calendar" };
 
-const shared = new Set<string>([rooms.lobby, "All floors"]);
-
-export default function CalendarPage() {
+export default async function CalendarPage() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <PickCommunity screen="Calendar" />;
+  const { s, c } = sc;
+  const { rooms, eventsBetween } = c;
+  // Departure points and "All floors" can host several things at once.
+  const shared = new Set<string>([rooms.lobby ?? "Lobby", "All floors"]);
   const t = today();
   const start = sundayOf(t);
   const days = eventsBetween(start, 42, iso(t));
@@ -21,7 +27,7 @@ export default function CalendarPage() {
       const key = `${e.room}|${e.start}`;
       const clash = !shared.has(e.room) && seen.has(key) ? seen.get(key) : undefined;
       if (!shared.has(e.room)) seen.set(key, e.title);
-      const r = e.cap ? rsvpFor(e.id, e.taken ?? 0, e.waitlist ?? 0, isHarbor(e)) : undefined;
+      const r = e.cap ? rsvpFor(s, e.id, e.taken ?? 0, e.waitlist ?? 0, isHarbor(e)) : undefined;
       out.push({
         id: e.id, date: e.date, start: e.start, end: e.end, title: e.title, room: e.room, cat: e.cat, color: cats[e.cat].color, catLabel: cats[e.cat].label,
         cap: e.cap, taken: e.taken, waitlist: e.waitlist, harbor: isHarbor(e), leader: e.leader, desc: e.desc,

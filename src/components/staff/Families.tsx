@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Contact } from "@/data/staff";
+import type { Contact } from "@/data/staff/shared";
 import { Icon } from "../Icon";
 import { Badge } from "./ui";
 

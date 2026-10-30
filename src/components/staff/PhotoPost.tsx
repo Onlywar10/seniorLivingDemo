@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import { Icon } from "../Icon";
 import { Badge } from "./ui";
 
-type Person = { name: string; consent: boolean };
-type Preset = { k: string; src: string; label: string; title: string; caption: string; people: Person[] };
+import type { PhotoPreset as Preset, StaffData } from "@/data/staff/shared";
 
-export function PhotoPost({ presets, families }: { presets: Preset[]; families: number }) {
+type Brand = Pick<StaffData["brand"], "name" | "short" | "phone" | "domain">;
+
+export function PhotoPost({ presets, families, brand, approver }: { presets: Preset[]; families: number; brand: Brand; approver: string }) {
   const [sel, setSel] = useState(presets[0].k);
   const [upload, setUpload] = useState<string | null>(null);
   const p = presets.find((x) => x.k === sel) ?? presets[0];
@@ -48,7 +49,7 @@ export function PhotoPost({ presets, families }: { presets: Preset[]; families: 
                   const f = e.target.files?.[0];
                   if (!f) return;
                   setUpload(URL.createObjectURL(f));
-                  setTitle("A great afternoon at Prairie City Landing");
+                  setTitle(`A great afternoon at ${brand.name}`);
                   setCaption("Smiles all around this afternoon! Thank you to everyone who joined us.");
                   setStage("edit");
                 }}
@@ -131,11 +132,11 @@ export function PhotoPost({ presets, families }: { presets: Preset[]; families: 
             <div className="prev-b">
               <div className="pv-phone">
                 <div className="pv-phone-scr">
-                  <div className="pv-phone-top"><b>Prairie City Landing</b>(916) 458-0303</div>
+                  <div className="pv-phone-top"><b>{brand.name}</b>{brand.phone}</div>
                   <div className="pv-bubble">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt="" />
-                    PCL: {short} More photos: prairiecitylanding.com/news
+                    {brand.short}: {short} More photos: {brand.domain}/news
                   </div>
                   <div className="pv-meta">To {families} families</div>
                 </div>
@@ -149,7 +150,7 @@ export function PhotoPost({ presets, families }: { presets: Preset[]; families: 
             <Icon name="check" />
             <p>
               Posted.{dest.news && " Live on the news page."}{dest.family && ` Texted to ${families} families.`}
-              {dest.facebook && " Facebook post sent to Cheryl Martin for approval."}
+              {dest.facebook && ` Facebook post sent to ${approver} for approval.`}
             </p>
           </div>
         ) : (

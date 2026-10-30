@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 import { Icon } from "@/components/Icon";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Avatar, Badge, Card, HBars, Kpi, PageHead } from "@/components/staff/ui";
-import { ago, dayLabel, enquiries, enquirySources, followUps, funnel, staffPeople, tours } from "@/data/staff";
+import { ago, dayLabel, siteHref, staffPeople } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 import { fmtTime, nowMinutes } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Tours & enquiries" };
 
 const statusTone = { New: "accent", Contacted: "info", "Tour booked": "good", Nurturing: "neutral" } as const;
 
-export default function ToursPage() {
+export default async function ToursPage() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <PickCommunity screen="Tours & enquiries" />;
+  const { s } = sc;
+  const { enquiries, enquirySources, followUps, funnel, tours } = s;
   const now = nowMinutes();
   const upcoming = tours.filter((t) => t.days > 0 || t.time + 60 > now);
   const byDay = upcoming.reduce<Record<number, typeof tours>>((m, t) => ((m[t.days] ??= []).push(t), m), {});
@@ -17,18 +23,18 @@ export default function ToursPage() {
 
   return (
     <>
-      <PageHead title="Tours & enquiries" sub="Every enquiry from the website, Google, AI search and referral partners, in one list for Cynthia Bazin.">
-        <a className="sx-btn" href="/contact" target="_blank"><Icon name="globe" /> Tour booking page</a>
+      <PageHead title="Tours & enquiries" sub={`Every enquiry from the website, Google, AI search and referral partners, in one list for ${s.people[s.roles.tours].name}.`}>
+        <a className="sx-btn" href={siteHref(s.slug, "/contact")} target="_blank"><Icon name="globe" /> Tour booking page</a>
       </PageHead>
       <div className="sx-kpis">
         <Kpi label="Tours, next 7 days" value={thisWeek} note={`${tours.length} in the next two weeks`} />
         <Kpi label="New enquiries" value={enquiries.filter((e) => e.status === "New").length} note="waiting for a first reply" />
-        <Kpi label="Average first reply" value="38 min" delta={-41} invert note="vs last month" />
+        <Kpi label="Average first reply" value={s.firstReply.value} delta={s.firstReply.delta} invert note="vs last month" />
         <Kpi label="Enquiry to tour" value={`${Math.round((funnel[1].value / funnel[0].value) * 100)}%`} note="last 90 days" />
       </div>
 
       <div className="sx-grid g-21">
-        <Card title="Upcoming tours" sub="This week and next · lunch is on us">
+        <Card title="Upcoming tours" sub="This week and next">
           {Object.entries(byDay).map(([d, list]) => (
             <div key={d}>
               <h3 className="tour-day">{dayLabel(Number(d))}</h3>
@@ -37,7 +43,7 @@ export default function ToursPage() {
                   <time>{fmtTime(t.time)}</time>
                   <div>
                     <b>{t.who}</b> <span className="sx-hint">for {t.for}</span>
-                    <small>{t.interest} · {t.source}{t.lunch ? " · Lunch in the Cypress Room" : ""}</small>
+                    <small>{t.interest} · {t.source}{t.lunch ? ` · Lunch in the ${s.tourLunch}` : ""}</small>
                     {t.note && <small>“{t.note}”</small>}
                   </div>
                   <span className="sx-name"><Avatar who={t.with} size={28} /><span className="sx-hint">{staffPeople[t.with].name.split(" ")[0]}</span></span>

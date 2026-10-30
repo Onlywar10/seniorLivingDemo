@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { SignIn } from "@/components/staff/SignIn";
-import { site } from "@/data/site";
+import { communities } from "@/data/communities";
+import { getStaffScope } from "@/data/staff/server";
 import "./staff.css";
 
-export const metadata: Metadata = { title: { absolute: "Sign in · Prairie City Landing Team" }, robots: { index: false, follow: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const scope = await getStaffScope();
+  const name = scope === "all" ? "Tenfold Senior Living" : communities[scope].site.name;
+  return { title: { absolute: `Sign in · ${name} Team` }, robots: { index: false, follow: false } };
+}
 
-export default function StaffSignIn() {
+export default async function StaffSignIn() {
+  const scope = await getStaffScope();
+  const site = scope === "all" ? null : communities[scope].site;
+  const name = site ? site.name : "Tenfold Senior Living";
   return (
     <div className="sx-login" data-no-translate>
       <div className="sx-login-photo">
@@ -21,13 +29,15 @@ export default function StaffSignIn() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/img/brand/dots.png" alt="" width={52} height={52} />
           <span>
-            <b>Prairie City Landing</b>
+            <b>{name}</b>
             <span>Team sign in</span>
           </span>
         </div>
         <SignIn />
         <p className="sx-login-foot">
-          For the Prairie City Landing team. Trouble signing in? Ask the front desk at {site.phone}, ext. 100, or email it@tenfoldseniorliving.com.
+          {site
+            ? `For the ${site.name} team. Trouble signing in? Ask the front desk at ${site.phone}${scope === "prairie-city-landing" ? ", ext. 100," : ","} or email it@tenfoldseniorliving.com.`
+            : "For the Tenfold Senior Living team. Trouble signing in? Email it@tenfoldseniorliving.com."}
         </p>
       </main>
     </div>

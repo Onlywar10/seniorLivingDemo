@@ -1,7 +1,8 @@
-import { plans, type Plan, type PlanKind } from "@/data/site";
+import type { Plan, PlanKind } from "@/data/shared";
 import { roomName } from "./FloorPlan";
 
-export const findPlan = (code: string) => plans.find((p) => p.code.toLowerCase() === code.toLowerCase());
+/** The plan with this code in a community's plans (case-insensitive), or undefined. */
+export const findPlan = (plans: Plan[], code: string) => plans.find((p) => p.code.toLowerCase() === code.toLowerCase());
 
 export function availability(p: Plan): { text: string; tone: "open" | "wait" } {
   if (p.available > 0) return { text: `${p.available} available`, tone: "open" };
@@ -10,7 +11,11 @@ export function availability(p: Plan): { text: string; tone: "open" | "wait" } {
 }
 
 export const bedLabel = (p: Plan) => (p.kind === "harbor" ? "Private room" : p.beds === 0 ? "Studio" : `${p.beds} bedroom${p.beds > 1 ? "s" : ""}`);
-export const bathLabel = (p: Plan) => (p.baths === 0.5 ? "Shared bath" : `${p.baths} bath${p.baths > 1 ? "s" : ""}`);
+/** "1 bath", "2 baths", "Shared bath"; null where the community doesn't publish the bath count. */
+export const bathLabel = (p: Plan) => (p.baths === null ? null : p.baths === 0.5 ? "Shared bath" : `${p.baths} bath${p.baths > 1 ? "s" : ""}`);
+
+/** A plan with a wrap-around balcony (its features say so). */
+export const wrapBalcony = (p: Plan) => p.features.some((f) => /wrap-around balcony/i.test(f));
 
 export const interestFor: Record<PlanKind, string> = { independent: "independent", assisted: "assisted", harbor: "harbor" };
 
@@ -29,25 +34,21 @@ export interface Stop {
   spots: Spot[];
 }
 
+/** What the tour needs to know about the community: its city (for the bedroom's ceiling fan) and Harbor's entry. */
+export interface TourPlace {
+  city: string;
+  /** Harbor's shared living room, just outside the residents' rooms. */
+  harborEntry: Pick<Stop, "photo" | "alt" | "caption" | "spots">;
+}
+
 /** Tour stops for a plan: only the rooms it has, in walking order. */
-export function tourStops(p: Plan): Stop[] {
+export function tourStops(p: Plan, place: TourPlace): Stop[] {
   const has = (k: string) => p.rooms.some((r) => r[0] === k);
   const care = p.kind !== "independent";
   const stops: Stop[] = [];
 
   if (p.kind === "harbor") {
-    stops.push({
-      key: "entry",
-      title: "Entry",
-      photo: "/img/harbor-living.jpg",
-      alt: "Harbor’s living room with armchairs and a fireplace, just outside the residents’ rooms",
-      caption: "Every Harbor room opens onto a bright, home-like neighborhood with its own living room and fireplace.",
-      spots: [
-        { x: 72, y: 48, label: "Fireplace lounge", text: "The heart of Harbor: armchairs by the fire for coffee, stories and visits with family." },
-        { x: 32, y: 62, label: "Easy to find your way", text: "A small, secured neighborhood with clear sight lines, so everyone can find their way home." },
-        { x: 88, y: 26, label: "Care Partners close by", text: "Harbor’s own team is on hand day and night, never more than a few steps away." },
-      ],
-    });
+    stops.push({ key: "entry", title: "Entry", ...place.harborEntry });
     stops.push({
       key: "bedroom",
       title: roomName("bedroom", p),
@@ -158,7 +159,7 @@ export function tourStops(p: Plan): Stop[] {
       spots: [
         { x: 62, y: 40, label: "Natural light", text: "Oversized windows, with sheers and blackout curtains of your choosing." },
         { x: 95, y: 42, label: "Walk-in closet", text: "Through the door: a walk-in closet with room for every season." },
-        { x: 13, y: 10, label: "Ceiling fan", text: "A ceiling fan for warm Folsom summer nights." },
+        { x: 13, y: 10, label: "Ceiling fan", text: `A ceiling fan for warm ${place.city} summer nights.` },
         { x: 30, y: 52, label: "Emergency pull cord", text: "An emergency pull cord by the bed reaches our team, on site 24 hours." },
       ],
     });
@@ -185,15 +186,15 @@ export function tourStops(p: Plan): Stop[] {
     if (care) spots.unshift({ x: 53, y: 52, label: "Grab bars", text: "Grab bars by the toilet and in the shower, installed from day one." });
     stops.push({
       key: "bath",
-      title: p.baths > 1 ? "Baths" : "Bath",
+      title: (p.baths ?? 1) > 1 ? "Baths" : "Bath",
       photo: "/img/apt-bath.jpg",
       alt: "A bright bathroom with a walk-in shower, grab bar and solid-surface vanity",
-      caption: p.baths > 1 ? "Two full bathrooms, each with a walk-in shower." : "A bright, generous bathroom with a walk-in shower.",
+      caption: (p.baths ?? 1) > 1 ? "Two full bathrooms, each with a walk-in shower." : "A bright, generous bathroom with a walk-in shower.",
       spots,
     });
   }
   if (has("balcony")) {
-    const grand = p.code === "NC6";
+    const grand = wrapBalcony(p);
     stops.push({
       key: "balcony",
       title: "Balcony view",

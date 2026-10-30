@@ -66,11 +66,11 @@
 .ca-wants li { position: relative; padding-left: 20px; font-size: 0.96rem; line-height: 1.45; }
 .ca-wants li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 9px; height: 9px; border-radius: 50%; background: var(--terra); }
 @media (max-width: 640px) { .ca-res-grid, .ca-wants { grid-template-columns: 1fr; } }
-.ca-next { padding: 22px 24px; border-radius: var(--radius); background: var(--green-deep); color: #e9efe8; }
+.ca-next { padding: 22px 24px; border-radius: var(--radius); background: var(--green-deep); color: #e8ecef; }
 .ca-next p { max-width: none; }
 .ca-next a { color: var(--butter); }
 .ca-next .link-arrow { color: #fff; }
-.ca-restart { min-height: 44px; background: none; border: 0; color: #cfd9cf; font: 600 0.96rem var(--font-body), sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.ca-restart { min-height: 44px; background: none; border: 0; color: #cfd5d9; font: 600 0.96rem var(--font-body), sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 /* ---------- Cost comparison ---------- */
 .cc { display: grid; gap: clamp(20px, 3vw, 32px); }
@@ -103,7 +103,7 @@
 .cc-total span { font-weight: 600; flex: 1; }
 .cc-total strong { font-family: var(--font-display), serif; font-weight: 400; font-size: 1.9rem; color: var(--ink); font-variant-numeric: tabular-nums; }
 .cc-total small { font-size: 0.86rem; }
-.cc-total-pcl { background: var(--green-deep); color: #dfe7de; }
+.cc-total-pcl { background: var(--green-deep); color: #dee3e7; }
 .cc-total-pcl strong { color: #fff; }
 
 .cc-apts { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

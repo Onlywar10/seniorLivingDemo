@@ -2,9 +2,11 @@
 
 import { useId, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { useT } from "@/i18n/client";
 
 /** Availability alert for one floor plan: email or text, confirmed locally. */
 export function AlertSignup({ code, open: startOpen = false, compact = false }: { code: string; open?: boolean; compact?: boolean }) {
+  const { t } = useT();
   const id = useId();
   const [open, setOpen] = useState(startOpen);
   const [how, setHow] = useState<"text" | "email">("text");
@@ -17,7 +19,7 @@ export function AlertSignup({ code, open: startOpen = false, compact = false }: 
       <div className="fp-alert-done" role="status">
         <Icon name="check" />
         <span>
-          {how === "text" ? `We’ll text you the moment an ${code} opens up.` : `We’ll email you the moment an ${code} opens up.`}
+          {t(how === "text" ? `We’ll text you the moment an ${code} opens up.` : `We’ll email you the moment an ${code} opens up.`)}
         </span>
       </div>
     );
@@ -26,7 +28,7 @@ export function AlertSignup({ code, open: startOpen = false, compact = false }: 
   if (!open) {
     return (
       <button type="button" className="fp-alert-btn" onClick={() => setOpen(true)} aria-expanded="false">
-        <Icon name="bell" /> Get availability alerts
+        <Icon name="bell" /> {t("Get availability alerts")}
       </button>
     );
   }
@@ -34,8 +36,8 @@ export function AlertSignup({ code, open: startOpen = false, compact = false }: 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const v = value.trim();
-    if (how === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return setError("Please enter a valid email address.");
-    if (how === "text" && v.replace(/\D/g, "").length < 10) return setError("Please enter a 10-digit mobile number.");
+    if (how === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return setError(t("Please enter a valid email address."));
+    if (how === "text" && v.replace(/\D/g, "").length < 10) return setError(t("Please enter a 10-digit mobile number."));
     setError("");
     setDone(true);
   };
@@ -43,19 +45,19 @@ export function AlertSignup({ code, open: startOpen = false, compact = false }: 
   return (
     <form className={`fp-alert ${compact ? "is-compact" : ""}`} onSubmit={submit} noValidate>
       <fieldset className="fp-alert-how">
-        <legend className="vh">How should we reach you?</legend>
+        <legend className="vh">{t("How should we reach you?")}</legend>
         <label className={how === "text" ? "on" : ""}>
           <input type="radio" name={`${id}-how`} checked={how === "text"} onChange={() => { setHow("text"); setError(""); }} />
-          <Icon name="sms" /> Text
+          <Icon name="sms" /> {t("Text")}
         </label>
         <label className={how === "email" ? "on" : ""}>
           <input type="radio" name={`${id}-how`} checked={how === "email"} onChange={() => { setHow("email"); setError(""); }} />
-          <Icon name="mail" /> Email
+          <Icon name="mail" /> {t("Email")}
         </label>
       </fieldset>
       <div className="fp-alert-row">
         <label className="vh" htmlFor={`${id}-v`}>
-          {how === "text" ? `Mobile number for ${code} alerts` : `Email address for ${code} alerts`}
+          {t(how === "text" ? `Mobile number for ${code} alerts` : `Email address for ${code} alerts`)}
         </label>
         <input
           id={`${id}-v`}
@@ -70,7 +72,7 @@ export function AlertSignup({ code, open: startOpen = false, compact = false }: 
           aria-describedby={error ? `${id}-e` : undefined}
         />
         <button type="submit" className="btn btn-green btn-sm">
-          Notify me
+          {t("Notify me")}
         </button>
       </div>
       {error && (

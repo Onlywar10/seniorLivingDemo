@@ -1,49 +1,35 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import { getT } from "@/i18n/server";
 import { Icon } from "@/components/Icon";
-import { Dots } from "@/components/Logo";
-import { site } from "@/data/site";
-import "@/components/info/info.css";
+import { TenfoldChrome } from "@/components/tenfold/TenfoldChrome";
+import { summaries, intoCommunity } from "@/components/tenfold/parts";
 
-export const metadata: Metadata = {
-  title: "Page not found",
-};
-
-const links = [
-  { href: "/calendar", label: "Activity calendar", icon: "calendar" },
-  { href: "/dining", label: "Dining & menus", icon: "fork" },
-  { href: "/floor-plans", label: "Floor plans & pricing", icon: "home" },
-  { href: "/tour", label: "Schedule a tour", icon: "users" },
-  { href: "/news", label: "News", icon: "doc" },
-  { href: "/contact", label: "Info & directions", icon: "pin" },
-] as const;
-
-export default function NotFound() {
+/** The 404 for anything outside a community: the Tenfold chrome and a way back to each community. */
+export default async function NotFound() {
+  const { t, href, lang } = await getT();
   return (
-    <section className="sec tone-sand inf-404">
-      <Dots size={320} style={{ right: -80, top: -40, opacity: 0.25 }} />
-      <div className="wrap-narrow center">
-        <p className="eyebrow">Page not found</p>
-        <h1>
-          We can’t find <em>that page</em>
-        </h1>
-        <p className="muted inf-404-lede">
-          It may have moved, or the link may be out of date. Here are some of the places people look for most — or call us at{" "}
-          <a href={site.phoneHref}>{site.phone}</a> and we’ll point you in the right direction.
-        </p>
-        <ul className="inf-404-links">
-          {links.map((l) => (
-            <li key={l.href}>
-              <Link href={l.href}>
-                <Icon name={l.icon} /> {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <Link className="btn" href="/">
-          Back to the home page
-        </Link>
-      </div>
-    </section>
+    <TenfoldChrome>
+      <section className="tf-phero tf-404">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/img/brand/dots.svg" alt="" aria-hidden="true" className="tf-phero-dots" width={300} height={300} />
+        <div className="wrap tf-phero-grid">
+          <p className="eyebrow">{t("Page not found")}</p>
+          <h1>
+            {t("We can’t find ")}
+            <em>{t("that page.")}</em>
+          </h1>
+          <p className="lede">{t("It may have moved, or the address may be mistyped. These will take you somewhere good:")}</p>
+          <div className="btn-row">
+            {summaries().map((s) => (
+              <a key={s.slug} className="btn btn-green" href={intoCommunity(lang, s.slug)}>
+                {s.name} <Icon name="arrow" />
+              </a>
+            ))}
+            <a className="btn btn-ghost" href={href("/")}>
+              {t("Tenfold home")}
+            </a>
+          </div>
+        </div>
+      </section>
+    </TenfoldChrome>
   );
 }

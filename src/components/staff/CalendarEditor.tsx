@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { addDays, dayName, fmtRange, fmtTime, fromIso, iso, monthName } from "@/lib/clock";
 import { Icon } from "../Icon";
+import { useStaffCommunity } from "./StaffCommunity";
 import { Badge, XIcon } from "./ui";
 
 export interface EdEvent {
@@ -152,6 +153,7 @@ function Drawer({ title, sub, onClose, children, foot }: { title: string; sub?: 
 }
 
 function EventDrawer({ e, onClose }: { e: EdEvent; onClose: () => void }) {
+  const { site } = useStaffCommunity();
   const d = fromIso(e.date);
   const [sent, setSent] = useState(false);
   return (
@@ -167,7 +169,7 @@ function EventDrawer({ e, onClose }: { e: EdEvent; onClose: () => void }) {
               <Icon name="sms" /> {sent ? "Reminder sent" : "Text a reminder to families"}
             </button>
           ) : (
-            <a className="sx-btn sx-btn-primary" href="/calendar" target="_blank">See on website</a>
+            <a className="sx-btn sx-btn-primary" href={site("/calendar")} target="_blank">See on website</a>
           )}
         </>
       }

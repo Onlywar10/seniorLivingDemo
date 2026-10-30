@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { staffPeople, type PersonKey } from "@/data/staff";
+import { staffPeople } from "@/data/staff/people";
+import type { PersonKey } from "@/data/staff/shared";
 
 export const fmt = (n: number) => n.toLocaleString("en-US");
 export const pctChange = (a: number, b: number) => Math.round(((a - b) / b) * 100);

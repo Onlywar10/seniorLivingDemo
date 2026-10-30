@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { cats, type CalEvent } from "@/data/calendar";
+import { cats, type CalEvent } from "@/data/shared";
+import { useCommunity } from "@/lib/community";
 import { fmtRange, fmtTime, fromIso, longDate } from "@/lib/clock";
 import { Icon } from "@/components/Icon";
-import { downloadIcs } from "./ics";
+import { downloadIcs, icsPlace } from "./ics";
+import { useT } from "@/i18n/client";
 
 export interface Rsvp { name: string; party: number; who: "resident" | "family"; apt?: string; waitlist?: number }
 
@@ -13,6 +15,8 @@ export function EventDialog({ event, rsvp, todayIso, now, phone, phoneHref, onCl
   event: CalEvent | null; rsvp?: Rsvp; todayIso: string; now: number; phone: string; phoneHref: string;
   onClose: () => void; onRsvp: (id: string, r: Rsvp) => void;
 }) {
+  const { t } = useT();
+  const c = useCommunity();
   const ref = useRef<HTMLDialogElement>(null);
   const [who, setWho] = useState<"resident" | "family">("resident");
   const [err, setErr] = useState("");
@@ -50,29 +54,29 @@ export function EventDialog({ event, rsvp, todayIso, now, phone, phoneHref, onCl
     <dialog ref={ref} className="cal-dialog" aria-labelledby="cal-dialog-title" onClose={onClose} onClick={(ev) => { if (ev.target === ref.current) ref.current?.close(); }}>
       {e && (
         <div className="cal-dialog-inner" style={{ "--cat": cats[e.cat].color } as React.CSSProperties}>
-          <button type="button" className="cal-dialog-x" aria-label="Close" onClick={() => ref.current?.close()}><Icon name="x" /></button>
-          <p className="cal-dialog-cat"><span className="cal-dot" aria-hidden="true" /> {cats[e.cat].label}{e.special && " · Special event"}</p>
-          <h2 id="cal-dialog-title">{e.title}</h2>
+          <button type="button" className="cal-dialog-x" aria-label={t("Close")} onClick={() => ref.current?.close()}><Icon name="x" /></button>
+          <p className="cal-dialog-cat"><span className="cal-dot" aria-hidden="true" /> {t(cats[e.cat].label)}{e.special && t(" · Special event")}</p>
+          <h2 id="cal-dialog-title">{t(e.title)}</h2>
           <dl className="cal-dialog-facts">
-            <div><dt><Icon name="calendar" /><span className="vh">Date</span></dt><dd>{longDate(fromIso(e.date))}</dd></div>
-            <div><dt><Icon name="clock" /><span className="vh">Time</span></dt><dd>{fmtRange(e.start, e.end)}</dd></div>
-            <div><dt><Icon name="pin" /><span className="vh">Where</span></dt><dd>{bus ? "Departs from the Lobby" : e.room}</dd></div>
-            {e.leader && <div><dt><Icon name="users" /><span className="vh">Led by</span></dt><dd>With <span data-no-translate>{e.leader}</span></dd></div>}
-            {e.cost && <div><dt><Icon name="info" /><span className="vh">Cost</span></dt><dd>Additional cost: {e.cost}</dd></div>}
+            <div><dt><Icon name="calendar" /><span className="vh">{t("Date")}</span></dt><dd>{t(longDate(fromIso(e.date)))}</dd></div>
+            <div><dt><Icon name="clock" /><span className="vh">{t("Time")}</span></dt><dd>{t(fmtRange(e.start, e.end))}</dd></div>
+            <div><dt><Icon name="pin" /><span className="vh">{t("Where")}</span></dt><dd>{t(bus ? "Departs from the Lobby" : e.room)}</dd></div>
+            {e.leader && <div><dt><Icon name="users" /><span className="vh">{t("Led by")}</span></dt><dd>{t("With ")}<span data-no-translate>{e.leader}</span></dd></div>}
+            {e.cost && <div><dt><Icon name="info" /><span className="vh">{t("Cost")}</span></dt><dd>{t("Additional cost: ")}{e.cost}</dd></div>}
           </dl>
-          {e.desc && <p className="cal-dialog-desc">{e.desc}</p>}
-          {bus && <p className="cal-dialog-bus"><Icon name="bus" /> The bus leaves from the Lobby at {fmtTime(e.start)}. Please be there ten minutes early.</p>}
+          {e.desc && <p className="cal-dialog-desc">{t(e.desc)}</p>}
+          {bus && <p className="cal-dialog-bus"><Icon name="bus" />{t(" The bus leaves from the Lobby at ")}{t(fmtTime(e.start))}{t(". Please be there ten minutes early.")}</p>}
 
           {e.cap ? (
             <div className="cal-seats">
               <div className="cal-seats-row">
-                <b>{full ? "Full — join the waitlist" : `${left} of ${e.cap} seats left`}</b>
-                {full && (e.waitlist ?? 0) > 0 && <span className="muted small">{e.waitlist} on the waitlist</span>}
+                <b>{t(full ? "Full — join the waitlist" : `${left} of ${e.cap} seats left`)}</b>
+                {full && (e.waitlist ?? 0) > 0 && <span className="muted small">{e.waitlist}{t(" on the waitlist")}</span>}
               </div>
               <div className="cal-meter" aria-hidden="true"><span style={{ width: `${Math.min(100, ((e.taken ?? 0) / e.cap) * 100)}%` }} /></div>
             </div>
           ) : (
-            !past && <p className="cal-dialog-open"><Icon name="check" /> No sign-up needed — just come along.</p>
+            !past && <p className="cal-dialog-open"><Icon name="check" /> {t("No sign-up needed — just come along.")}</p>
           )}
 
           {e.cap && !past && (
@@ -82,54 +86,54 @@ export function EventDialog({ event, rsvp, todayIso, now, phone, phoneHref, onCl
                 <div>
                   {rsvp.waitlist ? (
                     <>
-                      <b>You’re number {rsvp.waitlist} on the waitlist for {e.title}.</b>
-                      <p>We’ll call you as soon as a seat opens up.</p>
+                      <b>{t("You’re number ")}{rsvp.waitlist}{t(" on the waitlist for ")}{t(e.title)}.</b>
+                      <p>{t("We’ll call you as soon as a seat opens up.")}</p>
                     </>
                   ) : (
                     <>
-                      <b>You’re on the list for {e.title}{rsvp.party > 1 ? `, party of ${rsvp.party}` : ""}.</b>
-                      <p>{bus ? `Bus leaves from the Lobby at ${fmtTime(e.start)}.` : `See you in the ${e.room} at ${fmtTime(e.start)}.`} Need to cancel? Call the front desk at <a href={phoneHref}>{phone}</a>.</p>
+                      <b>{t("You’re on the list for ")}{t(e.title)}{rsvp.party > 1 ? t(`, party of ${rsvp.party}`) : ""}.</b>
+                      <p>{t(bus ? `Bus leaves from the Lobby at ${fmtTime(e.start)}.` : `See you in the ${e.room} at ${fmtTime(e.start)}.`)}{t(" Need to cancel? Call the front desk at ")}<a href={phoneHref}>{phone}</a>.</p>
                     </>
                   )}
                 </div>
               </div>
             ) : (
               <form className="cal-rsvp" onSubmit={submit} noValidate>
-                <h3>{full ? "Join the waitlist" : "Reserve your seat"}</h3>
+                <h3>{t(full ? "Join the waitlist" : "Reserve your seat")}</h3>
                 <div className="form-grid">
                   <label className="field full">
-                    <span>Your name</span>
+                    <span>{t("Your name")}</span>
                     <input name="name" autoComplete="name" required />
                   </label>
                   <fieldset className="cal-who full">
-                    <legend>I am</legend>
-                    <label className="check"><input type="radio" name="who" value="resident" checked={who === "resident"} onChange={() => setWho("resident")} /> A resident</label>
-                    <label className="check"><input type="radio" name="who" value="family" checked={who === "family"} onChange={() => setWho("family")} /> A family member</label>
+                    <legend>{t("I am")}</legend>
+                    <label className="check"><input type="radio" name="who" value="resident" checked={who === "resident"} onChange={() => setWho("resident")} />{t(" A resident")}</label>
+                    <label className="check"><input type="radio" name="who" value="family" checked={who === "family"} onChange={() => setWho("family")} />{t(" A family member")}</label>
                   </fieldset>
                   {who === "resident" && (
                     <label className="field">
-                      <span>Apartment number</span>
+                      <span>{t("Apartment number")}</span>
                       <input name="apt" inputMode="numeric" required />
                     </label>
                   )}
                   <label className="field">
-                    <span>Party size</span>
+                    <span>{t("Party size")}</span>
                     <select name="party" defaultValue="1">
-                      {Array.from({ length: maxParty }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? "person" : "people"}</option>)}
+                      {Array.from({ length: maxParty }, (_, i) => <option key={i + 1} value={i + 1}>{t(`${i + 1} ${i === 0 ? "person" : "people"}`)}</option>)}
                     </select>
                   </label>
                 </div>
-                {err && <p className="cal-err" role="alert">{err}</p>}
-                <button type="submit" className="btn btn-lg cal-rsvp-btn">{full ? "Join the waitlist" : "RSVP"}</button>
+                {err && <p className="cal-err" role="alert">{t(err)}</p>}
+                <button type="submit" className="btn btn-lg cal-rsvp-btn">{t(full ? "Join the waitlist" : "RSVP")}</button>
               </form>
             )
           )}
 
           {past ? (
-            <p className="muted small cal-dialog-past">This event has already taken place.</p>
+            <p className="muted small cal-dialog-past">{t("This event has already taken place.")}</p>
           ) : (
-            <button type="button" className="btn btn-ghost btn-sm cal-dialog-ics" onClick={() => downloadIcs([e], e.title, `${e.id}.ics`)}>
-              <Icon name="calendar" /> Add to my calendar
+            <button type="button" className="btn btn-ghost btn-sm cal-dialog-ics" onClick={() => downloadIcs([e], e.title, `${e.id}.ics`, icsPlace(c.site))}>
+              <Icon name="calendar" /> {t("Add to my calendar")}
             </button>
           )}
         </div>

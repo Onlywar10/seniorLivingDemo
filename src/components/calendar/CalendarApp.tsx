@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { useT } from "@/i18n/client";
 import { useEffect, useMemo, useState } from "react";
-import { cats, filters, isHarbor, type Cat, type CalEvent } from "@/data/calendar";
+import { cats, filters, isHarbor, type Cat, type CalEvent } from "@/data/shared";
+import { useCommunity } from "@/lib/community";
 import { dayName, fmtRange, fromIso, nowMinutes, shortDate } from "@/lib/clock";
 import { Icon } from "@/components/Icon";
 import { EventDialog, type Rsvp } from "./EventDialog";
-import { downloadIcs } from "./ics";
+import { downloadIcs, icsPlace } from "./ics";
 
 export type CalView = "today" | "week" | "month";
 export interface CalDay { date: string; events: CalEvent[] }
@@ -25,6 +27,8 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
   view: CalView; harbor: boolean; todayIso: string; nowMin: number; label: string; days: CalDay[]; month: number;
   todayInRange: boolean; hrefs: Hrefs; phone: string; phoneHref: string;
 }) {
+  const { t } = useT();
+  const c = useCommunity();
   const [active, setActive] = useState<Cat[]>([]);
   const [now, setNow] = useState(nowMin);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -63,9 +67,9 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
   const chipList: Cat[] = harbor ? filters.filter((c) => c !== "harbor") : filters;
 
   const subscribe = () => {
-    const name = harbor ? "Prairie City Landing · Harbor" : "Prairie City Landing";
-    const file = `prairie-city-landing-${view === "month" ? label.toLowerCase().replace(/\s+/g, "-") : (days[0]?.date ?? "calendar")}.ics`;
-    downloadIcs(visible, name, file);
+    const name = harbor ? `${c.site.name} · Harbor` : c.site.name;
+    const file = `${c.slug}-${view === "month" ? label.toLowerCase().replace(/\s+/g, "-") : (days[0]?.date ?? "calendar")}.ics`;
+    downloadIcs(visible, name, file, icsPlace(c.site));
   };
 
   const card = (e: CalEvent, compact = false) => {
@@ -81,79 +85,80 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
         onClick={() => setOpenId(e.id)}
         aria-haspopup="dialog"
       >
-        <span className="cal-ev-time">{fmtRange(e.start, e.end)}</span>
-        <span className="cal-ev-title">{e.title}</span>
+        <span className="cal-ev-time">{t(fmtRange(e.start, e.end))}</span>
+        <span className="cal-ev-title">{t(e.title)}</span>
         {!compact && (
           <span className="cal-ev-meta">
-            {e.room}
+            {t(e.room)}
             {e.leader && <span data-no-translate> · {e.leader}</span>}
           </span>
         )}
         {(live || left !== undefined || mine) && (
           <span className="cal-ev-flags">
-            {live && <span className="cal-now">Happening now</span>}
-            {mine && <span className="cal-flag cal-flag-mine"><Icon name="check" /> {mine.waitlist ? "Waitlisted" : "You’re going"}</span>}
-            {!mine && left !== undefined && !past && (left === 0 ? <span className="cal-flag cal-flag-full">Full · waitlist</span> : <span className="cal-flag">{left} {left === 1 ? "seat" : "seats"} left</span>)}
+            {live && <span className="cal-now">{t("Happening now")}</span>}
+            {mine && <span className="cal-flag cal-flag-mine"><Icon name="check" /> {t(mine.waitlist ? "Waitlisted" : "You’re going")}</span>}
+            {!mine && left !== undefined && !past && (left === 0 ? <span className="cal-flag cal-flag-full">{t("Full · waitlist")}</span> : <span className="cal-flag">{left} {t(left === 1 ? "seat" : "seats")}{t(" left")}</span>)}
           </span>
         )}
       </button>
     );
   };
 
-  const empty = <p className="cal-empty">Nothing on with these filters.</p>;
+  const empty = <p className="cal-empty">{t("Nothing on with these filters.")}</p>;
 
   return (
     <div className={`cal cal-view-${view}${harbor ? " cal-harbor" : ""}`}>
       <div className="cal-print-head" aria-hidden="true">
-        <strong>Prairie City Landing{harbor ? " · Harbor" : ""}</strong> · Activity Calendar · {label}
+        <strong>{c.site.name}{harbor ? " · Harbor" : ""}</strong>{t(" · Activity Calendar · ")}{t(label)}
+        <span className="cal-print-sub" data-no-translate>{c.site.name} · {c.site.addressLine} · {c.site.phone} · {c.site.licence}</span>
       </div>
 
       <div className="cal-bar">
         <div className="cal-nav">
-          <Link className="cal-arrow" href={hrefs.prev} scroll={false} aria-label={hrefs.prevLabel}><Icon name="left" /></Link>
-          <Link className="cal-arrow" href={hrefs.next} scroll={false} aria-label={hrefs.nextLabel}><Icon name="right" /></Link>
-          <h2 id="cal-heading" className="cal-label" aria-live="polite">{harbor ? <><span className="cal-harbor-mark">Harbor</span> · </> : null}{label}</h2>
+          <Link className="cal-arrow" href={hrefs.prev} scroll={false} aria-label={t(hrefs.prevLabel)}><Icon name="left" /></Link>
+          <Link className="cal-arrow" href={hrefs.next} scroll={false} aria-label={t(hrefs.nextLabel)}><Icon name="right" /></Link>
+          <h2 id="cal-heading" className="cal-label" aria-live="polite">{harbor ? <><span className="cal-harbor-mark">Harbor</span> · </> : null}{t(label)}</h2>
         </div>
         <div className="cal-actions">
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => window.print()}><Icon name="printer" /> Print large-print calendar</button>
-          <button type="button" className="btn btn-green btn-sm" onClick={subscribe}><Icon name="download" /> Add to my phone calendar</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => window.print()}><Icon name="printer" /> {t("Print large-print calendar")}</button>
+          <button type="button" className="btn btn-green btn-sm" onClick={subscribe}><Icon name="download" /> {t("Add to my phone calendar")}</button>
         </div>
       </div>
 
       <div className="cal-bar2">
-        <nav className="cal-tabs" aria-label="Calendar view">
-          <Link href={hrefs.today} scroll={false} aria-current={view === "today" ? "page" : undefined}>Today</Link>
-          <Link href={hrefs.week} scroll={false} aria-current={view === "week" ? "page" : undefined}>Week</Link>
-          <Link href={hrefs.month} scroll={false} aria-current={view === "month" ? "page" : undefined}>Month</Link>
+        <nav className="cal-tabs" aria-label={t("Calendar view")}>
+          <Link href={hrefs.today} scroll={false} aria-current={view === "today" ? "page" : undefined}>{t("Today")}</Link>
+          <Link href={hrefs.week} scroll={false} aria-current={view === "week" ? "page" : undefined}>{t("Week")}</Link>
+          <Link href={hrefs.month} scroll={false} aria-current={view === "month" ? "page" : undefined}>{t("Month")}</Link>
         </nav>
-        {!todayInRange && <Link className="btn btn-ghost btn-sm" href={hrefs.backToToday} scroll={false}>Back to today</Link>}
+        {!todayInRange && <Link className="btn btn-ghost btn-sm" href={hrefs.backToToday} scroll={false}>{t("Back to today")}</Link>}
         {hrefs.published && (
           <Link className="cal-published" href={hrefs.published} scroll={false}>
-            <Icon name="spark" /> <span>The November calendar is out — <b>see November</b></span> <Icon name="arrow" />
+            <Icon name="spark" /> <span>{t("The November calendar is out — ")}<b>{t("see November")}</b></span> <Icon name="arrow" />
           </Link>
         )}
       </div>
 
-      <div className="cal-filters" role="group" aria-label="Show only">
-        <button type="button" className="cal-chip cal-chip-all" aria-pressed={active.length === 0} onClick={() => setActive([])}>All</button>
+      <div className="cal-filters" role="group" aria-label={t("Show only")}>
+        <button type="button" className="cal-chip cal-chip-all" aria-pressed={active.length === 0} onClick={() => setActive([])}>{t("All")}</button>
         {chipList.map((c) => (
           <button key={c} type="button" className="cal-chip" aria-pressed={active.includes(c)} style={{ "--cat": cats[c].color } as React.CSSProperties} onClick={() => toggle(c)}>
-            <span className="cal-dot" aria-hidden="true" /> {cats[c].label}
+            <span className="cal-dot" aria-hidden="true" /> {t(cats[c].label)}
           </button>
         ))}
         {harbor ? (
-          <Link className="cal-chip cal-chip-link" href={hrefs.all}>Whole community calendar</Link>
+          <Link className="cal-chip cal-chip-link" href={hrefs.all}>{t("Whole community calendar")}</Link>
         ) : (
-          <Link className="cal-chip cal-chip-link" href={hrefs.harbor}>Harbor calendar</Link>
+          <Link className="cal-chip cal-chip-link" href={hrefs.harbor}>{t("Harbor calendar")}</Link>
         )}
       </div>
 
       {nowEvents.length > 0 && view !== "today" && (
         <div className="cal-nowbar" role="status">
-          <span className="cal-now">Happening now</span>
+          <span className="cal-now">{t("Happening now")}</span>
           {nowEvents.map((e) => (
             <button key={e.id} type="button" className="cal-nowbar-ev" onClick={() => setOpenId(e.id)}>
-              <b>{e.title}</b> · {e.room}
+              <b>{t(e.title)}</b> · {t(e.room)}
             </button>
           ))}
         </div>
@@ -171,7 +176,7 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
 
       {view === "week" && todayInRange && days[0].date < todayIso && !showPast && (
         <button type="button" className="cal-show-past" onClick={() => setShowPast(true)}>
-          <Icon name="chev" /> Show earlier this week
+          <Icon name="chev" /> {t("Show earlier this week")}
         </button>
       )}
       {view === "week" && (
@@ -182,9 +187,9 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
             return (
               <li key={d.date} className={`cal-col${isToday ? " is-today" : ""}${d.date < todayIso ? " is-pastday" : ""}`} aria-current={isToday ? "date" : undefined}>
                 <h3 className="cal-col-head">
-                  <span className="cal-col-dow">{dayName(dt)}</span>
-                  <span className="cal-col-date">{shortDate(dt)}</span>
-                  {isToday && <span className="cal-today-tag">Today</span>}
+                  <span className="cal-col-dow">{t(dayName(dt))}</span>
+                  <span className="cal-col-date">{t(shortDate(dt))}</span>
+                  {isToday && <span className="cal-today-tag">{t("Today")}</span>}
                 </h3>
                 {d.events.length === 0 ? empty : (
                   <ol className="cal-col-list">
@@ -199,10 +204,10 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
 
       {view === "month" && (
         <>
-          <div className="cal-month" role="table" aria-label={label}>
+          <div className="cal-month" role="table" aria-label={t(label)}>
             <div className="cal-month-head" role="row">
               {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d) => (
-                <span key={d} role="columnheader"><span className="cal-dow-long">{d}</span><span className="cal-dow-short" aria-hidden="true">{d.slice(0, 3)}</span></span>
+                <span key={d} role="columnheader"><span className="cal-dow-long">{t(d)}</span><span className="cal-dow-short" aria-hidden="true">{t(d.slice(0, 3))}</span></span>
               ))}
             </div>
             {Array.from({ length: shown.length / 7 }, (_, w) => (
@@ -215,15 +220,15 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
                   const more = d.events.length - top.length;
                   return (
                     <div role="cell" key={d.date} className={`cal-cell${out ? " is-out" : ""}${isToday ? " is-today" : ""}${d.date < todayIso ? " is-pastday" : ""}`} aria-current={isToday ? "date" : undefined}>
-                      <Link className="cal-cell-num" href={hrefs.day + d.date} aria-label={`${dayName(dt)}, ${shortDate(dt)} — all events`}>
+                      <Link className="cal-cell-num" href={hrefs.day + d.date} aria-label={t(`${dayName(dt)}, ${shortDate(dt)} — all events`)}>
                         {dt.getUTCDate()}
-                        {isToday && <span className="cal-today-tag">Today</span>}
+                        {isToday && <span className="cal-today-tag">{t("Today")}</span>}
                       </Link>
                       {!out && (
                         <ul className="cal-cell-list">
                           {top.map((e) => <li key={e.id}>{card(e, true)}</li>)}
                           {more > 0 && (
-                            <li><Link className="cal-more" href={hrefs.day + d.date}>+{more} more</Link></li>
+                            <li><Link className="cal-more" href={hrefs.day + d.date}>+{more}{t(" more")}</Link></li>
                           )}
                         </ul>
                       )}
@@ -242,9 +247,9 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
               return (
                 <li key={d.date} className={`cal-agenda-day${isToday ? " is-today" : ""}`}>
                   <h3 className="cal-col-head">
-                    <span className="cal-col-dow">{dayName(dt)}</span>
-                    <span className="cal-col-date">{shortDate(dt)}</span>
-                    {isToday && <span className="cal-today-tag">Today</span>}
+                    <span className="cal-col-dow">{t(dayName(dt))}</span>
+                    <span className="cal-col-date">{t(shortDate(dt))}</span>
+                    {isToday && <span className="cal-today-tag">{t("Today")}</span>}
                   </h3>
                   {top.length === 0 ? empty : (
                     <ol className="cal-col-list">
@@ -252,7 +257,7 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
                     </ol>
                   )}
                   {d.events.length > top.length && (
-                    <Link className="cal-more" href={hrefs.day + d.date}>See all {d.events.length} events <Icon name="arrow" /></Link>
+                    <Link className="cal-more" href={hrefs.day + d.date}>{t("See all ")}{d.events.length}{t(" events ")}<Icon name="arrow" /></Link>
                   )}
                 </li>
               );
@@ -261,9 +266,9 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
         </>
       )}
 
-      <ul className="cal-legend" aria-label="Color key">
+      <ul className="cal-legend" aria-label={t("Color key")}>
         {(Object.keys(cats) as Cat[]).map((c) => (
-          <li key={c} style={{ "--cat": cats[c].color } as React.CSSProperties}><span className="cal-dot" aria-hidden="true" /> {cats[c].label}</li>
+          <li key={c} style={{ "--cat": cats[c].color } as React.CSSProperties}><span className="cal-dot" aria-hidden="true" /> {t(cats[c].label)}</li>
         ))}
       </ul>
 

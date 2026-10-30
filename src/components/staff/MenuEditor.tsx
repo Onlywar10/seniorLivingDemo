@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { DayMenu, Dish, Tag, Venue } from "@/data/menus";
+import type { DayMenu, Dish, Tag, Venue } from "@/data/shared";
 import { dayName, fromIso, monthName } from "@/lib/clock";
 import { Icon } from "../Icon";
 import { Badge } from "./ui";
@@ -9,7 +9,11 @@ import { Badge } from "./ui";
 const TAGS: Tag[] = ["GF", "VG", "DF"];
 const tagName: Record<Tag, string> = { GF: "Gluten free", VG: "Vegetarian", DF: "Dairy free" };
 
-export function MenuEditor({ menus, todayIso, lastPublished }: { menus: { venue: Venue; days: DayMenu[] }[]; todayIso: string; lastPublished: string }) {
+/**
+ * `barKey`: the coffeehouse and wine bar, whose daily special is a pour and a bite.
+ * `screens`: the digital signage screens that show the menus.
+ */
+export function MenuEditor({ menus, todayIso, lastPublished, barKey, publisher, domain, community, screens }: { menus: { venue: Venue; days: DayMenu[] }[]; todayIso: string; lastPublished: string; barKey?: string; publisher: string; domain: string; community: string; screens: string[] }) {
   const [v, setV] = useState(0);
   const [di, setDi] = useState(0);
   const [data, setData] = useState(menus);
@@ -36,7 +40,7 @@ export function MenuEditor({ menus, todayIso, lastPublished }: { menus: { venue:
       <div className="sx-tabs" role="tablist" aria-label="Restaurant">
         {data.map((x, i) => (
           <button key={x.venue.key} role="tab" aria-selected={v === i} onClick={() => { setV(i); }}>
-            <Icon name={x.venue.key === "rendezvous" ? "coffee" : "fork"} /> {x.venue.name}
+            <Icon name={x.venue.key === barKey ? "coffee" : "fork"} /> {x.venue.name}
           </button>
         ))}
       </div>
@@ -66,7 +70,7 @@ export function MenuEditor({ menus, todayIso, lastPublished }: { menus: { venue:
           <div className="sx-card-body sx-form">
             {(["special", "soup"] as const).map((k) => (
               <fieldset key={k} style={{ border: "1px solid var(--sx-line)", borderRadius: 10, padding: "10px 12px 12px", margin: 0, display: "grid", gap: 8 }}>
-                <legend className="sx-lbl" style={{ padding: "0 4px" }}>{k === "special" ? (venue.key === "rendezvous" ? "Pour and bite of the day" : "Daily special") : "Soup of the day"}</legend>
+                <legend className="sx-lbl" style={{ padding: "0 4px" }}>{k === "special" ? (venue.key === barKey ? "Pour and bite of the day" : "Daily special") : "Soup of the day"}</legend>
                 <label>
                   <span className="vh">{k === "special" ? "Special" : "Soup"} name</span>
                   <input value={m[k].name} onChange={(e) => setDish(k, { name: e.target.value })} />
@@ -112,7 +116,7 @@ export function MenuEditor({ menus, todayIso, lastPublished }: { menus: { venue:
             <header className="sx-card-head">
               <div>
                 <h2>Publish</h2>
-                <p>Last published {pub === "done" ? "just now" : stamp} by Conrad Caguimbal</p>
+                <p>Last published {pub === "done" ? "just now" : stamp} by {publisher}</p>
               </div>
             </header>
             <div className="sx-card-body" style={{ display: "grid", gap: 12 }}>
@@ -127,14 +131,14 @@ export function MenuEditor({ menus, todayIso, lastPublished }: { menus: { venue:
               {pub === "done" && (
                 <div className="sx-callout good" role="status">
                   <Icon name="check" />
-                  <p>Live on prairiecitylanding.com/dining and on 3 signage screens. Families who follow {venue.name} see it in tomorrow’s digest.</p>
+                  <p>Live on {domain}/dining and on {screens.length} signage screens. Families who follow {venue.name} see it in tomorrow’s digest.</p>
                 </div>
               )}
               <ul className="sx-list">
                 <li className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>Website dining page</b><Badge tone="good">Live</Badge></li>
-                <li className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>Lobby screen</b><Badge tone="good">Live</Badge></li>
-                <li className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>Natoma Café screen</b><Badge tone="good">Live</Badge></li>
-                <li className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>The Rendezvous screen</b><Badge tone="good">Live</Badge></li>
+                {screens.map((sc) => (
+                  <li key={sc} className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>{sc}</b><Badge tone="good">Live</Badge></li>
+                ))}
               </ul>
             </div>
           </section>
@@ -146,11 +150,11 @@ export function MenuEditor({ menus, todayIso, lastPublished }: { menus: { venue:
                 <div className="signage-scr">
                   <h3>{venue.name}<small>{m.date === todayIso ? "Today" : `${dayName(d)} ${d.getUTCDate()}`}</small></h3>
                   <ul>
-                    <li><b>{m.holiday ? m.holiday : venue.key === "rendezvous" ? "Today’s pour" : "Chef’s special"}</b>{m.special.name}{m.special.tags?.length ? ` (${m.special.tags.join(", ")})` : ""}</li>
+                    <li><b>{m.holiday ? m.holiday : venue.key === barKey ? "Today’s pour" : "Chef’s special"}</b>{m.special.name}{m.special.tags?.length ? ` (${m.special.tags.join(", ")})` : ""}</li>
                     <li><b>Soup</b>{m.soup.name}{m.soup.tags?.length ? ` (${m.soup.tags.join(", ")})` : ""}</li>
                     <li><b>Hours</b>{venue.hours}</li>
                   </ul>
-                  <footer><span>Prairie City Landing</span><span>Bon appétit!</span></footer>
+                  <footer><span>{community}</span><span>Bon appétit!</span></footer>
                 </div>
               </div>
             </div>

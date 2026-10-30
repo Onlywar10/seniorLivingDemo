@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../Icon";
 import { Badge } from "./ui";
 import { fmtTime, fromIso, dayName, monthName } from "@/lib/clock";
+import type { StaffData } from "@/data/staff/shared";
+import { useStaffCommunity } from "./StaffCommunity";
 
 type Kind = "event" | "menu" | "photo" | "pdf";
 type Aud = "everyone" | "harbor";
@@ -19,6 +21,11 @@ export interface PublisherProps {
   digest: string;
   wine: { date: string; start: number; cap: number; taken: number };
   todayIso: string;
+  brand: StaffData["brand"];
+  /** The Executive Director, who approves posts with resident photos. */
+  approver: { name: string; first: string };
+  /** The community's starting points and contact lines. */
+  copy: StaffData["publish"];
 }
 
 const kinds: { k: Kind; label: string; icon: "calendar" | "fork" | "image" | "doc" }[] = [
@@ -39,12 +46,6 @@ const chanInfo: Record<Chan, { label: string; icon: "globe" | "sms" | "mail" | "
 
 const esDays = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const esMonths = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-const esTitles: Record<string, string> = {
-  "Bus Trip: Wine Tasting at Wise Villa Winery & Lunch": "Excursión: cata de vinos en Wise Villa Winery y almuerzo",
-  "Thanksgiving dinner in the Cypress Room": "Cena de Acción de Gracias en el Cypress Room",
-  "Pumpkin carving in the Courtyard": "Tallado de calabazas en el patio",
-  "Healthy Happy Hour with Jason & Cynthia!": "¡Hora feliz saludable con Jason y Cynthia!",
-};
 
 const toMin = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
@@ -53,51 +54,18 @@ const toMin = (hhmm: string) => {
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 
 export function Publisher(p: PublisherProps) {
-  const presets: Record<Kind, { title: string; date: string; time: string; room: string; cap: string; desc: string; photo: string; chans: Chan[] }> = useMemo(
-    () => ({
-      event: {
-        title: "Bus Trip: Wine Tasting at Wise Villa Winery & Lunch",
-        date: p.wine.date,
-        time: toHHMM(p.wine.start),
-        room: "Lobby",
-        cap: String(p.wine.cap),
-        desc: "A tasting of Wise Villa’s Tempranillo and estate whites in the Lincoln foothills, then lunch at the winery. The bus leaves from the Lobby.",
-        photo: "/img/vineyard.jpg",
-        chans: ["web", "sms", "email", "flyer", "facebook", "gbp"],
-      },
-      menu: {
-        title: "Thanksgiving dinner in the Cypress Room",
-        date: "2026-11-26",
-        time: "11:00",
-        room: "Cypress Dining Room",
-        cap: "",
-        desc: "Herb-roasted turkey with sage pan gravy, honey-glazed ham or wild mushroom Wellington, with all the trimmings and pumpkin, pecan or apple desserts. 11:00 am–3:00 pm, by reservation.",
-        photo: "/img/turkey.jpg",
-        chans: ["web", "sms", "email", "flyer"],
-      },
-      photo: {
-        title: "Pumpkin carving in the Courtyard",
-        date: p.todayIso,
-        time: "14:00",
-        room: "Courtyard",
-        cap: "",
-        desc: "Our residents brought their best ideas to the Courtyard this afternoon. Vote for your favorite on Facebook on Friday!",
-        photo: "/img/pumpkins.jpg",
-        chans: ["web", "sms", "email", "facebook"],
-      },
-      pdf: {
-        title: "Healthy Happy Hour with Jason & Cynthia!",
-        date: "2026-11-18",
-        time: "15:00",
-        room: "The Rendezvous",
-        cap: "",
-        desc: "Music, nutritious snacks and choreography with Jason and Cynthia. Mocktail recipes to take home.",
-        photo: "/img/cocktail.jpg",
-        chans: ["web", "sms", "email", "flyer"],
-      },
-    }),
-    [p.wine, p.todayIso]
-  );
+  const { site } = useStaffCommunity();
+  const { brand, approver, copy } = p;
+  const presets: Record<Kind, { title: string; date: string; time: string; room: string; cap: string; desc: string; photo: string; chans: Chan[] }> = useMemo(() => {
+    const { event, menu, photo, pdf } = copy;
+    return {
+      event: { title: event.title, date: p.wine.date, time: toHHMM(p.wine.start), room: event.room, cap: String(p.wine.cap), desc: event.desc, photo: event.photo, chans: ["web", "sms", "email", "flyer", "facebook", "gbp"] },
+      menu: { title: menu.title, date: menu.date, time: menu.time, room: menu.room, cap: menu.cap, desc: menu.desc, photo: menu.photo, chans: ["web", "sms", "email", "flyer"] },
+      photo: { title: photo.title, date: p.todayIso, time: photo.time, room: photo.room, cap: photo.cap, desc: photo.desc, photo: photo.photo, chans: ["web", "sms", "email", "facebook"] },
+      pdf: { title: pdf.title, date: pdf.date, time: pdf.time, room: pdf.room, cap: pdf.cap, desc: pdf.desc, photo: pdf.photo, chans: ["web", "sms", "email", "flyer"] },
+    };
+  }, [p.wine, p.todayIso, copy]);
+  const esTitles: Record<string, string> = Object.fromEntries([copy.event, copy.menu, copy.photo, copy.pdf].map((x) => [x.title, x.titleEs]));
 
   const [kind, setKind] = useState<Kind>("event");
   const [f, setF] = useState(presets.event);
@@ -114,7 +82,7 @@ export function Publisher(p: PublisherProps) {
     setKind(k);
     setF(presets[k]);
     setChans(new Set(presets[k].chans));
-    setFile(k === "pdf" ? { url: "", name: "healthy-happy-hour-nov-18.pdf", pdf: true } : null);
+    setFile(k === "pdf" ? { url: "", name: copy.pdf.file, pdf: true } : null);
     setAud("everyone");
   };
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -131,23 +99,23 @@ export function Publisher(p: PublisherProps) {
   const harbor = aud === "harbor";
   const families = harbor ? p.harborFamilies : p.families;
   const sms = families;
-  const emails = harbor ? 19 : p.emailReachable;
+  const emails = harbor ? copy.harborEmails : p.emailReachable;
   const titleEs = esTitles[f.title] ?? f.title;
   const needsApproval = chans.has("facebook") && (kind === "photo" || (!!file && !file.pdf));
 
   const shortT = f.title.replace(/^Bus Trip: /, "");
   const smsEn =
     kind === "photo"
-      ? `PCL: New photos! ${f.title}. ${f.desc.split(". ")[0]}. See them: prairiecitylanding.com/news`
+      ? `${brand.short}: New photos! ${f.title}. ${f.desc.split(". ")[0]}. See them: ${brand.domain}/news`
       : kind === "menu"
-        ? `PCL: ${f.title}, ${whenEn}. Families welcome. Reserve with Mickei at (916) 458-0303 ext. 160.`
-        : `PCL: ${shortT}, ${whenEn}, ${f.room}.${cap ? ` ${left} of ${cap} seats left.` : ""} Reply YES to save a seat.`;
+        ? `${brand.short}: ${f.title}, ${whenEn}. Families welcome. ${copy.reserveEn}`
+        : `${brand.short}: ${shortT}, ${whenEn}, ${f.room}.${cap ? ` ${left} of ${cap} seats left.` : ""} Reply YES to save a seat.`;
   const smsEs =
     kind === "photo"
-      ? `PCL: ¡Fotos nuevas! ${titleEs}. Véalas en prairiecitylanding.com/news`
+      ? `${brand.short}: ¡Fotos nuevas! ${titleEs}. Véalas en ${brand.domain}/news`
       : kind === "menu"
-        ? `PCL: ${titleEs}, ${whenEs}. Familias bienvenidas. Reserve con Mickei al (916) 458-0303 ext. 160.`
-        : `PCL: ${titleEs.replace(/^Excursión: /, "")}, ${whenEs}, ${f.room}.${cap ? ` Quedan ${left} de ${cap} lugares.` : ""} Responda SÍ para reservar.`;
+        ? `${brand.short}: ${titleEs}, ${whenEs}. Familias bienvenidas. ${copy.reserveEs}`
+        : `${brand.short}: ${titleEs.replace(/^Excursión: /, "")}, ${whenEs}, ${f.room}.${cap ? ` Quedan ${left} de ${cap} lugares.` : ""} Responda SÍ para reservar.`;
   const smsText = lang === "en" ? smsEn : smsEs;
   const segs = Math.ceil(smsText.length / 160);
 
@@ -187,7 +155,7 @@ export function Publisher(p: PublisherProps) {
               <Icon name="sms" />
               <b>{sms} families texted</b>
               <span>
-                {delivered} delivered · {failed} failed{failed ? " (landline numbers, sent by email instead)" : ""} · {harbor ? 2 : 28} in Spanish, Russian, Tagalog, Vietnamese or Chinese
+                {delivered} delivered · {failed} failed{failed ? " (landline numbers, sent by email instead)" : ""} · {harbor ? copy.harborTranslated : copy.translated} in {copy.otherLangs}
               </span>
             </li>
           )}
@@ -202,14 +170,14 @@ export function Publisher(p: PublisherProps) {
             <li>
               <Icon name="printer" />
               <b>Large-print flyer</b>
-              <span>Sent to the front desk printer (letter, 24 pt). Shirley’s team will post it by the elevators and in the Lobby.</span>
+              <span>Sent to the front desk printer (letter, 24 pt). {copy.flyerPost}</span>
             </li>
           )}
           {chans.has("facebook") && (
             <li className={needsApproval ? "wait" : ""}>
               <Icon name={needsApproval ? "clock" : "facebook"} />
-              <b>Facebook {needsApproval ? <Badge tone="warn">Waiting for Cheryl</Badge> : <Badge tone="good">Posted</Badge>}</b>
-              <span>{needsApproval ? "Posts with resident photos go to Cheryl Martin for approval before they go public. She’s been notified." : "Posted to facebook.com/PrairieCityLanding."}</span>
+              <b>Facebook {needsApproval ? <Badge tone="warn">Waiting for {approver.first}</Badge> : <Badge tone="good">Posted</Badge>}</b>
+              <span>{needsApproval ? `Posts with resident photos go to ${approver.name} for approval before they go public. She’s been notified.` : `Posted to ${brand.facebook}.`}</span>
             </li>
           )}
           {chans.has("gbp") && (
@@ -222,11 +190,11 @@ export function Publisher(p: PublisherProps) {
           <li>
             <Icon name="sparkle" />
             <b>Search and AI</b>
-            <span>Published with structured data, so Google and AI assistants can answer “what’s on at Prairie City Landing?”</span>
+            <span>Published with structured data, so Google and AI assistants can answer “what’s on at {brand.name}?”</span>
           </li>
         </ul>
         <div className="btn-row" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link className="sx-btn sx-btn-primary" href={kind === "menu" ? "/dining" : kind === "photo" ? "/news" : "/calendar"} target="_blank">
+          <Link className="sx-btn sx-btn-primary" href={site(kind === "menu" ? "/dining" : kind === "photo" ? "/news" : "/calendar")} target="_blank">
             <Icon name="globe" /> See it on the website
           </Link>
           <Link className="sx-btn" href="/staff/messages">
@@ -330,7 +298,7 @@ export function Publisher(p: PublisherProps) {
           {needsApproval && (
             <div className="sx-callout info">
               <Icon name="info" />
-              <p>The Facebook post includes resident photos, so it will go to Cheryl Martin for approval. Everything else publishes now.</p>
+              <p>The Facebook post includes resident photos, so it will go to {approver.name} for approval. Everything else publishes now.</p>
             </div>
           )}
           <div className="pub-foot">
@@ -352,7 +320,7 @@ export function Publisher(p: PublisherProps) {
           <div className="prev-b">
             <div className="pv-web">
               <div className="pv-web-bar">
-                <span>prairiecitylanding.com/{kind === "menu" ? "dining" : kind === "photo" ? "news" : "calendar"}</span>
+                <span>{brand.domain}/{kind === "menu" ? "dining" : kind === "photo" ? "news" : "calendar"}</span>
                 <span>{harbor ? "Harbor" : "All events"}</span>
               </div>
               <div className="pv-web-day">{dayName(d)}, {monthName(d)} {d.getUTCDate()}</div>
@@ -384,8 +352,8 @@ export function Publisher(p: PublisherProps) {
             <div className="pv-phone">
               <div className="pv-phone-scr">
                 <div className="pv-phone-top">
-                  <b>Prairie City Landing</b>
-                  (916) 458-0303
+                  <b>{brand.name}</b>
+                  {brand.phone}
                 </div>
                 <div className="pv-bubble">
                   {kind === "photo" && (
@@ -409,16 +377,16 @@ export function Publisher(p: PublisherProps) {
           <div className="prev-b">
             <div className="pv-mail">
               <div className="pv-mail-h">
-                <span><b>From:</b> Prairie City Landing</span>
-                <span><b>Subject:</b> Your week at Prairie City Landing</span>
+                <span><b>From:</b> {brand.name}</span>
+                <span><b>Subject:</b> Your week at {brand.name}</span>
               </div>
               <div className="pv-mail-banner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/img/brand/dots.png" alt="" width={22} height={22} />
-                This week at PCL
+                This week at {brand.short}
               </div>
               <div className="pv-mail-body">
-                <p>Hello from Folsom! Here’s what’s coming up for your loved one.</p>
+                <p>{brand.hello} Here’s what’s coming up for your loved one.</p>
                 <div className="pv-mail-item hl">
                   <div className="pv-mail-img">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -433,12 +401,12 @@ export function Publisher(p: PublisherProps) {
                 <div className="pv-mail-item">
                   <div className="pv-mail-img">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/img/turkey.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+                    <img src={copy.digestExtra.photo} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
                   </div>
                   <div>
-                    <b>Thanksgiving dinner</b>
+                    <b>{copy.digestExtra.title}</b>
                     <br />
-                    <small>Thu, Nov 26 · Cypress Room · by reservation</small>
+                    <small>{copy.digestExtra.when}</small>
                   </div>
                 </div>
               </div>
@@ -454,7 +422,7 @@ export function Publisher(p: PublisherProps) {
             <div className="pv-flyer">
               <div className="pv-flyer-top">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/img/brand/dots.png" alt="" width={14} height={14} /> Prairie City Landing
+                <img src="/img/brand/dots.png" alt="" width={14} height={14} /> {brand.name}
               </div>
               <div className="pv-flyer-img">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -465,7 +433,7 @@ export function Publisher(p: PublisherProps) {
                 <span>{dayName(d)}, {monthName(d)} {d.getUTCDate()} · {fmtTime(start)}</span>
                 <small>{f.room}{cap ? ` · Limited to ${cap} · Sign up at the front desk` : ""}</small>
               </div>
-              <div className="pv-flyer-foot">Questions? Ask Toni Glenn, ext. 140 · (916) 458-0303</div>
+              <div className="pv-flyer-foot">Questions? Ask {copy.flyerAsk} · {brand.phone}</div>
             </div>
           </div>
         </div>

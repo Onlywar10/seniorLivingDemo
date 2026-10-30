@@ -1,25 +1,31 @@
 "use client";
 
-import Link from "next/link";
+import NextLink from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { site } from "@/data/site";
-import { usePrefs } from "@/lib/prefs";
+import { useCommunity } from "@/lib/community";
+import { useT } from "@/i18n/client";
+import { htmlLang } from "@/i18n/config";
 import { Icon } from "./Icon";
-import { answer, hello, starters, officeOpen, looksSpanish, type Answer, type Lang } from "./chat/answers";
+import { answer, callbackName, hello, starters, officeOpen, langOf, type Answer, type Lang } from "./chat/answers";
 import "./chat/chat.css";
 
 type Msg = { id: number; who: "me"; text: string } | { id: number; who: "us"; a: Answer } | { id: number; who: "typing" };
 
-const UI = {
-  en: { launch: "Ask us anything", close: "Close chat", sub: "Answers from our website", call: `or call ${site.phone}`, label: "Your question", ph: "Ask a question…", send: "Send", typing: "Writing an answer", online: "Online now" },
-  es: { launch: "Pregúntenos", close: "Cerrar el chat", sub: "Respuestas de nuestro sitio web", call: `o llame al ${site.phone}`, label: "Su pregunta", ph: "Escriba su pregunta…", send: "Enviar", typing: "Escribiendo una respuesta", online: "En línea" },
-};
+const UI = (phone: string): Record<Lang, Record<"launch" | "close" | "sub" | "call" | "label" | "ph" | "send" | "typing" | "online", string>> => ({
+  en: { launch: "Ask us anything", close: "Close chat", sub: "Answers from our website", call: `or call ${phone}`, label: "Your question", ph: "Ask a question…", send: "Send", typing: "Writing an answer", online: "Online now" },
+  es: { launch: "Pregúntenos", close: "Cerrar el chat", sub: "Respuestas de nuestro sitio web", call: `o llame al ${phone}`, label: "Su pregunta", ph: "Escriba su pregunta…", send: "Enviar", typing: "Escribiendo una respuesta", online: "En línea" },
+  zh: { launch: "有问题请问我们", close: "关闭对话", sub: "回答来自我们的网站", call: `或致电 ${phone}`, label: "您的问题", ph: "请输入您的问题…", send: "发送", typing: "正在撰写回答", online: "在线" },
+});
+
+const YOU: Record<Lang, string> = { en: "You: ", es: "Usted: ", zh: "您：" };
+const SUGGESTED: Record<Lang, string> = { en: "Suggested questions", es: "Preguntas sugeridas", zh: "推荐问题" };
 
 let seq = 0;
 
 /** Website chat, on every public page. Answers come from the community's own published content. */
 export function ChatWidget() {
-  const { lang } = usePrefs();
+  const { lang: L, t: tr } = useT();
+  const c = useCommunity();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [q, setQ] = useState("");
@@ -29,13 +35,12 @@ export function ChatWidget() {
   const fab = useRef<HTMLButtonElement>(null);
   const timer = useRef<number | undefined>(undefined);
   const titleId = useId();
-  const L: Lang = lang === "es" ? "es" : "en";
-  const t = UI[L];
+  const t = UI(c.site.phone)[L];
 
   // The greeting is built only when the panel first opens (it depends on the time of day).
   useEffect(() => {
     if (!open) return;
-    if (msgs.length === 0) setMsgs([{ id: ++seq, who: "us", a: hello(L) }]);
+    if (msgs.length === 0) setMsgs([{ id: ++seq, who: "us", a: hello(c, L) }]);
     requestAnimationFrame(() => input.current?.focus());
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -78,7 +83,7 @@ export function ChatWidget() {
     const s = text.trim();
     if (!s) return;
     setQ("");
-    const a = answer(s, L);
+    const a = answer(s, c, L, tr);
     setMsgs((m) => [...m.filter((x) => x.who !== "typing"), { id: ++seq, who: "me", text: s }, { id: ++seq, who: "typing" }]);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
@@ -134,7 +139,7 @@ export function ChatWidget() {
             </span>
             <div className="chat-head-text">
               <h2 id={titleId} data-no-translate>
-                {site.name}
+                {c.site.name}
               </h2>
               <p>
                 <span>{t.sub} ·</span> <span className="chat-call">{t.call}</span>
@@ -149,7 +154,7 @@ export function ChatWidget() {
             {msgs.map((m) =>
               m.who === "me" ? (
                 <li key={m.id} className="chat-me" data-no-translate>
-                  <span className="vh">{L === "es" ? "Usted: " : "You: "}</span>
+                  <span className="vh">{YOU[L]}</span>
                   {m.text}
                 </li>
               ) : m.who === "typing" ? (
@@ -159,14 +164,14 @@ export function ChatWidget() {
                   <i />
                 </li>
               ) : (
-                <li key={m.id} className="chat-us" lang={m.a.lang}>
+                <li key={m.id} className="chat-us" lang={htmlLang[m.a.lang]}>
                   <Bubble a={m.a} onNav={close} />
                 </li>
               )
             )}
             {!asked && msgs.length > 0 && (
-              <li className="chat-starters" role="group" aria-label={L === "es" ? "Preguntas sugeridas" : "Suggested questions"}>
-                {starters[L].map((s) => (
+              <li className="chat-starters" role="group" aria-label={SUGGESTED[L]}>
+                {starters(c)[L].map((s) => (
                   <button key={s} type="button" onClick={() => ask(s)}>
                     {s}
                   </button>
@@ -176,9 +181,9 @@ export function ChatWidget() {
           </ol>
 
           {chips.length > 0 && (
-            <div className="chat-chips" role="group" aria-label={L === "es" ? "Preguntas sugeridas" : "Suggested questions"}>
+            <div className="chat-chips" role="group" aria-label={SUGGESTED[L]}>
               {chips.map((s) => (
-                <button key={s} type="button" onClick={() => ask(s)} lang={looksSpanish(s) ? "es" : "en"}>
+                <button key={s} type="button" onClick={() => ask(s)} lang={htmlLang[langOf(s) ?? L]}>
                   {s}
                 </button>
               ))}
@@ -207,6 +212,8 @@ export function ChatWidget() {
 }
 
 function Bubble({ a, onNav }: { a: Answer; onNav: () => void }) {
+  // Answer links are bare site paths; keep the visitor in the page's language whatever language the answer is in.
+  const { href } = useT();
   return (
     <>
       <p>{a.text}</p>
@@ -233,14 +240,14 @@ function Bubble({ a, onNav }: { a: Answer; onNav: () => void }) {
       {(a.cta || a.source) && (
         <div className="chat-links">
           {a.cta && (
-            <Link className="chat-cta" href={a.cta.href} onClick={onNav}>
+            <NextLink className="chat-cta" href={href(a.cta.href)} onClick={onNav}>
               {a.cta.label} <Icon name="arrow" />
-            </Link>
+            </NextLink>
           )}
           {a.source && a.source.href !== a.cta?.href && (
-            <Link className="chat-src" href={a.source.href} onClick={onNav}>
+            <NextLink className="chat-src" href={href(a.source.href)} onClick={onNav}>
               <Icon name="doc" /> {a.source.label}
-            </Link>
+            </NextLink>
           )}
         </div>
       )}
@@ -248,22 +255,49 @@ function Bubble({ a, onNav }: { a: Answer; onNav: () => void }) {
   );
 }
 
+/** `who` is the first name of whoever returns call-backs, or null when the community names no one. */
+const LEAD: Record<Lang, { done: (first: string, phone: string, soon: boolean, who: string | null) => string; noName: string; badPhone: string; name: string; phone: string; submit: (who: string | null) => string }> = {
+  en: {
+    done: (first, phone, soon, who) => `Thank you, ${first}. ${who ?? "We"} will call you ${soon ? "within the hour" : "first thing tomorrow morning"} at ${phone}.`,
+    noName: "Please add your name.",
+    badPhone: "Please enter a 10-digit phone number.",
+    name: "Name",
+    phone: "Phone",
+    submit: (who) => (who ? `Ask ${who} to call me` : "Please call me back"),
+  },
+  es: {
+    done: (first, phone, soon, who) => `Gracias, ${first}. ${who ? `${who} le llamará` : "Le llamaremos"} al ${phone} ${soon ? "dentro de una hora" : "mañana a primera hora"}.`,
+    noName: "Escriba su nombre.",
+    badPhone: "Escriba un teléfono de 10 dígitos.",
+    name: "Nombre",
+    phone: "Teléfono",
+    submit: (who) => (who ? `Pedir que ${who} me llame` : "Pedir que me llamen"),
+  },
+  zh: {
+    done: (first, phone, soon, who) => `谢谢您，${first}。${who ? `${who} ` : "我们"}会在${soon ? "一小时内" : "明天一早"}致电 ${phone} 与您联系。`,
+    noName: "请填写您的姓名。",
+    badPhone: "请输入10位数的电话号码。",
+    name: "姓名",
+    phone: "电话",
+    submit: (who) => (who ? `请 ${who} 给我回电` : "请给我回电"),
+  },
+};
+
 function LeadForm({ lang }: { lang: Lang }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [err, setErr] = useState("");
   const [done, setDone] = useState<null | { first: string; phone: string; soon: boolean }>(null);
   const id = useId();
-  const es = lang === "es";
+  const who = callbackName(useCommunity());
+  const c = LEAD[lang];
 
   if (done)
     return (
       <p className="chat-done" role="status">
         <Icon name="check" />
         <span>
-          {es
-            ? `Gracias, ${done.first}. Cynthia le llamará al ${done.phone} ${done.soon ? "dentro de una hora" : "mañana a primera hora"}.`
-            : `Thank you, ${done.first}. Cynthia will call you ${done.soon ? "within the hour" : "first thing tomorrow morning"} at ${done.phone}.`}
+          {c.done(done.first, done.phone, done.soon, who)}
         </span>
       </p>
     );
@@ -275,19 +309,19 @@ function LeadForm({ lang }: { lang: Lang }) {
       onSubmit={(e) => {
         e.preventDefault();
         const digits = phone.replace(/\D/g, "");
-        if (!name.trim()) return setErr(es ? "Escriba su nombre." : "Please add your name.");
-        if (digits.length < 10) return setErr(es ? "Escriba un teléfono de 10 dígitos." : "Please enter a 10-digit phone number.");
+        if (!name.trim()) return setErr(c.noName);
+        if (digits.length < 10) return setErr(c.badPhone);
         const d = digits.slice(-10);
         setErr("");
         setDone({ first: name.trim().split(/\s+/)[0], phone: `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`, soon: officeOpen() });
       }}
     >
       <div className="chat-lead-row">
-        <label htmlFor={`${id}-n`}>{es ? "Nombre" : "Name"}</label>
+        <label htmlFor={`${id}-n`}>{c.name}</label>
         <input id={`${id}-n`} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
       </div>
       <div className="chat-lead-row">
-        <label htmlFor={`${id}-p`}>{es ? "Teléfono" : "Phone"}</label>
+        <label htmlFor={`${id}-p`}>{c.phone}</label>
         <input id={`${id}-p`} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" aria-describedby={err ? `${id}-e` : undefined} />
       </div>
       {err && (
@@ -296,7 +330,7 @@ function LeadForm({ lang }: { lang: Lang }) {
         </p>
       )}
       <button type="submit" className="btn btn-sm">
-        {es ? "Pedir que Cynthia me llame" : "Ask Cynthia to call me"}
+        {c.submit(who)}
       </button>
     </form>
   );

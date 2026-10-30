@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { useT } from "@/i18n/client";
 
 export interface GalleryItem {
   src: string;
@@ -14,6 +15,7 @@ export interface GalleryItem {
 
 /** A photo grid that opens into a keyboard-friendly lightbox. */
 export function Gallery({ items, variant = "mosaic" }: { items: GalleryItem[]; variant?: "mosaic" | "cards" }) {
+  const { t } = useT();
   const [open, setOpen] = useState<number | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -52,40 +54,40 @@ export function Gallery({ items, variant = "mosaic" }: { items: GalleryItem[]; v
       <ul className={`br-gal br-gal-${variant}`}>
         {items.map((it, i) => (
           <li key={it.src + i}>
-            <button type="button" className="br-gal-btn" onClick={(e) => show(i, e.currentTarget)} aria-label={`Open photo: ${it.title}`}>
+            <button type="button" className="br-gal-btn" onClick={(e) => show(i, e.currentTarget)} aria-label={t(`Open photo: ${it.title}`)}>
               <span className="br-gal-ph">
-                <Image src={it.src} alt={it.alt} fill sizes="(max-width: 640px) 100vw, (max-width: 960px) 50vw, 33vw" />
+                <Image src={it.src} alt={t(it.alt)} fill sizes="(max-width: 640px) 100vw, (max-width: 960px) 50vw, 33vw" />
               </span>
               <span className="br-gal-cap">
-                <b>{it.title}</b>
-                {it.meta && <span>{it.meta}</span>}
+                <b>{t(it.title)}</b>
+                {it.meta && <span>{t(it.meta)}</span>}
               </span>
             </button>
-            {variant === "cards" && it.caption && <p className="br-gal-text">{it.caption}</p>}
+            {variant === "cards" && it.caption && <p className="br-gal-text">{t(it.caption)}</p>}
           </li>
         ))}
       </ul>
-      <dialog ref={dialog} className="br-lightbox" onClose={close} onClick={(e) => e.target === e.currentTarget && close()} aria-label={cur?.title ?? "Photo"}>
+      <dialog ref={dialog} className="br-lightbox" onClose={close} onClick={(e) => e.target === e.currentTarget && close()} aria-label={t(cur?.title ?? "Photo")}>
         {cur && (
           <div className="br-lb-inner">
             <div className="br-lb-ph">
-              <Image src={cur.src} alt={cur.alt} fill sizes="90vw" />
+              <Image src={cur.src} alt={t(cur.alt)} fill sizes="90vw" />
             </div>
             <div className="br-lb-text">
               <div>
-                <p className="br-lb-title">{cur.title}</p>
-                {cur.meta && <p className="br-lb-meta">{cur.meta}</p>}
-                {cur.caption && <p className="br-lb-cap">{cur.caption}</p>}
+                <p className="br-lb-title">{t(cur.title)}</p>
+                {cur.meta && <p className="br-lb-meta">{t(cur.meta)}</p>}
+                {cur.caption && <p className="br-lb-cap">{t(cur.caption)}</p>}
               </div>
               <div className="br-lb-ctl">
-                <button type="button" onClick={() => step(-1)} aria-label="Previous photo">
+                <button type="button" onClick={() => step(-1)} aria-label={t("Previous photo")}>
                   <Icon name="left" />
                 </button>
-                <span className="small">{`${(open ?? 0) + 1} of ${items.length}`}</span>
-                <button type="button" onClick={() => step(1)} aria-label="Next photo">
+                <span className="small">{t(`${(open ?? 0) + 1} of ${items.length}`)}</span>
+                <button type="button" onClick={() => step(1)} aria-label={t("Next photo")}>
                   <Icon name="right" />
                 </button>
-                <button type="button" onClick={close} aria-label="Close">
+                <button type="button" onClick={close} aria-label={t("Close")}>
                   <Icon name="x" />
                 </button>
               </div>

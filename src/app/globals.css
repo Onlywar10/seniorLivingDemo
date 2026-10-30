@@ -1,37 +1,40 @@
 /* ------------------------------------------------------------------
-   Prairie City Landing · design tokens and shared styles
-   Tenfold palette: forest green, terracotta, brick, olive, butter, slate, sky.
-   Warm cream grounds, Libre Baskerville headings, Montserrat text, confetti dots.
+   Tenfold Senior Living · design tokens and shared styles (parent site, every community, staff)
+   Palette as on the Tenfold websites: slate structure, brick-red actions, gold highlights, blue-grey and sage accents,
+   cool sage-tinted grounds, Libre Baskerville headings, Montserrat text, confetti dots.
    Page-specific styles live next to each page; shared patterns live here.
 ------------------------------------------------------------------ */
 :root {
-  --cream: #fbf7f0;
-  --sand: #f4ece0;
-  --sand-2: #ece2d2;
+  --cream: #f8f9f6;
+  --sand: #eef1ec;
+  --sand-2: #e1e7df;
   --paper: #ffffff;
-  --ink: #23302a;
-  --ink-2: #4a5650;
-  --ink-3: #6a746f;
+  --ink: #26343c;
+  --ink-2: #4a5961;
+  --ink-3: #66737a;
 
-  --green: #47704c;
-  --green-deep: #2e4d33;
-  --green-ink: #1f3624;
-  --green-tint: #e4ede3;
-  --terra: #ce7056;
-  --terra-deep: #ad4f36; /* AA with white text */
-  --terra-tint: #f8e6df;
-  --brick: #be4142;
+  /* Role names kept from the first build: "green" is the structural colour (now slate) and "terra" the action colour (now brick). */
+  --green: #415a68;
+  --green-deep: #33495a;
+  --green-ink: #24363f;
+  --green-tint: #e3eaee;
+  --terra: #bf4142;
+  --terra-deep: #b33536; /* AA with white text */
+  --terra-tint: #f7e1e0;
+  --brick: #bf4142;
   --brick-tint: #f7e1e0;
-  --olive: #968b53;
-  --butter: #cec489;
-  --butter-tint: #f5f0d9;
-  --slate: #425968;
-  --slate-tint: #e3e9ed;
-  --sky: #4c87a2;
-  --sky-tint: #e1eef3;
+  --olive: #8d9b8c;
+  --butter: #d0c588;
+  --butter-tint: #f6f2dd;
+  --slate: #415a68;
+  --slate-tint: #e3eaee;
+  --sky: #7591a1;
+  --sky-tint: #e4ebef;
+  --sage: #a3b0a2;
+  --sage-tint: #e9eee8;
 
-  --rule: #e3d9c8;
-  --rule-2: #eee6d8;
+  --rule: #d9e0d8;
+  --rule-2: #e6ebe4;
 
   /* calendar categories */
   --c-fitness: #47704c;
@@ -45,8 +48,8 @@
 
   --radius: 18px;
   --radius-s: 10px;
-  --shadow: 0 1px 2px rgba(35, 48, 42, 0.06), 0 12px 32px -14px rgba(35, 48, 42, 0.22);
-  --shadow-lg: 0 2px 6px rgba(35, 48, 42, 0.06), 0 30px 60px -24px rgba(35, 48, 42, 0.35);
+  --shadow: 0 1px 2px rgba(36, 54, 63, 0.06), 0 12px 32px -14px rgba(36, 54, 63, 0.22);
+  --shadow-lg: 0 2px 6px rgba(36, 54, 63, 0.06), 0 30px 60px -24px rgba(36, 54, 63, 0.35);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --wrap: 1220px;
   --header-h: 84px;
@@ -61,7 +64,7 @@ html[data-contrast="high"] {
   --ink-3: #222222;
   --green: #1e4a24;
   --green-deep: #0f2e14;
-  --terra-deep: #8a2f18;
+  --terra-deep: #831f20;
   --rule: #000000;
   --rule-2: #444444;
 }
@@ -139,10 +142,10 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .tone-cream { background: var(--cream); }
 .tone-sand { background: var(--sand); }
 .tone-white { background: var(--paper); }
-.tone-green { background: var(--green-deep); color: #f3efe6; }
+.tone-green { background: var(--green-deep); color: #ecefea; }
 .tone-green h1, .tone-green h2, .tone-green h3, .tone-green h4 { color: #fff; }
 .tone-green a:not(.btn) { color: var(--butter); }
-.tone-green .muted, .on-dark .muted { color: #cfd9cf; }
+.tone-green .muted, .on-dark .muted { color: #cfd5d9; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -154,10 +157,10 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
   background: var(--b); color: #fff;
   transition: transform 0.2s var(--ease), background 0.2s, box-shadow 0.2s, color 0.2s;
 }
-.btn:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 10px 22px -10px rgba(173, 79, 54, 0.6); background: #9b4430; border-color: #9b4430; }
+.btn:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 10px 22px -10px rgba(176, 51, 53, 0.6); background: #9e2d2f; border-color: #9e2d2f; }
 .btn:active { transform: translateY(0); }
 .btn-green { --b: var(--green); }
-.btn-green:hover { background: var(--green-deep); border-color: var(--green-deep); box-shadow: 0 10px 22px -10px rgba(46, 77, 51, 0.6); }
+.btn-green:hover { background: var(--green-deep); border-color: var(--green-deep); box-shadow: 0 10px 22px -10px rgba(48, 65, 75, 0.6); }
 .btn-ghost { background: transparent; color: var(--green-deep); border-color: color-mix(in srgb, var(--green) 45%, transparent); }
 .btn-ghost:hover { background: var(--green-tint); color: var(--green-ink); border-color: var(--green); box-shadow: none; }
 .btn-light { background: #fff; color: var(--green-ink); border-color: #fff; }
@@ -185,7 +188,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 @media (max-width: 640px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
 
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; background: var(--green-tint); color: var(--green-ink); line-height: 1.5; white-space: nowrap; }
-.pill-terra { background: var(--terra-tint); color: #8c3a25; }
+.pill-terra { background: var(--terra-tint); color: #8f2224; }
 .pill-butter { background: var(--butter-tint); color: #5f5520; }
 .pill-sky { background: var(--sky-tint); color: #2b5a70; }
 .pill-brick { background: var(--brick-tint); color: #8e2a2b; }
@@ -230,14 +233,14 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .dots-deco { position: absolute; pointer-events: none; opacity: 0.9; z-index: 0; }
 
 /* ---------- Utility bar ---------- */
-.utility { background: var(--green-ink); color: #dfe7de; font-size: 0.84rem; }
+.utility { background: var(--green-ink); color: #dee3e7; font-size: 0.84rem; }
 .utility-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 42px; }
 .utility-lic { margin: 0; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
 .utility-lic a { color: #fff; text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
 .utility-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .u-group { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); }
-.u-label { padding: 0 8px; color: #b9c7b8; }
-.u-btn, .u-size { background: none; border: 0; color: #e8eee7; font: inherit; font-weight: 500; min-height: 34px; padding: 4px 12px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.u-label { padding: 0 8px; color: #b9c1c6; }
+.u-btn, .u-size { background: none; border: 0; color: #e7ebee; font: inherit; font-weight: 500; min-height: 34px; padding: 4px 12px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .u-size { min-width: 34px; padding: 0; justify-content: center; font-family: var(--font-display), serif; }
 .u-size-0 { font-size: 13px; } .u-size-1 { font-size: 16px; } .u-size-2 { font-size: 19px; }
 .u-btn[aria-pressed="true"], .u-size[aria-pressed="true"] { background: #fff; color: var(--green-ink); }
@@ -246,7 +249,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 @media (max-width: 620px) { .utility-inner { flex-direction: column; align-items: flex-start; gap: 4px; padding: 6px 0; } }
 
 /* ---------- Header ---------- */
-.header { position: sticky; top: 0; z-index: 40; background: rgba(251, 247, 240, 0.94); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid var(--rule-2); }
+.header { position: sticky; top: 0; z-index: 40; background: rgba(245, 247, 244, 0.94); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 4px solid var(--sky); /* blue-grey band, as on the Tenfold websites */ }
 .header-inner { display: flex; align-items: center; gap: 24px; min-height: var(--header-h); }
 .logo { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: var(--green-ink); flex: none; }
 .logo img { width: 46px; height: 46px; object-fit: contain; }
@@ -254,7 +257,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .logo-text b { font-family: var(--font-display), serif; font-weight: 400; font-size: 1.32rem; letter-spacing: -0.01em; color: var(--green-ink); }
 .logo-text span { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; margin-top: 4px; }
 .logo.light b { color: #fff; }
-.logo.light span { color: #c8d3c6; }
+.logo.light span { color: #c7ced2; }
 .nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .nav-item { position: relative; }
 .nav-link { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; min-height: 44px; padding: 8px 14px; border-radius: 999px; font-weight: 500; font-size: 0.96rem; color: var(--ink); text-decoration: none; background: none; border: 0; cursor: pointer; font-family: inherit; }
@@ -282,7 +285,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .mnav .btn { margin-top: 16px; }
 
 /* ---------- Footer ---------- */
-.footer { background: var(--green-ink); color: #d7e0d6; padding: clamp(56px, 7vw, 88px) 0 28px; position: relative; overflow: hidden; }
+.footer { background: var(--green-ink); color: #d7dce0; padding: clamp(56px, 7vw, 88px) 0 28px; position: relative; overflow: hidden; }
 .footer a { color: #fff; text-decoration: none; }
 .footer a:hover { text-decoration: underline; text-decoration-color: var(--terra); }
 .footer-top { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 40px; position: relative; z-index: 1; }
@@ -293,9 +296,9 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .footer-family { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-top: 48px; padding-top: 28px; border-top: 1px solid rgba(255, 255, 255, 0.14); position: relative; z-index: 1; }
 .footer-family img { height: 52px; width: auto; }
 .footer-family p { margin: 0; font-size: 0.92rem; }
-.footer-bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 24px; font-size: 0.84rem; color: #aebcac; position: relative; z-index: 1; }
+.footer-bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 24px; font-size: 0.84rem; color: #adb6bb; position: relative; z-index: 1; }
 .footer-bottom nav { display: flex; gap: 18px; flex-wrap: wrap; }
-.footer-bottom a { color: #d7e0d6; }
+.footer-bottom a { color: #d7dce0; }
 .licence { font-weight: 600; color: #fff; }
 @media (max-width: 900px) { .footer-top { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .footer-top { grid-template-columns: 1fr; } }
@@ -339,3 +342,22 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
   .logo-text span { font-size: 0.6rem; letter-spacing: 0.1em; }
 }
 .nav-item:last-child .nav-drop { left: auto; right: -8px; }
+
+/* ---------- Languages ---------- */
+a.u-btn { text-decoration: none; }
+.u-group .icon { margin: 0 2px 0 8px; color: #b9c1c6; }
+.u-btn[aria-current="true"] { background: #fff; color: var(--green-ink); }
+.u-btn[aria-current="true"]:hover { background: #fff; }
+.lang-suggest { background: var(--butter, #cec489); color: var(--green-ink); }
+.lang-suggest-inner { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; min-height: 56px; padding-block: 8px; }
+.lang-suggest-inner p { margin: 0; font-weight: 600; font-size: 1.02rem; }
+.lang-suggest-inner .btn { margin-left: auto; }
+.lang-suggest-stay { background: none; border: 0; font: inherit; color: var(--green-ink); text-decoration: underline; min-height: 44px; padding: 0 6px; cursor: pointer; }
+
+/* Simplified Chinese: Chinese faces after the Latin ones (Latin text, numbers and names keep the brand fonts).
+   No italics, no wide tracking, and a little more size and leading, which Chinese needs at small sizes. */
+html[lang="zh-Hans"] body { font-family: var(--font-body), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif; line-height: 1.75; }
+html[lang="zh-Hans"] :is(h1, h2, h3, h4, .logo-text b) { font-family: var(--font-display), "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif; letter-spacing: 0.02em; line-height: 1.35; }
+html[lang="zh-Hans"] :is(h1, h2) em { font-style: normal; }
+html[lang="zh-Hans"] :is(.eyebrow, .footer h2) { letter-spacing: 0.08em; }
+html[lang="zh-Hans"] :is(p, li, dd, td) { word-break: normal; overflow-wrap: anywhere; }

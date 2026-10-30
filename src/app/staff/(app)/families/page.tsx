@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
 import { ContactTable, ImportContacts } from "@/components/staff/Families";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Card, HBars, Kpi, PageHead } from "@/components/staff/ui";
-import { community, contacts, languages } from "@/data/staff";
+import { getStaffCommunity } from "@/data/staff/server";
 
 export const metadata: Metadata = { title: "Families & contacts" };
 
-export default function FamiliesPage() {
+export default async function FamiliesPage() {
+  const sc = await getStaffCommunity();
+  if (!sc) return <PickCommunity screen="Families & contacts" />;
+  const { s } = sc;
+  const { community, contacts, languages } = s;
   return (
     <>
-      <PageHead title="Families & contacts" sub="Everyone who hears from Prairie City Landing, how they like to hear, and in which language." />
+      <PageHead title="Families & contacts" sub={`Everyone who hears from ${s.brand.name}, how they like to hear, and in which language.`} />
       <div className="sx-kpis">
         <Kpi label="Residents" value={community.residents} note={`${community.harborResidents} in Harbor`} />
         <Kpi label="Families opted in" value={community.families} note={`${community.contacts} contacts in all`} />
@@ -17,7 +22,7 @@ export default function FamiliesPage() {
       </div>
       <ContactTable contacts={contacts} />
       <div className="sx-grid g-2">
-        <Card title="Import from a spreadsheet" sub="Last import: Oct 3, from the business office (Yardi), 268 contacts">
+        <Card title="Import from a spreadsheet" sub={s.importNote}>
           <ImportContacts />
         </Card>
         <Card title="Languages" sub="Messages are translated automatically for these families">
