@@ -167,7 +167,7 @@ function resultFor(c: Community): Record<LivingKey, { photo: string; alt: string
   return {
     independent: { photo: "/img/friends-laugh.jpg", alt: "Residents laughing together over coffee", from: `From ${money(pricing.independentRange[0])} a month`, interest: "independent" },
     assisted: { photo: "/img/care-chat.jpg", alt: "A Care Partner chatting with a resident on her sofa", from: `Your apartment, plus a ${money(pricing.assistedBase)} monthly base support fee and personal care by care plan`, interest: "assisted" },
-    harbor: { photo: "/img/harbor-couple.jpg", alt: "A couple enjoying time together in Harbor", from: `From ${money(pricing.harbor[0].from)} a month`, interest: "harbor" },
+    lantern: { photo: "/img/lantern-couple.jpg", alt: "A couple enjoying time together in Lantern", from: `From ${money(pricing.lantern[0].from)} a month`, interest: "lantern" },
   };
 }
 
@@ -314,7 +314,7 @@ function score(ans: Record<string, string[]>) {
       if ((o.care ?? 0) >= 3) heavy = true;
     }
   }
-  const rec: LivingKey = memory >= 3 ? "harbor" : heavy || care >= 3 ? "assisted" : "independent";
+  const rec: LivingKey = memory >= 3 ? "lantern" : heavy || care >= 3 ? "assisted" : "independent";
   return { rec, care, memory };
 }
 
@@ -337,7 +337,7 @@ function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, 
   const wants = (ans.wants ?? []).map((w) => WANTS[w]).filter(Boolean);
   const when = ans.when?.[0];
   const social = ans.social?.[0];
-  const openNow = plans.filter((p) => (rec === "harbor" ? p.kind === "harbor" : p.kind !== "harbor") && p.available > 0).reduce((s, p) => s + p.available, 0);
+  const openNow = plans.filter((p) => (rec === "lantern" ? p.kind === "lantern" : p.kind !== "lantern") && p.available > 0).reduce((s, p) => s + p.available, 0);
 
   const headline =
     rec === "independent" ? (
@@ -350,7 +350,7 @@ function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, 
       </>
     ) : (
       <>
-        <em>{t("Harbor Memory Care")}</em>{t(" may be the right place")}
+        <em>{t("Lantern Memory Care")}</em>{t(" may be the right place")}
       </>
     );
 
@@ -359,7 +359,7 @@ function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, 
       ? `${self ? "You sound" : `${n.Name} sounds`} independent and ready to enjoy more of life, with none of the chores. Independent Living means a real apartment home, three restaurants, a calendar full of things to do, and our team on site 24 hours, just in case.`
       : rec === "assisted"
         ? `${self ? "You’d have your own apartment and your own routine" : `${n.Name} would have an apartment and a routine of their own`}, with a Care Partner close by for the parts of the day that have become harder${care >= 5 ? ", from medications to bathing" : ""}. Assisted Living Services are delivered discreetly in every apartment, so nobody ever has to move to get more help.`
-        : `${self ? "You’d" : `${n.Name} would`} live in Harbor, our secured, home-like memory care neighborhood with its own courtyard and its own team. Harbor is built around what residents can still do and love${memory >= 4 ? "" : ", and families tell us the peace of mind comes quickly"}: weekly outings, music, gardening and purposeful roles in everyday life.`);
+        : `${self ? "You’d" : `${n.Name} would`} live in Lantern, our secured, home-like memory care neighborhood with its own courtyard and its own team. Lantern is built around what residents can still do and love${memory >= 4 ? "" : ", and families tell us the peace of mind comes quickly"}: weekly outings, music, gardening and purposeful roles in everyday life.`);
 
   return (
     <div className="ca-result">
@@ -403,13 +403,13 @@ function Result({ N, ans, headRef, onRestart }: { N: Names; ans: Record<string, 
               {when === "later"
                 ? t("You’re just exploring, which is the best time to start. There’s no rush and no pressure.")
                 : `${t(`You’re hoping to move ${QUESTIONS.find((q) => q.id === "when")!.opts.find((o) => o.v === when)!.echo}.`)} ${t(
-                    openNow > 0 ? `We have ${openNow} ${rec === "harbor" ? "Harbor room" : "apartment"}${openNow === 1 ? "" : "s"} available right now.` : `Ask ${contactFirst ?? "us"} about the waitlist; spaces open up regularly.`,
+                    openNow > 0 ? `We have ${openNow} ${rec === "lantern" ? "Lantern room" : "apartment"}${openNow === 1 ? "" : "s"} available right now.` : `Ask ${contactFirst ?? "us"} about the waitlist; spaces open up regularly.`,
                   )}`}
             </p>
           )}
         </div>
         <div className="ca-res-box">
-          <h3>{t(rec === "harbor" ? "Life in Harbor" : `What ${L.name} includes`)}</h3>
+          <h3>{t(rec === "lantern" ? "Life in Lantern" : `What ${L.name} includes`)}</h3>
           <ul className="ca-echo">
             {L.points.slice(0, 5).map((p) => (
               <li key={p}>

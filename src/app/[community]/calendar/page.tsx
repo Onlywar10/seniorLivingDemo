@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Dots } from "@/components/Logo";
 import { Icon } from "@/components/Icon";
 import { CalendarApp, type CalDay, type CalView } from "@/components/calendar/CalendarApp";
-import { cats, isHarbor, type CalEvent } from "@/data/shared";
+import { cats, isLantern, type CalEvent } from "@/data/shared";
 import { calendarCopy } from "@/data/communities/copy/events";
 import { getCommunity } from "@/lib/community-server";
 import { addDays, dayName, fmtTime, fromIso, iso, longDate, monthGrid, monthLabel, nowMinutes, shortDate, sundayOf, today } from "@/lib/clock";
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** The published month. */
 const PUBLISHED = "2026-11-01";
 
-type SP = Promise<{ view?: string; date?: string; harbor?: string }>;
+type SP = Promise<{ view?: string; date?: string; lantern?: string }>;
 
 export default async function CalendarPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
@@ -33,7 +33,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
   const eventsOn = c.eventsOn;
   const t = today();
   const todayIso = iso(t);
-  const harbor = sp.view === "harbor" || sp.harbor === "1";
+  const lantern = sp.view === "lantern" || sp.lantern === "1";
   const view: CalView = sp.view === "today" || sp.view === "day" ? "today" : sp.view === "month" ? "month" : "week";
 
   // Anchor date, kept within a year either side of today.
@@ -47,7 +47,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
     const q = new URLSearchParams();
     q.set("view", v);
     if (d) q.set("date", iso(d));
-    if (harbor) q.set("harbor", "1");
+    if (lantern) q.set("lantern", "1");
     return `/calendar?${q.toString()}`;
   };
 
@@ -89,7 +89,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
   const publishedHref = !showingPublished && t.getTime() < addDays(pub, 30).getTime() ? href("month", pub) : undefined;
 
   const nowMin = nowMinutes();
-  const keep = (e: CalEvent) => !harbor || isHarbor(e);
+  const keep = (e: CalEvent) => !lantern || isLantern(e);
   const upNext = eventsOn(t, todayIso).filter((e) => keep(e) && (e.end ?? e.start + 60) > nowMin).slice(0, 3);
   const tomorrow = eventsOn(addDays(t, 1), todayIso).filter(keep).slice(0, 3);
 
@@ -106,19 +106,19 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
             <nav className="crumbs" aria-label={tr("Breadcrumb")}>
               <Link href="/">{tr("Home")}</Link>
               <span><span aria-hidden="true">/ </span><Link href="/calendar">{tr("Activity Calendar")}</Link></span>
-              {harbor && <span><span aria-hidden="true">/ </span><Link href="/calendar?view=harbor">Harbor</Link></span>}
+              {lantern && <span><span aria-hidden="true">/ </span><Link href="/calendar?view=lantern">Lantern</Link></span>}
             </nav>
-            <p className="eyebrow rise">{tr(harbor ? "Harbor Memory Care" : "Events & Adventures")}</p>
-            <h1 className="rise rise-2">{harbor ? <>{tr("The Harbor ")}<em>{tr("calendar")}</em></> : <>{tr("What’s on at ")}<em>{tr(copy.titleEm)}</em></>}</h1>
+            <p className="eyebrow rise">{tr(lantern ? "Lantern Memory Care" : "Events & Adventures")}</p>
+            <h1 className="rise rise-2">{lantern ? <>{tr("The Lantern ")}<em>{tr("calendar")}</em></> : <>{tr("What’s on at ")}<em>{tr(copy.titleEm)}</em></>}</h1>
             <p className="lede rise rise-3">
-              {tr(harbor
-                ? copy.harborLede
+              {tr(lantern
+                ? copy.lanternLede
                 : "More than 25 fitness classes a week, clubs and games, live music, faith services and a bus out the door almost every day. Sign up for trips right here, or at the front desk.")}
             </p>
           </div>
           <aside className="cal-next rise rise-3" aria-labelledby="cal-next-h">
             <div className="cal-next-ph">
-              <Image src={harbor ? "/img/harbor-garden.jpg" : copy.photo.src} alt={tr(harbor ? "Harbor’s private courtyard garden, with lawn and patio chairs" : copy.photo.alt)} fill sizes="(max-width: 860px) 100vw, 420px" priority />
+              <Image src={lantern ? "/img/lantern-garden.jpg" : copy.photo.src} alt={tr(lantern ? "Lantern’s private courtyard garden, with lawn and patio chairs" : copy.photo.alt)} fill sizes="(max-width: 860px) 100vw, 420px" priority />
             </div>
             <div className="cal-next-body">
               <h2 id="cal-next-h">{tr(upNext.length ? "Up next today" : "Tomorrow")}</h2>
@@ -152,7 +152,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
         <div className="wrap">
           <CalendarApp
             view={view}
-            harbor={harbor}
+            lantern={lantern}
             todayIso={todayIso}
             nowMin={nowMin}
             label={label}
@@ -169,8 +169,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
               nextLabel,
               backToToday: href(view),
               published: publishedHref,
-              day: `/calendar?view=today${harbor ? "&harbor=1" : ""}&date=`,
-              harbor: "/calendar?view=harbor",
+              day: `/calendar?view=today${lantern ? "&lantern=1" : ""}&date=`,
+              lantern: "/calendar?view=lantern",
               all: `/calendar?view=${view}`,
             }}
             phone={site.phone}
@@ -204,10 +204,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
               </p>
             </div>
           </div>
-          {!harbor && (
-            <p className="cal-harbor-link">
-              <Link className="link-arrow" href="/calendar?view=harbor">
-                {tr("See the Harbor Memory Care calendar ")}<Icon name="arrow" />
+          {!lantern && (
+            <p className="cal-lantern-link">
+              <Link className="link-arrow" href="/calendar?view=lantern">
+                {tr("See the Lantern Memory Care calendar ")}<Icon name="arrow" />
               </Link>
             </p>
           )}

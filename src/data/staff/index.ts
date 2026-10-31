@@ -3,16 +3,16 @@
 // Client components import types from "./shared" and people from "./people" so they don't bundle every community's data.
 import { communities, type CommunitySlug } from "@/data/communities";
 import { communitySlugs } from "@/lib/sites";
-import { staff as bp } from "./bruceville-point";
-import { staff as pcl } from "./prairie-city-landing";
+import { staff as kp } from "./kestrel-point";
+import { staff as ab } from "./alder-bend";
 import type { StaffData } from "./shared";
 
 export * from "./shared";
 export { staffPeople, user } from "./people";
 
 export const staffData: Record<CommunitySlug, StaffData> = {
-  "prairie-city-landing": pcl,
-  "bruceville-point": bp,
+  "alder-bend": ab,
+  "kestrel-point": kp,
 };
 
 export const getStaffData = (slug: CommunitySlug): StaffData => staffData[slug];
@@ -31,7 +31,7 @@ export function occupancy(slug: CommunitySlug) {
   return { units, avail, pct: ((units - avail) / units) * 100 };
 }
 
-/** The headline figures for one community, for the Tenfold overview. */
+/** The headline figures for one community, for the Wrenhaven overview. */
 export function staffSummary(slug: CommunitySlug) {
   const d = staffData[slug];
   const c = communities[slug];

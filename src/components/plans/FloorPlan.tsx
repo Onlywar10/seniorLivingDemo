@@ -17,7 +17,7 @@ export function roomName(key: string, plan: Pick<Plan, "kind" | "rooms">): strin
     case "living":
       return room && room[3] >= 36 ? "Living & dining" : "Living";
     case "bedroom":
-      return plan.kind === "harbor" ? "Private room" : plan.rooms.some((r) => r[0] === "bedroom2") ? "Primary bedroom" : "Bedroom";
+      return plan.kind === "lantern" ? "Private room" : plan.rooms.some((r) => r[0] === "bedroom2") ? "Primary bedroom" : "Bedroom";
     case "bedroom2":
       return "Second bedroom";
     case "bath":
@@ -35,7 +35,7 @@ export function roomName(key: string, plan: Pick<Plan, "kind" | "rooms">): strin
 
 /** Short labels for inside the drawing. */
 function shortName(key: string, plan: PlanShape, r: Room): string {
-  if (key === "bedroom" && plan.kind === "harbor") return "Room";
+  if (key === "bedroom" && plan.kind === "lantern") return "Room";
   if (key === "bedroom") return plan.rooms.some((x) => x[0] === "bedroom2") ? "Bedroom 1" : "Bedroom";
   if (key === "bedroom2") return "Bedroom 2";
   if (key === "living") return r[3] >= 36 ? "Living / Dining" : "Living";

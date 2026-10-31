@@ -20,7 +20,7 @@ export default async function ScorecardPage() {
   const maxSrc = Math.max(...enquirySources.map((s) => s.value), ...enquirySourcesPrev);
   return (
     <>
-      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`${s.brand.name} compared with ${m.prev} and this month’s targets. Shared with ${s.people[s.roles.approver].name} and Tenfold Senior Living.`}>
+      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`${s.brand.name} compared with ${m.prev} and this month’s targets. Shared with ${s.people[s.roles.approver].name} and Wrenhaven Senior Living.`}>
         <button type="button" className="sx-btn"><Icon name="download" /> Download PDF</button>
         <button type="button" className="sx-btn sx-btn-primary"><Icon name="mail" /> Email to the team</button>
       </PageHead>

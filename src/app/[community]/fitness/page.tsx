@@ -67,11 +67,11 @@ export default async function Fitness() {
         </div>
       </PageHero>
 
-      <section className="sec tone-white" aria-labelledby="br-jason-h">
+      <section className="sec tone-white" aria-labelledby="br-fitdir-h">
         <div className="wrap br-split">
           <div>
             <p className="eyebrow">{t("Meet your Fitness Director")}</p>
-            <h2 id="br-jason-h">
+            <h2 id="br-fitdir-h">
               {t("Fitness is better ")}<em>{t("with friends.")}</em>
             </h2>
             {director && !director.unnamed && (

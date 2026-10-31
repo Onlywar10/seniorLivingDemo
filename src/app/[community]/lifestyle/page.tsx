@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
 import "@/components/brand/brand.css";
-import { yusm } from "@/data/tenfold";
+import { pillars } from "@/data/wrenhaven";
 import { lifestyleCopy } from "@/data/communities/copy/lifestyle";
 import { getCommunity } from "@/lib/community-server";
 import { today } from "@/lib/clock";
@@ -30,10 +30,10 @@ export default async function Lifestyle() {
         eyebrow="Lifestyle"
         title={
           <>
-            {t("Not just a home, but a ")}<em>{t("lifestyle.")}</em>
+            {t("Your days, ")}<em>{t("your way.")}</em>
           </>
         }
-        lede={`Today alone there are ${n} things happening on the calendar. Join in, start something new, or simply enjoy the view from the courtyard — it’s your call.`}
+        lede={`There are ${n} things on the calendar today alone. Join in, start something of your own, or just enjoy the courtyard. Up to you.`}
         photo={hero.photo}
         alt={hero.alt}
         crumbs={[["Lifestyle", "/lifestyle"]]}
@@ -42,24 +42,24 @@ export default async function Lifestyle() {
           <Link className="btn" href="/calendar">
             <Icon name="calendar" /> {t("Today’s calendar")}
           </Link>
-          <Link className="btn btn-ghost" href="#yusm">
-            {t("What is YUSM?")}
+          <Link className="btn btn-ghost" href="#live">
+            {t("What is LIVE?")}
           </Link>
         </div>
       </PageHero>
 
-      <section className="sec tone-cream" id="yusm" aria-labelledby="br-yusm-h">
+      <section className="sec tone-cream" id="live" aria-labelledby="br-live-h">
         <div className="wrap">
           <div className="sec-head">
-            <p className="eyebrow">{t("What is YUSM?")}</p>
-            <h2 id="br-yusm-h">
-              {t("Youthful. Useful. Spontaneous. ")}<em>{t("Mobile.")}</em>
+            <p className="eyebrow">{t("What is LIVE?")}</p>
+            <h2 id="br-live-h">
+              {t("Lively. Independent. Valued. ")}<em>{t("Engaged.")}</em>
             </h2>
-            <p>{t("YUSM is how Tenfold Senior Living thinks about a good life. It’s the lens we use for every class, menu, outing and conversation — and the reason no two weeks here look the same.")}</p>
+            <p>{t("LIVE is Wrenhaven Senior Living’s short answer to what makes a good life. We hold every class, menu, outing and conversation up against it, which is why no two weeks here are alike.")}</p>
           </div>
-          <div className="br-yusm">
-            {yusm.map((y) => {
-              const x = deeper[y.letter];
+          <div className="br-live">
+            {pillars.map((y, i) => {
+              const x = deeper[y.letter] ?? Object.values(deeper)[i];
               return (
                 <article key={y.letter} className="br-y">
                   <span className="br-y-letter" aria-hidden="true">

@@ -126,21 +126,21 @@
 @media (max-width: 960px) { .hm-living { grid-template-columns: 1fr; } .hm-opt-1 { grid-row: auto; } .hm-opt-1 .hm-opt-ph { min-height: 280px; } }
 @media (max-width: 640px) { .hm-opt-2, .hm-opt-3 { grid-template-columns: 1fr; } .hm-opt-ph { min-height: 210px; } }
 
-/* ---------- YUSM ---------- */
-.hm-yusm { overflow: hidden; }
-.hm-yusm-head { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: end; margin-bottom: clamp(32px, 4vw, 52px); position: relative; }
-.hm-yusm-head p:not(.eyebrow) { color: #d7dde1; font-size: 1.12rem; margin: 0; }
-.hm-yusm-head h2 em { color: var(--butter); }
-.hm-yusm-grid { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(16px, 2.4vw, 28px); margin-bottom: 40px; position: relative; }
-.hm-yusm-grid li:nth-child(even) { margin-top: 40px; }
+/* ---------- LIVE ---------- */
+.hm-live { overflow: hidden; }
+.hm-live-head { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: end; margin-bottom: clamp(32px, 4vw, 52px); position: relative; }
+.hm-live-head p:not(.eyebrow) { color: #d7dde1; font-size: 1.12rem; margin: 0; }
+.hm-live-head h2 em { color: var(--butter); }
+.hm-live-grid { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(16px, 2.4vw, 28px); margin-bottom: 40px; position: relative; }
+.hm-live-grid li:nth-child(even) { margin-top: 40px; }
 .hm-y-ph { position: relative; display: block; aspect-ratio: 3 / 4; border-radius: 22px 22px 90px 22px; overflow: hidden; margin-bottom: 18px; }
 .hm-y-ph img { object-fit: cover; }
 .hm-y-ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 50%, rgba(21, 28, 33, 0.7)); }
 .hm-y-letter { position: absolute; z-index: 1; left: 18px; bottom: 6px; font-family: var(--font-display), serif; font-size: 5.4rem; line-height: 1; color: #fff; }
-.hm-yusm-grid h3 { font-size: 1.5rem; }
-.hm-yusm-grid p { color: #d7dde1; font-size: 0.98rem; margin: 0; }
-@media (max-width: 960px) { .hm-yusm-head { grid-template-columns: 1fr; } .hm-yusm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hm-yusm-grid li:nth-child(even) { margin-top: 0; } }
-@media (max-width: 480px) { .hm-yusm-grid { grid-template-columns: 1fr; } .hm-y-ph { aspect-ratio: 16 / 10; } .hm-yusm .btn { width: 100%; } }
+.hm-live-grid h3 { font-size: 1.5rem; }
+.hm-live-grid p { color: #d7dde1; font-size: 0.98rem; margin: 0; }
+@media (max-width: 960px) { .hm-live-head { grid-template-columns: 1fr; } .hm-live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hm-live-grid li:nth-child(even) { margin-top: 0; } }
+@media (max-width: 480px) { .hm-live-grid { grid-template-columns: 1fr; } .hm-y-ph { aspect-ratio: 16 / 10; } .hm-live .btn { width: 100%; } }
 
 /* ---------- Dining ---------- */
 .hm-venues { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 2.4vw, 28px); }

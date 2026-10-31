@@ -24,8 +24,6 @@ export default async function AllAreWelcome() {
   const { t } = await getT();
   const c = await getCommunity();
   const { site, welcome } = c;
-  // SageCare is shown only where the community holds the certification.
-  const sageCare = c.awards.some((a) => a.source === "SAGE" || /SageCare/i.test(a.title));
   return (
     <>
       <PageHero
@@ -66,15 +64,14 @@ export default async function AllAreWelcome() {
         </div>
       </section>
 
-      {sageCare && (
-      <section className="sec tone-green on-dark" aria-labelledby="br-sage-h">
+      <section className="sec tone-green on-dark" aria-labelledby="br-open-h">
         <div className="wrap br-split">
           <div>
-            <p className="eyebrow">SageCare</p>
-            <h2 id="br-sage-h">{t("Every team member, trained every year.")}</h2>
+            <p className="eyebrow">{t("Open Door training")}</p>
+            <h2 id="br-open-h">{t("Every team member, trained every year.")}</h2>
             <p style={{ color: "#d8e2d6", marginTop: 16 }}>
               {t(
-                "SageCare is the LGBTQ+ cultural competency training from SAGE, the country’s largest organization dedicated to LGBTQ+ older adults. Many LGBTQ+ elders have spent decades hiding who they are from doctors, landlords and neighbours. We don’t want anyone to feel that way at home.",
+                "Open Door is Wrenhaven’s own LGBTQ+ inclusion training, and everyone on the team takes it every year. Many LGBTQ+ elders spent decades guarding who they are from doctors, landlords and neighbors. Nobody should have to do that at home.",
               )}
             </p>
             <ul className="br-checks" style={{ marginTop: 20 }}>
@@ -94,7 +91,6 @@ export default async function AllAreWelcome() {
           </div>
         </div>
       </section>
-      )}
 
       <section className="sec tone-white" aria-labelledby="br-asl-h">
         <div className="wrap grid-2" style={{ alignItems: "start" }}>

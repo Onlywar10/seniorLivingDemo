@@ -34,7 +34,7 @@ function tourDays(eventsOn: Community["eventsOn"]): TourDay[] {
       taken: hash(`tour-${key}-${min}`) % 10 < busy,
     }));
     const happening = eventsOn(d)
-      .filter((e) => e.start >= 9 * 60 && e.start <= 16 * 60 && !e.harbor && e.cat !== "harbor" && (e.special || e.cat === "music" || e.cat === "trips"))
+      .filter((e) => e.start >= 9 * 60 && e.start <= 16 * 60 && !e.lantern && e.cat !== "lantern" && (e.special || e.cat === "music" || e.cat === "trips"))
       .slice(0, 3)
       .map((e) => ({ time: fmtTime(e.start), title: e.title }));
     return {
@@ -54,7 +54,7 @@ function toInterest(v: string | string[] | undefined): Interest {
   const s = (Array.isArray(v) ? v[0] : v ?? "").toLowerCase();
   if (s.startsWith("independent")) return "independent";
   if (s.startsWith("assisted")) return "assisted";
-  if (s.startsWith("harbor") || s.startsWith("memory")) return "harbor";
+  if (s.startsWith("lantern") || s.startsWith("memory")) return "lantern";
   return "unsure";
 }
 

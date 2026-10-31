@@ -69,5 +69,5 @@ export function downloadIcs(events: CalEvent[], name: string, file: string, plac
 export const icsPlace = (site: { name: string; addressLine: string; email: string }): IcsPlace => ({
   name: site.name,
   addressLine: site.addressLine,
-  domain: site.email.split("@")[1] ?? "tenfoldseniorliving.com",
+  domain: site.email.split("@")[1] ?? "wrenhaven.example",
 });

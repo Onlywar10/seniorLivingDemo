@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     title: t("Care Assessment"),
-    description: t("Ten friendly questions to see whether Independent Living, Assisted Living Services or Harbor Memory Care is the right fit."),
+    description: t("Ten friendly questions to see whether Independent Living, Assisted Living Services or Lantern Memory Care is the right fit."),
   };
 }
 

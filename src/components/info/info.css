@@ -259,15 +259,15 @@
 .tm-regulars b { font-family: var(--font-display), serif; font-weight: 400; font-size: 1.15rem; color: var(--green-ink); }
 .tm-regulars span { font-weight: 600; font-size: 0.92rem; }
 .tm-regulars small { color: var(--ink-2); font-size: 0.82rem; }
-.tm-thor { background: var(--butter-tint) !important; }
+.tm-pet { background: var(--butter-tint) !important; }
 .tm-paw { width: 52px; height: 52px; border-radius: 50%; background: var(--olive); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .tm-paw .icon { width: 26px; height: 26px; }
 .tm-council { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
 .tm-council-photo { position: relative; aspect-ratio: 5 / 4; border-radius: 28px 120px 28px 28px; overflow: hidden; box-shadow: var(--shadow-lg); }
 .tm-council-photo img { object-fit: cover; }
 .tm-council h2 { margin-bottom: 22px; }
-.tm-bill { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
-.tm-bill h3 { margin: 0; }
+.tm-council { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+.tm-council h3 { margin: 0; }
 @media (max-width: 1000px) {
   .tm-dirs { grid-template-columns: 1fr 1fr; }
   .tm-regulars { grid-template-columns: 1fr 1fr; }

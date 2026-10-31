@@ -16,7 +16,7 @@ const sizes: { v: TextSize; aria: string }[] = [
 export function UtilityBar() {
   const { text, setText, contrast, setContrast } = usePrefs();
   const { t, lang } = useT();
-  // On the Tenfold parent site there is no licence or address to show.
+  // On the Wrenhaven parent site there is no licence or address to show.
   const community = useMaybeCommunity();
   const path = usePath();
   return (
@@ -31,7 +31,7 @@ export function UtilityBar() {
               </a>
             </>
           ) : (
-            <span>{t("Luxury senior living in Folsom and Elk Grove, California")}</span>
+            <span>{t("Luxury senior living in Fairhollow and Rivermead, California")}</span>
           )}
         </p>
         <div className="utility-tools">

@@ -1,6 +1,6 @@
 "use client";
 
-// Which community the staff screens show. The server reads the `pcl-staff-community` cookie
+// Which community the staff screens show. The server reads the `wh-staff-community` cookie
 // (src/data/staff/server.ts) and the staff layout passes it here for client components.
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
@@ -13,9 +13,9 @@ export interface StaffCommunityOption { slug: CommunitySlug; name: string; short
 interface Ctx {
   scope: StaffScope;
   options: StaffCommunityOption[];
-  /** The selected community, or null in the Tenfold overview. */
+  /** The selected community, or null in the Wrenhaven overview. */
   current: StaffCommunityOption | null;
-  /** A page on the selected community's public website: site("/calendar") → "/bruceville-point/calendar". */
+  /** A page on the selected community's public website: site("/calendar") → "/kestrel-point/calendar". */
   site: (path?: string) => string;
 }
 
@@ -59,7 +59,7 @@ export function CommunitySwitcher() {
   const list = useRef<HTMLUListElement>(null);
   const choices: { v: StaffScope; name: string; sub: string }[] = [
     ...options.map((o) => ({ v: o.slug as StaffScope, name: o.name, sub: o.city })),
-    { v: "all", name: ALL_LABEL, sub: "Tenfold overview" },
+    { v: "all", name: ALL_LABEL, sub: "Wrenhaven overview" },
   ];
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export function CommunitySwitcher() {
       >
         <span className="sx-comm-t">
           <b>{current ? current.name : ALL_LABEL}</b>
-          <span>{pending ? "Switching…" : current ? current.city : "Tenfold overview"}</span>
+          <span>{pending ? "Switching…" : current ? current.city : "Wrenhaven overview"}</span>
         </span>
         <Icon name="chev" />
       </button>
@@ -142,7 +142,7 @@ export function CommunitySwitcher() {
   );
 }
 
-/** "Open" a community from the Tenfold overview: switches to it and stays on this screen. */
+/** "Open" a community from the Wrenhaven overview: switches to it and stays on this screen. */
 export function OpenCommunity({ slug, name, className = "sx-btn sx-btn-sm sx-btn-primary" }: { slug: CommunitySlug; name: string; className?: string }) {
   const { go, pending } = useSwitch();
   return (
@@ -152,7 +152,7 @@ export function OpenCommunity({ slug, name, className = "sx-btn sx-btn-sm sx-btn
   );
 }
 
-/** Shown on single-community screens while the Tenfold overview is selected. */
+/** Shown on single-community screens while the Wrenhaven overview is selected. */
 export function PickCommunity({ screen }: { screen: string }) {
   const { options } = useStaffCommunity();
   const { go, pending } = useSwitch();

@@ -112,7 +112,7 @@ export default async function DiningPage() {
           <div className="sec-head">
             <p className="eyebrow">{t("Live menus")}</p>
             <h2 id="din-menus-h">{t("What’s cooking ")}<em>{t("today")}</em></h2>
-            <p>{t("Menus change daily and the Cypress Room’s dinner menu changes every week. Pick a day to see what’s on.")}</p>
+            <p>{t("Menus change daily and the Juniper Room’s dinner menu changes every week. Pick a day to see what’s on.")}</p>
           </div>
           <MenuBoard days={days} extra={tgDay} todayIso={todayIso} nowMin={nowMin} />
         </div>

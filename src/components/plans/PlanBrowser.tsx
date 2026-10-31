@@ -18,7 +18,7 @@ const KINDS: [KindFilter, string][] = [
   ["all", "All plans"],
   ["independent", "Independent"],
   ["assisted", "Assisted"],
-  ["harbor", "Harbor"],
+  ["lantern", "Lantern"],
 ];
 const BEDS: [BedFilter, string][] = [
   ["any", "Any size"],
@@ -30,7 +30,7 @@ const BEDS: [BedFilter, string][] = [
 export function PlanBrowser({ plans, initialKind = "all" }: { plans: Plan[]; initialKind?: KindFilter }) {
   const { t } = useT();
   const contact = firstName(keyPeople(useCommunity()).relations);
-  // only the living options this community has plans for (Bruceville Point has no assisted-only plans)
+  // only the living options this community has plans for (Kestrel Point has no assisted-only plans)
   const kinds = KINDS.filter(([k]) => k === "all" || plans.some((p) => p.kind === k));
   const [kind, setKind] = useState<KindFilter>(initialKind);
   const [beds, setBeds] = useState<BedFilter>("any");
@@ -41,7 +41,7 @@ export function PlanBrowser({ plans, initialKind = "all" }: { plans: Plan[]; ini
       plans.filter(
         (p) =>
           (kind === "all" || p.kind === kind) &&
-          (beds === "any" || (p.kind !== "harbor" && String(p.beds) === beds) || (beds === "0" && p.kind === "harbor")) &&
+          (beds === "any" || (p.kind !== "lantern" && String(p.beds) === beds) || (beds === "0" && p.kind === "lantern")) &&
           (!openOnly || p.available > 0)
       ),
     [plans, kind, beds, openOnly]

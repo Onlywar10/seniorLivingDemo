@@ -9,7 +9,7 @@ import { Footer } from "./Footer";
 import { CookieConsent } from "./CookieConsent";
 import { ChatWidget } from "./ChatWidget";
 
-/** Chrome for a community's pages (/prairie-city-landing/…, /bruceville-point/…). The parent site has TenfoldChrome. */
+/** Chrome for a community's pages (/alder-bend/…, /kestrel-point/…). The parent site has WrenhavenChrome. */
 export function CommunityChrome({ children }: { children: ReactNode }) {
   const { t } = useT();
   return (

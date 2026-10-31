@@ -19,39 +19,39 @@ export interface TeamCopy {
 }
 
 export const teamCopy: Record<CommunitySlug, TeamCopy> = {
-  "prairie-city-landing": {
-    metaDescription: "Meet the leadership and department directors at Prairie City Landing, our Team Steward of the Month, instructors and Resident Council president.",
-    lede: "Every director at Prairie City Landing works on site, knows residents by name and picks up the phone. Here’s who they are, and who to call about what.",
-    stewardLede: "Residents and colleagues nominated Esther for her communication, cheerfulness and attentiveness. In their words:",
+  "alder-bend": {
+    metaDescription: "Meet the leadership and department directors at Alder Bend, our Team Steward of the Month, instructors and Resident Council president.",
+    lede: "Every director at Alder Bend has an office down the hall, knows residents by name and answers their own phone. Meet them here, and find out who to call about what.",
+    stewardLede: "Lucia was nominated by residents and coworkers alike, who singled out how clearly she communicates, how cheerful she is and how much she notices. Here’s what they wrote:",
     teamStory: "a-great-place-to-work",
-    regularsIntro: "Alongside our full-time team, these instructors and clergy are part of the week — plus one very good dog.",
+    regularsIntro: "Our full-time team has help from these instructors and visiting clergy, who are part of every week here. So is one very good dog.",
     regulars: [
       { name: "Sonya", what: "Chair Yoga", when: "Sundays, 11:00 am · Fitness Center", icon: "dumbbell" },
       { name: "Shaun", what: "Sit To Be Fit", when: "Mon, Wed, Fri & Sat, 12:15 pm · Fitness Center", icon: "dumbbell" },
-      { name: "Showen", what: "Tai Chi", when: "Fridays, 11:00 am · Fitness Center", icon: "dumbbell" },
-      { name: "Rhea", what: "Zumba", when: "Saturdays, 11:30 am · Harbor", icon: "music" },
-      { name: "Ava", what: "Brain Busters", when: "Saturdays, 3:00 pm · Natoma Café", icon: "sparkle" },
-      { name: "Chaplain Dave", what: "Non-Denominational Service", when: "Sundays, 10:30 am · Theatre", icon: "heart" },
-      { name: "Fr. Giovanni Gamas", what: "Catholic Mass, St. John the Baptist Catholic Church", when: "Monthly Mass in the Theatre", icon: "heart" },
+      { name: "Mei", what: "Tai Chi", when: "Fridays, 11:00 am · Fitness Center", icon: "dumbbell" },
+      { name: "Rhea", what: "Zumba", when: "Saturdays, 11:30 am · Lantern", icon: "music" },
+      { name: "Ava", what: "Brain Busters", when: "Saturdays, 3:00 pm · Millpond Café", icon: "sparkle" },
+      { name: "Chaplain Miriam", what: "Non-Denominational Service", when: "Sundays, 10:30 am · Theatre", icon: "heart" },
+      { name: "Fr. Daniel Brennan", what: "Catholic Mass with a visiting priest", when: "Monthly Mass in the Theatre", icon: "heart" },
     ],
-    pet: { name: "Thor", what: "Therapy pet", when: "Pet Therapy in Harbor, Wednesdays at 2:00 pm, and regular visits to the 2nd Floor Lounge" },
-    councilPhotoAlt: "Residents laughing together in the Rendezvous",
-    councilNote: "The All-Resident Council Meeting is held monthly in the Theatre, and Executive Director Cheryl Martin hosts a Town Hall each month too. Ask Cynthia to introduce you to Bill on your tour.",
+    pet: { name: "Thor", what: "Therapy pet", when: "Pet Therapy in Lantern, Wednesdays at 2:00 pm, and regular visits to the 2nd Floor Lounge" },
+    councilPhotoAlt: "Residents laughing together in the Perch",
+    councilNote: "The All-Resident Council meets in the Theatre once a month, and Executive Director Renata Holloway holds a monthly Town Hall as well. On your tour, ask Priya to introduce you to Walt.",
   },
-  "bruceville-point": {
-    metaDescription: "Meet the leadership and department directors at Bruceville Point, our instructors and Resident Council president.",
-    lede: "Every director at Bruceville Point works on site and knows residents by name. Here’s who they are, and who to ask for about what.",
+  "kestrel-point": {
+    metaDescription: "Meet the leadership and department directors at Kestrel Point, our instructors and Resident Council president.",
+    lede: "Every director at Kestrel Point works here in the building and knows residents by name. Meet them here, and find out who to ask for about what.",
     stewardLede: null,
     teamStory: "people-make-all-the-difference",
-    regularsIntro: "Alongside our full-time team, these instructors and visitors are part of the week.",
+    regularsIntro: "Our full-time team has help from these instructors and regular visitors, who are part of every week here.",
     regulars: [
-      { name: "Tina Trillo", what: "Step Aerobics and Strength Training", when: "Step Aerobics Mondays & Wednesdays, 9:00 am · Gym", icon: "dumbbell" },
+      { name: "Kara Lindqvist", what: "Step Aerobics and Strength Training", when: "Step Aerobics Mondays & Wednesdays, 9:00 am · Gym", icon: "dumbbell" },
       { name: "Personal Trainer", what: "One-to-one training in the gym", when: "By appointment · Gym", icon: "dumbbell", unnamed: true },
       { name: "Visiting art instructor", what: "Occasional Art Studio classes", when: "Art Studio", icon: "sparkle", unnamed: true },
       { name: "Visiting chaplain", what: "Non-Denominational Service", when: "Sundays, 10:30 am · Theatre", icon: "heart", unnamed: true },
     ],
     pet: null,
     councilPhotoAlt: "Residents laughing together",
-    councilNote: "Ask Jaime to introduce you to members of the Resident Council on your tour.",
+    councilNote: "On your tour, ask Mateo to introduce you to Bernie and the rest of the Resident Council.",
   },
 };

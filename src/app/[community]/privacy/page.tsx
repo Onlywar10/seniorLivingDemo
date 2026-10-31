@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { site } = await getCommunity();
   return {
     title: t("Privacy & Cookie Policy"),
-    description: t(`How ${site.name} and Tenfold Senior Living collect, use and protect your information, our cookie policy and SMS terms.`),
+    description: t(`How ${site.name} and Wrenhaven Senior Living collect, use and protect your information, our cookie policy and SMS terms.`),
   };
 }
 
@@ -96,7 +96,7 @@ export default async function PrivacyPage() {
 
             <h2 id="sms">{t("SMS terms")}</h2>
             <p>
-              {t(`If you opt in to text messages, ${site.name} will send you recurring automated texts about the topics you chose — such as your tour, the weekly activity calendar, daily menus, photos and news, Harbor updates or urgent notices.`)}
+              {t(`If you opt in to text messages, ${site.name} will send you recurring automated texts about the topics you chose — such as your tour, the weekly activity calendar, daily menus, photos and news, Lantern updates or urgent notices.`)}
             </p>
             <ul className="inf-bullets">
               <li>{t("Message frequency varies.")}</li>

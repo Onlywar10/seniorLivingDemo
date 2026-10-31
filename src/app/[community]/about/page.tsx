@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
 import "@/components/brand/brand.css";
-import { nameOrigin, purpose, values } from "@/data/tenfold";
+import { nameOrigin, purpose, values } from "@/data/wrenhaven";
 import { getCommunity } from "@/lib/community-server";
 import { aboutCopy } from "@/data/communities/copy/about";
 import { PageHero } from "@/components/PageHero";
@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { site, awards } = await getCommunity();
   return {
     title: t("Purpose & Values"),
-    description: t(`${site.name} is owned, designed, built and run by Tenfold Senior Living. Our purpose, our six values${awards.length ? ", and the awards that recognize our team" : " and where our name comes from"}.`),
+    description: t(`${site.name} is owned, designed, built and run by Wrenhaven Senior Living. Our purpose, our six values${awards.length ? ", and the awards that recognize our team" : " and where our name comes from"}.`),
   };
 }
 
@@ -31,11 +31,11 @@ export default async function About() {
         eyebrow="Purpose & Values"
         title={
           <>
-            {t("Each gives to each, ")}
-            <em>{t("tenfold.")}</em>
+            {t("Why we do ")}
+            <em>{t("what we do.")}</em>
           </>
         }
-        lede={`${site.name} is a Tenfold Senior Living community. We own it, designed it, built it and run it — so the people who make decisions here are the people you see in the hallway.`}
+        lede={`${site.name} belongs to the Wrenhaven Senior Living family. We designed it, built it, own it and run it ourselves, so the people making decisions here are the people you pass in the hallway.`}
         photo="/img/friends-laugh.jpg"
         alt="Two residents laughing together on a sofa"
         crumbs={[["About", "/about"]]}
@@ -60,7 +60,7 @@ export default async function About() {
               {t("Six values, ")}
               <em>{t("lived daily.")}</em>
             </h2>
-            <p>{t("They guide how we hire, how we plan the calendar and how we answer every request — from residents, families and each other.")}</p>
+            <p>{t("They shape who we hire, how the calendar comes together and how we answer every request, whether it comes from a resident, a family member or a colleague.")}</p>
           </div>
           <ul className="br-values">
             {values.map((v) => (
@@ -80,20 +80,15 @@ export default async function About() {
         <div className="wrap br-split" style={{ position: "relative" }}>
           <div>
             <p className="eyebrow">{t("Where the name comes from")}</p>
-            <h2 id="br-name-h">{t("Why “Tenfold”?")}</h2>
+            <h2 id="br-name-h">{t("Why “Wrenhaven”?")}</h2>
             <figure style={{ margin: "26px 0 0" }}>
               <blockquote style={{ margin: 0 }}>
-                <p className="br-quote">
-                  {t("“Each gives to each, and like the star gets back its gift in ")}
-                  <em>{t("tenfold pay.")}</em>”
-                </p>
+                <p className="br-quote">“{t(nameOrigin.quote)}”</p>
               </blockquote>
-              <figcaption className="br-cite" data-no-translate>
-                {nameOrigin.author}
-              </figcaption>
+              <figcaption className="br-cite">{t(nameOrigin.author)}</figcaption>
             </figure>
             <p style={{ marginTop: 24, color: "#d8e2d6" }}>
-              {t("The California poet’s line captures what we see every day: when residents and team members give to one another, everyone gets back far more than they gave.")}
+              {t(`Our founder, Helen Ashcombe, named the company after the wren: small, sociable and at home wherever it is welcome. That is how we want ${site.name} to feel, for residents, families and team members alike.`)}
             </p>
           </div>
           <div className="br-split-ph">
@@ -102,7 +97,7 @@ export default async function About() {
         </div>
       </section>
 
-      <section className="sec tone-sand" aria-labelledby="br-tenfold-h">
+      <section className="sec tone-sand" aria-labelledby="br-wrenhaven-h">
         <div className="wrap br-split rev">
           <div className="br-split-ph">
             <Image src={copy.placePhoto[0]} alt={t(copy.placePhoto[1])} fill sizes="(max-width: 860px) 100vw, 50vw" />
@@ -110,14 +105,14 @@ export default async function About() {
           <div>
             <div style={{ display: "inline-block", background: "var(--green-deep)", borderRadius: 16, padding: "16px 22px", marginBottom: 22 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/img/brand/tenfold-white.png" alt={t("Tenfold Senior Living")} className="br-tenfold-logo" style={{ margin: 0, width: 180 }} />
+              <img src="/img/brand/wrenhaven-white.png" alt={t("Wrenhaven Senior Living")} className="br-wrenhaven-logo" style={{ margin: 0, width: 180 }} />
             </div>
-            <h2 id="br-tenfold-h">
+            <h2 id="br-wrenhaven-h">
               {t("Owned, designed, built and ")}
-              <em>{t("run by Tenfold.")}</em>
+              <em>{t("run by Wrenhaven.")}</em>
             </h2>
             <p className="muted" style={{ marginTop: 14 }}>
-              {t(`Tenfold Senior Living is a Northern California family of communities. We don’t hand our buildings to an outside manager: the same team that designed ${site.name} runs it every day, and answers to the residents who live here.`)}
+              {t(`Wrenhaven Senior Living is a small group of communities in the Calder Valley. No outside management company runs our buildings: the people who planned ${site.name} are the people running it today, and they answer to the residents who live here.`)}
             </p>
             <p className="muted">
               {t("Our sister community, ")}
@@ -131,8 +126,8 @@ export default async function About() {
               <Link className="btn btn-green" href="/team">
                 {t("Meet our team")}
               </Link>
-              <a className="btn btn-ghost" href={site.tenfoldUrl} target="_blank" rel="noreferrer">
-                Tenfold Senior Living <Icon name="arrow" />
+              <a className="btn btn-ghost" href={site.wrenhavenUrl} target="_blank" rel="noreferrer">
+                Wrenhaven Senior Living <Icon name="arrow" />
               </a>
             </div>
           </div>
@@ -145,8 +140,8 @@ export default async function About() {
           <div className="sec-head center">
             <p className="eyebrow">{t("Recognition")}</p>
             <h2 id="br-awards-h">
-              {t("Award-winning, ")}
-              <em>{t("year after year.")}</em>
+              {t("Proud of ")}
+              <em>{t("our team.")}</em>
             </h2>
           </div>
           <ul className="br-awards">

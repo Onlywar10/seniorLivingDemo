@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useT } from "@/i18n/client";
 import { Icon } from "./Icon";
 
-const KEY = "pcl.cookies";
+const KEY = "wh.cookies";
 
 export function CookieConsent() {
   const { t } = useT();

@@ -1,4 +1,4 @@
-// The Tenfold-wide overview: one card per community, side by side, on the dashboard and the scorecard.
+// The Wrenhaven-wide overview: one card per community, side by side, on the dashboard and the scorecard.
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { allSummaries, scorecardMonths, user } from "@/data/staff";
@@ -25,7 +25,7 @@ export function Overview({ screen }: { screen: "dashboard" | "scorecard" }) {
             )}
           </h1>
           <p>
-            {screen === "dashboard" ? `${longDate(today())} · ` : ""}All Tenfold communities · {sums.length} communities, {total("apartments")} apartments, {fmt(total("families"))} families
+            {screen === "dashboard" ? `${longDate(today())} · ` : ""}All Wrenhaven communities · {sums.length} communities, {total("apartments")} apartments, {fmt(total("families"))} families
           </p>
         </div>
       </div>
@@ -132,7 +132,7 @@ export function Overview({ screen }: { screen: "dashboard" | "scorecard" }) {
       </Card>
 
       <p className="sx-note">
-        <Icon name="info" /> Each community’s team sees only its own screens. <Link className="sx-link" href="/" target="_blank">Tenfold Senior Living website</Link>
+        <Icon name="info" /> Each community’s team sees only its own screens. <Link className="sx-link" href="/" target="_blank">Wrenhaven Senior Living website</Link>
       </p>
     </>
   );

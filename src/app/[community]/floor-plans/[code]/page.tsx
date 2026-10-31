@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   };
 }
 
-const kindHref = { independent: "/living/independent-living", assisted: "/living/assisted-living", harbor: "/living/harbor-memory-care" } as const;
+const kindHref = { independent: "/living/independent-living", assisted: "/living/assisted-living", lantern: "/living/lantern-memory-care" } as const;
 
 export default async function PlanPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
@@ -42,7 +42,7 @@ export default async function PlanPage({ params }: { params: Promise<{ code: str
   const people = keyPeople(c);
   const contact = people.relations && !people.relations.unnamed ? people.relations : null;
   const said = (m: typeof contact) => (m && !m.unnamed ? `${m.name}, our ${m.role}` : null);
-  const harborNote = plansCopy[c.slug].harborNote(c, said(people.harbor));
+  const lanternNote = plansCopy[c.slug].lanternNote(c, said(people.lantern));
   const stops = tourStops(p, tourPlace(c));
   const a = availability(p);
   const others = [...plans.filter((o) => o.code !== p.code && o.kind === p.kind), ...plans.filter((o) => o.kind !== p.kind)].slice(0, 4);
@@ -154,10 +154,10 @@ export default async function PlanPage({ params }: { params: Promise<{ code: str
                 <Icon name="heart" />{t(" Add ")}{t(living.assisted.name)}{t(" for a ")}{money(pricing.assistedBase)}{t(said(people.residentServices) ? ` monthly base support fee, plus personal care by care plan. ${said(people.residentServices)}, completes a pre-move-in assessment with you and your family.` : " monthly base support fee, plus personal care by care plan. Our Resident Services Director completes a pre-move-in assessment with you and your family.")}
               </p>
             )}
-            {p.kind === "harbor" && (
+            {p.kind === "lantern" && (
               <p className="fpd-note">
                 <Icon name="heart" />
-                {harborNote.map((f, i) => (typeof f === "string" ? <span key={i}>{t(f)}</span> : <span key={i}>{f.raw}</span>))}
+                {lanternNote.map((f, i) => (typeof f === "string" ? <span key={i}>{t(f)}</span> : <span key={i}>{f.raw}</span>))}
               </p>
             )}
           </div>

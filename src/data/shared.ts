@@ -1,9 +1,9 @@
-// Types and helpers every Tenfold community shares. Each community's own content lives in
+// Types and helpers every Wrenhaven community shares. Each community's own content lives in
 // src/data/communities/<slug>/ and is gathered in src/data/communities/index.ts.
 
 // ---------------------------------------------------------------- living options and plans
 
-export type LivingKey = "independent" | "assisted" | "harbor";
+export type LivingKey = "independent" | "assisted" | "lantern";
 export type PlanKind = LivingKey;
 
 export interface Living {
@@ -36,7 +36,7 @@ export interface Plan {
   render?: string;
 }
 
-export const planKindLabel: Record<PlanKind, string> = { independent: "Independent Living", assisted: "Assisted Living", harbor: "Harbor Memory Care" };
+export const planKindLabel: Record<PlanKind, string> = { independent: "Independent Living", assisted: "Assisted Living", lantern: "Lantern Memory Care" };
 
 export const money = (n: number) => "$" + n.toLocaleString("en-US");
 
@@ -78,7 +78,7 @@ export interface Award { title: string; detail: string; source: string; years?: 
 
 // ---------------------------------------------------------------- calendar
 
-export type Cat = "fitness" | "faith" | "clubs" | "trips" | "music" | "movies" | "community" | "harbor";
+export type Cat = "fitness" | "faith" | "clubs" | "trips" | "music" | "movies" | "community" | "lantern";
 
 export const cats: Record<Cat, { label: string; color: string }> = {
   fitness: { label: "Fitness", color: "var(--c-fitness)" },
@@ -88,11 +88,11 @@ export const cats: Record<Cat, { label: string; color: string }> = {
   music: { label: "Music & happy hour", color: "var(--c-music)" },
   movies: { label: "Movies & TV", color: "var(--c-movies)" },
   community: { label: "Learning & community", color: "var(--c-community)" },
-  harbor: { label: "Harbor", color: "var(--c-harbor)" },
+  lantern: { label: "Lantern", color: "var(--c-lantern)" },
 };
 
 /** Public filters, in display order. */
-export const filters: Cat[] = ["fitness", "faith", "clubs", "trips", "music", "harbor"];
+export const filters: Cat[] = ["fitness", "faith", "clubs", "trips", "music", "lantern"];
 
 export interface CalEvent {
   id: string;
@@ -107,13 +107,13 @@ export interface CalEvent {
   /** Seats already taken (capped events only) */
   taken?: number;
   waitlist?: number;
-  harbor?: boolean; // shown in the Harbor view
+  lantern?: boolean; // shown in the Lantern view
   leader?: string;
   special?: boolean; // a dated, one-off event (as opposed to the weekly program)
   cost?: string;
 }
 
-export const isHarbor = (e: CalEvent) => e.harbor || e.cat === "harbor";
+export const isLantern = (e: CalEvent) => e.lantern || e.cat === "lantern";
 export const seatsLeft = (e: CalEvent) => (e.cap ? Math.max(0, e.cap - (e.taken ?? 0)) : undefined);
 
 // ---------------------------------------------------------------- dining
@@ -123,7 +123,7 @@ export const tagLabels: Record<Tag, string> = { GF: "Gluten free", VG: "Vegetari
 
 export interface Dish { name: string; desc?: string; tags?: Tag[]; price?: string }
 export interface Section { title: string; items: Dish[]; note?: string }
-/** Each community names its own restaurants ("cypress", "natoma", "stonelakes"…). */
+/** Each community names its own restaurants ("juniper", "millpond", "meadowbrook"…). */
 export type VenueKey = string;
 export interface Venue { key: VenueKey; name: string; kind: string; hours: string; open: number; close: number; photo: string; blurb: string }
 export interface DayMenu { date: string; venue: VenueKey; special: Dish; soup: Dish; sections: Section[]; holiday?: string }

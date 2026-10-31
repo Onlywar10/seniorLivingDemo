@@ -2,7 +2,7 @@
 // at the moment the question is asked, so "today", "tonight" and seats left are always current.
 // Every answer is about the community passed in (useCommunity()); nothing here names a particular community.
 import type { Community } from "@/data/communities";
-import { isHarbor, money, seatsLeft, type CalEvent, type DayMenu, type PlanKind, type Space, type Venue } from "@/data/shared";
+import { isLantern, money, seatsLeft, type CalEvent, type DayMenu, type PlanKind, type Space, type Venue } from "@/data/shared";
 import { today, nowMinutes, addDays, dow, fmtTime, longDate, dayShort, MONTHS, WEEKDAYS, iso } from "@/lib/clock";
 
 export type Lang = "en" | "es" | "zh";
@@ -104,7 +104,7 @@ const SRC = {
   faq: { label: "FAQs", href: "/faq" },
   il: { label: "Independent Living", href: "/living/independent-living" },
   al: { label: "Assisted Living Services", href: "/living/assisted-living" },
-  harbor: { label: "Harbor Memory Care", href: "/living/harbor-memory-care" },
+  lantern: { label: "Lantern Memory Care", href: "/living/lantern-memory-care" },
   tour: { label: "Schedule a Tour", href: "/tour" },
   contact: { label: "Info & Directions", href: "/contact" },
   careers: { label: "Careers", href: "/careers" },
@@ -121,7 +121,7 @@ const SRC_ES: Partial<Record<SrcKey, string>> = {
   calendar: "Calendario de actividades",
   dining: "Restaurantes",
   faq: "Preguntas frecuentes",
-  harbor: "Harbor: cuidado de la memoria",
+  lantern: "Lantern: cuidado de la memoria",
   tour: "Agendar una visita",
   il: "Vida independiente",
 };
@@ -132,7 +132,7 @@ const SRC_ZH: Record<SrcKey, string> = {
   faq: "常见问题",
   il: "独立生活",
   al: "协助生活服务",
-  harbor: "Harbor 记忆护理",
+  lantern: "Lantern 记忆护理",
   tour: "预约参观",
   contact: "信息与交通",
   careers: "招聘",
@@ -145,7 +145,7 @@ const SRC_ZH: Record<SrcKey, string> = {
 };
 /** A source link; the living-option pages take their paths from the community's own data. */
 const src = (k: SrcKey, l: Lang): Link => {
-  const href = k === "il" ? C.living.independent.href : k === "al" ? C.living.assisted.href : k === "harbor" ? C.living.harbor.href : SRC[k].href;
+  const href = k === "il" ? C.living.independent.href : k === "al" ? C.living.assisted.href : k === "lantern" ? C.living.lantern.href : SRC[k].href;
   return { href, label: l === "zh" ? SRC_ZH[k] : l === "es" && SRC_ES[k] ? SRC_ES[k]! : SRC[k].label };
 };
 
@@ -154,7 +154,7 @@ const faq = (start: string) => C.faqs.find((f) => f.q.startsWith(start))?.a ?? "
 
 /** Calendar events for a day, with seat counts as of today. */
 const dayEvents = (d: Date) => C.eventsOn(d, iso(today()));
-const publicEvents = (d: Date) => dayEvents(d).filter((e) => !isHarbor(e));
+const publicEvents = (d: Date) => dayEvents(d).filter((e) => !isLantern(e));
 
 /** The first day in the next `days` that passes `pred`. */
 function findDay(pred: (d: Date) => boolean, days = 120): Date | null {
@@ -178,12 +178,12 @@ const cafeVenue = () => venueWith(/^breakfast$/i);
 /** The coffeehouse and bar, where happy hour is. */
 const barVenue = () => venueWith(/^happy hour$/i);
 const menu = (v: Venue, d: Date) => C.menuFor(v.key, d);
-/** "The Cypress Room" → "Cypress Room"; for Chinese and Spanish sentences. */
+/** "The Juniper Room" → "Juniper Room"; for Chinese and Spanish sentences. */
 const bare = (v: Venue) => v.name.replace(/^The /, "");
-/** "in the Cypress Room" / "at Natoma Café" */
+/** "in the Juniper Room" / "at Millpond Café" */
 const enIn = (v: Venue) => (/^The /.test(v.name) ? `in the ${bare(v)}` : `at ${v.name}`);
 const enAt = (v: Venue) => (/^The /.test(v.name) ? `at the ${bare(v)}` : `at ${v.name}`);
-/** "en el Cypress Room" / "en Natoma Café" */
+/** "en el Juniper Room" / "en Millpond Café" */
 const esIn = (v: Venue) => (/^The /.test(v.name) ? `en el ${bare(v)}` : `en ${v.name}`);
 const RESTAURANTS_EN = ["", "", "both", "all three", "all four", "all five"];
 const RESTAURANTS_ZH = ["", "一", "两", "三", "四", "五"];
@@ -198,12 +198,12 @@ function who(topic: RegExp, role?: RegExp): Person | null {
   return { name, role: m?.role, first: m?.unnamed ? name : name.split(" ")[0], ext: w?.ext ?? m?.ext, unnamed: m?.unnamed };
 }
 const contact = () => who(/tour/i, /community relations/i);
-/** "Jaime Cervantes, our Community Relations Director" (or just the role, for a role with no published name) */
+/** "Mateo Ruiz, our Community Relations Director" (or just the role, for a role with no published name) */
 const enWho = (p: Person) => (p.unnamed ? `our ${p.role ?? p.name}` : p.role ? `${p.name}, our ${p.role}` : p.name);
-/** As the subject of a sentence: "Jaime Cervantes, our Community Relations Director," */
+/** As the subject of a sentence: "Mateo Ruiz, our Community Relations Director," */
 const enSubj = (p: Person) => cap(enWho(p)) + (p.role && !p.unnamed ? "," : "");
 const esWho = (p: Person) => (p.unnamed || !p.role ? tr(p.role ?? p.name) : `${p.name} (${tr(p.role)})`);
-/** "我们的社区关系部总监 Jaime Cervantes" */
+/** "我们的社区关系部总监 Mateo Ruiz" */
 const zhWho = (p: Person) => (p.unnamed ? `我们的${tr(p.role ?? p.name)}` : p.role ? `我们的${tr(p.role)} ${p.name}` : p.name);
 
 /** The first name of whoever returns call-back requests (null when the community names no one). */
@@ -218,7 +218,7 @@ export function callbackName(c: Community): string | null {
   }
 }
 
-/** Put the person's name into a sentence that names only their role ("…with our Dining Experience Director." → "…with Danyale Liberati Shaw, our Dining Experience Director."). */
+/** Put the person's name into a sentence that names only their role ("…with our Dining Experience Director." → "…with Celeste Okonkwo, our Dining Experience Director."). */
 const named = (text: string, p: Person | null) =>
   p && !p.unnamed && p.role && text.includes(`our ${p.role}`) ? text.replace(`our ${p.role}`, enWho(p)) : text;
 
@@ -308,9 +308,9 @@ export function resolveDays(n: string): DaySpan | null {
 
 // ---------------------------------------------------------------- answer builders
 
-function eventsAnswer(span: DaySpan, l: Lang, harborOnly = false): Answer {
+function eventsAnswer(span: DaySpan, l: Lang, lanternOnly = false): Answer {
   const now = nowMinutes();
-  const filterSet = (d: Date) => (harborOnly ? dayEvents(d).filter(isHarbor) : publicEvents(d));
+  const filterSet = (d: Date) => (lanternOnly ? dayEvents(d).filter(isLantern) : publicEvents(d));
   const chips =
     l === "es" ? ["¿Qué hay de cena esta noche?", "¿Cuánto cuesta?"]
     : l === "zh" ? ["明天有什么活动？", "近期有出游活动吗？", "今晚吃什么？"]
@@ -668,7 +668,7 @@ function pricesAnswer(l: Lang): Answer {
       groups: [
         { title: "独立生活", lines: pricing.independent.map((p) => ({ text: `${ZH_PLAN[p.name] ?? tr(p.name)}：每月 ${money(p.from)} 起` })) },
         { title: "协助生活服务", lines: [{ text: `基本支持费每月 ${money(pricing.assistedBase)}，另按护理计划收取个人护理费用` }] },
-        { title: "Harbor 记忆护理", lines: pricing.harbor.map((p) => ({ text: `${ZH_PLAN[p.name] ?? tr(p.name)}：每月 ${money(p.from)} 起` })) },
+        { title: "Lantern 记忆护理", lines: pricing.lantern.map((p) => ({ text: `${ZH_PLAN[p.name] ?? tr(p.name)}：每月 ${money(p.from)} 起` })) },
       ],
       after: `我们不收取第二人费用，夫妻每年可节省约 ${money(pricing.secondPersonSaving)}。${inc.length ? `租金包含${inc.join("、")}。` : ""}`,
       source: src("plans", l),
@@ -683,12 +683,12 @@ function pricesAnswer(l: Lang): Answer {
       groups: [
         { title: "Vida independiente", lines: pricing.independent.map((p) => ({ text: `${ES_PLAN[p.name] ?? p.name}: desde ${money(p.from)} al mes` })) },
         { title: "Servicios de vida asistida", lines: [{ text: `Cuota base de ${money(pricing.assistedBase)} al mes, más cuidado personal según el plan de cuidado` }] },
-        { title: "Harbor (cuidado de la memoria)", lines: pricing.harbor.map((p) => ({ text: `${ES_PLAN[p.name] ?? p.name}: desde ${money(p.from)} al mes` })) },
+        { title: "Lantern (cuidado de la memoria)", lines: pricing.lantern.map((p) => ({ text: `${ES_PLAN[p.name] ?? p.name}: desde ${money(p.from)} al mes` })) },
       ],
       after: `No hay cargo por segunda persona: las parejas ahorran unos ${money(pricing.secondPersonSaving)} al año.${inc.length ? ` La renta incluye ${andList(inc, "y")}.` : ""}`,
       source: src("plans", l),
       cta: src("tour", l),
-      chips: ["¿Hay cargo por segunda persona?", "Hábleme de Harbor"],
+      chips: ["¿Hay cargo por segunda persona?", "Hábleme de Lantern"],
     };
   }
   return {
@@ -697,7 +697,7 @@ function pricesAnswer(l: Lang): Answer {
     groups: [
       { title: "Independent Living", lines: pricing.independent.map((p) => ({ text: `${p.name} from ${money(p.from)} a month` })) },
       { title: "Assisted Living Services", lines: [{ text: `${money(pricing.assistedBase)} a month base support fee, plus personal care by care plan` }] },
-      { title: "Harbor Memory Care", lines: pricing.harbor.map((p) => ({ text: `${p.name} from ${money(p.from)} a month` })) },
+      { title: "Lantern Memory Care", lines: pricing.lantern.map((p) => ({ text: `${p.name} from ${money(p.from)} a month` })) },
     ],
     after: `There’s no second-person fee, which saves couples about ${money(pricing.secondPersonSaving)} a year.${inc.length ? ` Rent includes ${andList(inc)}.` : ""}`,
     source: src("plans", l),
@@ -708,10 +708,10 @@ function pricesAnswer(l: Lang): Answer {
 
 function availabilityAnswer(l: Lang): Answer {
   const zh = l === "zh";
-  const order: PlanKind[] = ["independent", "assisted", "harbor"];
+  const order: PlanKind[] = ["independent", "assisted", "lantern"];
   const label: Record<PlanKind, string> = zh
-    ? { independent: "独立生活", assisted: "协助生活", harbor: "Harbor 记忆护理" }
-    : { independent: "Independent Living", assisted: "Assisted Living", harbor: "Harbor Memory Care" };
+    ? { independent: "独立生活", assisted: "协助生活", lantern: "Lantern 记忆护理" }
+    : { independent: "Independent Living", assisted: "Assisted Living", lantern: "Lantern Memory Care" };
   const groups: Group[] = order.map((k) => ({
     title: label[k],
     lines: C.plans.filter((p) => p.kind === k && p.available > 0).map((p) => ({
@@ -771,24 +771,24 @@ function apartmentsAnswer(l: Lang): Answer {
   };
 }
 
-function harborAnswer(l: Lang): Answer {
+function lanternAnswer(l: Lang): Answer {
   const { pricing, living } = C;
-  const avail = C.plans.filter((p) => p.kind === "harbor" && p.available > 0).length;
+  const avail = C.plans.filter((p) => p.kind === "lantern" && p.available > 0).length;
   const t = today();
-  const todayH = dayEvents(t).filter(isHarbor).filter((e) => e.start > nowMinutes()).slice(0, 3);
-  const life = living.harbor.points.filter((p) => /music|ceramic|museum|golf|bowling|fitness|garden|outing/i.test(p)).slice(0, 4);
-  const dir = who(/harbor/i, /harbor/i);
+  const todayH = dayEvents(t).filter(isLantern).filter((e) => e.start > nowMinutes()).slice(0, 3);
+  const life = living.lantern.points.filter((p) => /music|ceramic|museum|golf|bowling|fitness|garden|outing/i.test(p)).slice(0, 4);
+  const dir = who(/lantern/i, /lantern/i);
   if (l === "zh") {
     return {
       lang: l,
-      text: `Harbor 是我们安全封闭的记忆护理社区，拥有自己的庭院和专属的活动与探险项目。${tr(living.harbor.lede)}`,
+      text: `Lantern 是我们安全封闭的记忆护理社区，拥有自己的庭院和专属的活动与探险项目。${tr(living.lantern.lede)}`,
       groups: [
-        { title: "价格", lines: pricing.harbor.map((p) => ({ text: `${ZH_PLAN[p.name] ?? tr(p.name)}：每月 ${money(p.from)} 起` })) },
-        { title: "Harbor 的生活", lines: life.map((p) => ({ text: tr(p) })) },
-        ...(todayH.length ? [{ title: "Harbor 今天稍后的活动", lines: todayH.map((e) => evLine(e, l)) }] : []),
+        { title: "价格", lines: pricing.lantern.map((p) => ({ text: `${ZH_PLAN[p.name] ?? tr(p.name)}：每月 ${money(p.from)} 起` })) },
+        { title: "Lantern 的生活", lines: life.map((p) => ({ text: tr(p) })) },
+        ...(todayH.length ? [{ title: "Lantern 今天稍后的活动", lines: todayH.map((e) => evLine(e, l)) }] : []),
       ],
-      after: `今天 Harbor 有 ${avail} 间空房。${dir ? `Harbor 由${zhWho(dir)}带领。` : ""}`,
-      source: src("harbor", l),
+      after: `今天 Lantern 有 ${avail} 间空房。${dir ? `Lantern 由${zhWho(dir)}带领。` : ""}`,
+      source: src("lantern", l),
       cta: src("tour", l),
       chips: ["如果以后需要更多照顾，需要搬家吗？", "费用是多少？"],
     };
@@ -796,27 +796,27 @@ function harborAnswer(l: Lang): Answer {
   if (l === "es") {
     return {
       lang: l,
-      text: `Harbor es nuestro vecindario seguro de cuidado de la memoria, con su propio patio y su propio programa de Events & Adventures. ${tr(living.harbor.lede)}`,
+      text: `Lantern es nuestro vecindario seguro de cuidado de la memoria, con su propio patio y su propio programa de Events & Adventures. ${tr(living.lantern.lede)}`,
       groups: [
-        { title: "Precios", lines: pricing.harbor.map((p) => ({ text: `${ES_PLAN[p.name] ?? p.name}: desde ${money(p.from)} al mes` })) },
-        { title: "La vida en Harbor", lines: life.map((p) => ({ text: tr(p) })) },
+        { title: "Precios", lines: pricing.lantern.map((p) => ({ text: `${ES_PLAN[p.name] ?? p.name}: desde ${money(p.from)} al mes` })) },
+        { title: "La vida en Lantern", lines: life.map((p) => ({ text: tr(p) })) },
       ],
-      after: `Hoy hay ${avail} habitaciones disponibles en Harbor.${dir ? ` Dirige Harbor: ${esWho(dir)}.` : ""}`,
-      source: src("harbor", l),
+      after: `Hoy hay ${avail} habitaciones disponibles en Lantern.${dir ? ` Dirige Lantern: ${esWho(dir)}.` : ""}`,
+      source: src("lantern", l),
       cta: src("tour", l),
       chips: ["¿Cuánto cuesta?", "¿Puedo agendar una visita?"],
     };
   }
   return {
     lang: l,
-    text: `Harbor is our secured memory care neighborhood, with its own courtyard and its own Events & Adventures program — ${lcFirst(living.harbor.lede)}`,
+    text: `Lantern is our secured memory care neighborhood, with its own courtyard and its own Events & Adventures program — ${lcFirst(living.lantern.lede)}`,
     groups: [
-      { title: "Pricing", lines: pricing.harbor.map((p) => ({ text: `${p.name} from ${money(p.from)} a month` })) },
-      { title: "Life in Harbor", lines: life.map((p) => ({ text: p })) },
-      ...(todayH.length ? [{ title: "Still to come in Harbor today", lines: todayH.map((e) => evLine(e, l)) }] : []),
+      { title: "Pricing", lines: pricing.lantern.map((p) => ({ text: `${p.name} from ${money(p.from)} a month` })) },
+      { title: "Life in Lantern", lines: life.map((p) => ({ text: p })) },
+      ...(todayH.length ? [{ title: "Still to come in Lantern today", lines: todayH.map((e) => evLine(e, l)) }] : []),
     ],
-    after: `${avail} Harbor ${avail === 1 ? "room is" : "rooms are"} available today.${dir ? ` Harbor is led by ${enWho(dir)}.` : ""}`,
-    source: src("harbor", l),
+    after: `${avail} Lantern ${avail === 1 ? "room is" : "rooms are"} available today.${dir ? ` Lantern is led by ${enWho(dir)}.` : ""}`,
+    source: src("lantern", l),
     cta: src("tour", l),
     chips: ["Will I have to move if I need more help?", "How much does it cost?"],
   };
@@ -978,7 +978,7 @@ function holidayAnswer(l: Lang, d: Date, copy: { en: HolidayCopy; zh: HolidayCop
   return {
     lang: zh ? "zh" : "en",
     text: c.intro,
-    groups: [{ title: zh ? zhDate(d) : longDate(d), lines: dayEvents(d).filter((e) => (onlySpecial ? e.special : !isHarbor(e) || e.special)).map((e) => evLine(e, zh ? "zh" : "en")) }],
+    groups: [{ title: zh ? zhDate(d) : longDate(d), lines: dayEvents(d).filter((e) => (onlySpecial ? e.special : !isLantern(e) || e.special)).map((e) => evLine(e, zh ? "zh" : "en")) }],
     after: c.extra,
     source: src("calendar", l),
     chips: c.chips,
@@ -1094,14 +1094,14 @@ const intents: Intent[] = [
         : simple(c.l, `${faq("Is there a second-person fee")}${sq ? ` Our two-bedroom${twoBath ? ", two-bath" : ""} apartments go up to ${sq} square feet — plenty of room for two.` : ""}`, src("faq", c.l), { cta: src("plans", c.l), chips: ["How much does it cost?", "What’s available right now?"] });
     },
   },
-  { test: has(/harbor|memory|dementia|alzheimer|memoria|demencia/, /记忆|失智|痴呆|阿尔茨海默|认知症/), run: (c) => harborAnswer(c.l) },
+  { test: has(/lantern|memory|dementia|alzheimer|memoria|demencia/, /记忆|失智|痴呆|阿尔茨海默|认知症/), run: (c) => lanternAnswer(c.l) },
   {
     test: has(/assist|have to move|need more help|more help|move again|medication|personal care|bathing|dressing|care plan|nursing|care partner|asistida/, /协助|更多(帮助|照顾|照护)|搬家|用药|吃药|个人护理|洗澡|穿衣|护理计划|护理伙伴|护理服务|照护/),
     run: (c) => {
       const rs = who(/care plan/i, /resident services/i);
       return c.l === "zh"
-        ? simple(c.l, `不需要。每套公寓都可以提供协助生活服务，由我们的住户服务团队上门提供。基本支持费为每月 ${money(C.pricing.assistedBase)}，另按护理计划收取个人护理费用。服务包括用药管理、个人护理、陪同用餐、陪同参加活动和就诊，以及与您的医疗服务提供者协调。${rs ? `${zhWho(rs)}会在入住前进行评估，并与家属一起制定每位住户的护理计划。` : ""}`, src("al", c.l), { cta: { label: "进行护理评估", href: "/care-assessment" }, chips: ["介绍一下 Harbor", "费用是多少？"] })
-        : simple(c.l, `${faq("If I need more help later")} Services include medication management, personal care, escorts to meals, activities and appointments, and coordination with your healthcare providers.${rs ? ` ${enSubj(rs)} completes a pre-move-in assessment and builds each care plan with families.` : ""}`, src("al", c.l), { cta: { label: "Take the Care Assessment", href: "/care-assessment" }, chips: ["Tell me about Harbor", "How much does it cost?"] });
+        ? simple(c.l, `不需要。每套公寓都可以提供协助生活服务，由我们的住户服务团队上门提供。基本支持费为每月 ${money(C.pricing.assistedBase)}，另按护理计划收取个人护理费用。服务包括用药管理、个人护理、陪同用餐、陪同参加活动和就诊，以及与您的医疗服务提供者协调。${rs ? `${zhWho(rs)}会在入住前进行评估，并与家属一起制定每位住户的护理计划。` : ""}`, src("al", c.l), { cta: { label: "进行护理评估", href: "/care-assessment" }, chips: ["介绍一下 Lantern", "费用是多少？"] })
+        : simple(c.l, `${faq("If I need more help later")} Services include medication management, personal care, escorts to meals, activities and appointments, and coordination with your healthcare providers.${rs ? ` ${enSubj(rs)} completes a pre-move-in assessment and builds each care plan with families.` : ""}`, src("al", c.l), { cta: { label: "Take the Care Assessment", href: "/care-assessment" }, chips: ["Tell me about Lantern", "How much does it cost?"] });
     },
   },
   {
@@ -1117,14 +1117,14 @@ const intents: Intent[] = [
     },
   },
   {
-    test: has(/lgbt|\bgay\b|lesbian|\btrans(gender)?\b|queer|sagecare|\bsage\b|inclusi|divers|pride/, /同性恋|同志|性少数|跨性别|多元|包容/),
+    test: has(/lgbt|\bgay\b|lesbian|\btrans(gender)?\b|queer|inclusi|divers|pride/, /同性恋|同志|性少数|跨性别|多元|包容/),
     run: (c) => {
-      // SageCare is mentioned only where the community publishes it.
-      const sage = C.welcome.points.some((p) => /sagecare/i.test(p.title + p.text)) || C.awards.some((a) => /sagecare/i.test(a.title + a.detail));
+      // Inclusion training or certification is mentioned only where the community publishes it.
       const first = C.welcome.points[0];
+      const cert = C.welcome.points.find((p, i) => i > 0 && /certif|training/i.test(p.title));
       return c.l === "zh"
-        ? simple(c.l, `${tr(C.welcome.intro)}${first ? tr(first.text) : ""}`, src("welcome", c.l), { after: sage ? `${C.site.name} 已获得 SageCare 认证。` : undefined })
-        : simple(c.l, `${C.welcome.intro}${first ? ` ${first.text}` : ""}`, src("welcome", c.l), { after: sage ? `${C.site.name} is SageCare certified.` : undefined });
+        ? simple(c.l, `${tr(C.welcome.intro)}${first ? tr(first.text) : ""}`, src("welcome", c.l), { after: cert ? tr(cert.text) : undefined })
+        : simple(c.l, `${C.welcome.intro}${first ? ` ${first.text}` : ""}`, src("welcome", c.l), { after: cert?.text });
     },
   },
   {
@@ -1145,12 +1145,12 @@ const intents: Intent[] = [
   },
   {
     test: (c) =>
-      /tenfold|sister|other communit|who owns|operator|parent company/.test(c.n) ||
+      /wrenhaven|sister|other communit|who owns|operator|parent company/.test(c.n) ||
       c.n.includes(norm(C.site.sister.name)) || c.n.includes(norm(C.site.sister.city)) ||
       /母公司|运营方|姐妹社区|谁拥有|哪家公司|其他社区/.test(c.raw),
     run: (c) => c.l === "zh"
-      ? simple(c.l, `${C.site.name} 是 ${C.site.operator} 旗下的社区，我们的姐妹社区是位于 ${C.site.sister.city} 的 ${C.site.sister.name}。我们的宗旨是“Each gives to each”（彼此给予）——Tenfold 的名字正是出自 Joaquin Miller 的这句诗。`, src("about", c.l))
-      : simple(c.l, `${C.site.name} is a ${C.site.operator} community. Our sister community is ${C.site.sister.name} in ${C.site.sister.city}. Our purpose: “Each gives to each” — the line from Joaquin Miller that gave Tenfold its name.`, src("about", c.l)),
+      ? simple(c.l, `${C.site.name} 是 ${C.site.operator} 旗下的社区，我们的姐妹社区是位于 ${C.site.sister.city} 的 ${C.site.sister.name}。Wrenhaven 这个名字来自鹪鹩（wren）：一种小巧、爱结伴的鸟，会筑起温暖的小窝，再让它充满歌声。我们希望每一个 Wrenhaven 社区都给人这样的感觉。`, src("about", c.l))
+      : simple(c.l, `${C.site.name} is a ${C.site.operator} community. Our sister community is ${C.site.sister.name} in ${C.site.sister.city}. The name comes from the wren, a small, sociable bird that builds a snug home and fills it with song. That’s how we want every Wrenhaven community to feel.`, src("about", c.l)),
   },
   {
     test: has(/\b(jobs?|careers?|hiring|employment|apply for a job|work (here|for you|at)|openings?|positions?|empleo|trabajo)\b/, /招聘|求职|应聘|职位|工作机会|找工作|在这里工作/),
@@ -1227,7 +1227,7 @@ const intents: Intent[] = [
   { test: () => true, run: (c) => spaceAnswer(c) },
   {
     test: (c) =>
-      has(/where|address|located|location|directions|map|how far|airport|highway|sacramento|donde|direccion/, /在哪|哪里|地址|位置|怎么走|路线|地图|多远|机场|高速|萨克拉门托/)(c) ||
+      has(/where|address|located|location|directions|map|how far|airport|highway|calder|donde|direccion/, /在哪|哪里|地址|位置|怎么走|路线|地图|多远|机场|高速/)(c) ||
       c.n.includes(norm(C.site.address.city)),
     run: (c) => c.l === "zh"
       ? { lang: c.l, text: `我们的地址是 ${C.site.addressLine}。`, groups: [{ lines: C.site.location.map((t) => ({ text: tr(t) })) }], source: src("contact", c.l), cta: { label: "获取路线", href: "/contact" } }
@@ -1255,7 +1255,7 @@ const identity = (s: string) => s;
 export function answer(raw: string, c: Community, siteLang: Lang = "en", t: (s: string) => string = identity): Answer {
   const n = norm(raw);
   const asked = langOf(raw);
-  // Spanish and Chinese are recognised anywhere. On a Chinese page, an English sentence (not just a name like "Harbor") is answered in English.
+  // Spanish and Chinese are recognised anywhere. On a Chinese page, an English sentence (not just a name like "Lantern") is answered in English.
   const english = asked === "en" && siteLang === "zh" && /[a-z]{2,}\W+[a-z]{2,}/i.test(raw);
   const l: Lang = asked === "zh" || asked === "es" ? asked : english ? "en" : siteLang;
   const prev = C;
@@ -1283,14 +1283,14 @@ export function answer(raw: string, c: Community, siteLang: Lang = "en", t: (s: 
   }
 }
 
-/** Suggested first questions. Harbor is suggested only where the community has Harbor apartments. */
+/** Suggested first questions. Lantern is suggested only where the community has Lantern apartments. */
 export function starters(c: Community): Record<Lang, string[]> {
-  const harbor = c.plans.some((p) => p.kind === "harbor");
-  const keep = (xs: string[]) => (harbor ? xs : xs.filter((x) => !/harbor/i.test(x)));
+  const lantern = c.plans.some((p) => p.kind === "lantern");
+  const keep = (xs: string[]) => (lantern ? xs : xs.filter((x) => !/lantern/i.test(x)));
   return {
-    en: keep(["What’s on today?", "What’s for dinner tonight?", "How much does it cost?", "Is there a second-person fee?", "Tell me about Harbor", "Can I bring my dog?"]),
-    es: keep(["¿Qué hay hoy?", "¿Qué hay de cena esta noche?", "¿Cuánto cuesta?", "¿Hay cargo por segunda persona?", "Hábleme de Harbor", "¿Puedo traer a mi perro?"]),
-    zh: keep(["今天有什么活动？", "今晚吃什么？", "费用是多少？", "第二人需要付费吗？", "介绍一下 Harbor", "可以带狗入住吗？"]),
+    en: keep(["What’s on today?", "What’s for dinner tonight?", "How much does it cost?", "Is there a second-person fee?", "Tell me about Lantern", "Can I bring my dog?"]),
+    es: keep(["¿Qué hay hoy?", "¿Qué hay de cena esta noche?", "¿Cuánto cuesta?", "¿Hay cargo por segunda persona?", "Hábleme de Lantern", "¿Puedo traer a mi perro?"]),
+    zh: keep(["今天有什么活动？", "今晚吃什么？", "费用是多少？", "第二人需要付费吗？", "介绍一下 Lantern", "可以带狗入住吗？"]),
   };
 }
 

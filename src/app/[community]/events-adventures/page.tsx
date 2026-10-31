@@ -39,7 +39,7 @@ export default async function EventsAdventures() {
   const first = director?.name.split(" ")[0];
   const trips = c.eventsBetween(d, 35, iso(d))
     .flatMap((x) => x.events)
-    .filter((e) => e.cat === "trips" && !/^Shopping/.test(e.title) && e.title !== "Harbor Outing")
+    .filter((e) => e.cat === "trips" && !/^Shopping/.test(e.title) && e.title !== "Lantern Outing")
     .slice(0, 10);
 
   return (
@@ -48,10 +48,10 @@ export default async function EventsAdventures() {
         eyebrow="Events & Adventures"
         title={
           <>
-            {t("From everyday enjoyment to ")}<em>{t("once-in-a-lifetime.")}</em>
+            {t("Small pleasures. ")}<em>{t("Big adventures.")}</em>
           </>
         }
-        lede="Events & Adventures covers everything from everyday enjoyment to once-in-a-lifetime bucket list items — planned with residents, not just for them."
+        lede="Events & Adventures runs from the everyday to the unforgettable, and residents help plan all of it."
         photo={copy.hero.photo}
         alt={copy.hero.alt}
         crumbs={[
@@ -74,7 +74,7 @@ export default async function EventsAdventures() {
           <div>
             <p className="eyebrow">{t("The can-do spirit")}</p>
             <h2 id="br-cando-h">
-              {t("If you can dream it, ")}<em>{t("we’ll plan it.")}</em>
+              {t("Bring the idea. ")}<em>{t("We’ll book the bus.")}</em>
             </h2>
             <p className="muted" style={{ marginTop: 14 }}>
               {t(copy.canDo[0])}<span className="br-bikini">{t(copy.canDo[1])}</span>{t(copy.canDo[2])}
@@ -174,7 +174,7 @@ export default async function EventsAdventures() {
                 {t("Our pumpkin carvers ")}<em>{t("never disappoint.")}</em>
               </h2>
               <p className="muted" style={{ marginTop: 14 }}>
-                {t("Every October, residents bring their best ideas to the courtyard for pumpkin carving — and the creations go up on our Facebook page for family and friends to admire. Vote for your favorite in the comments.")}
+                {t("Each October the courtyard turns into a carving workshop, and the finished pumpkins go up on our Facebook page for family and friends to see. Leave a comment for your favorite.")}
               </p>
               <a className="btn btn-green" href={site.facebook} target="_blank" rel="noreferrer">
                 <Icon name="facebook" /> {t("See them on Facebook")}

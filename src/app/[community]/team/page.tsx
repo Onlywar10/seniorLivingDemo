@@ -31,7 +31,7 @@ export default async function TeamPage() {
   const council = team.find(isCouncil);
   const topicsFor = (name: string) => whoToCall.filter((w) => w.name === name).map((w) => w.topic);
   const hasExt = whoToCall.some((w) => w.ext);
-  const harborPhone = c.phones.find((p) => p.label === "Harbor Memory Care")?.number;
+  const lanternPhone = c.phones.find((p) => p.label === "Lantern Memory Care")?.number;
   const callHref = (ext?: string | null) => (ext ? `${site.phoneHref},${ext}` : site.phoneHref);
   /** Unnamed roles show the role once, as the name. */
   const nameOf = (m: TeamMember) => (m.unnamed ? <h3>{t(m.role)}</h3> : <h3 data-no-translate>{m.name}</h3>);
@@ -177,10 +177,10 @@ export default async function TeamPage() {
               <p>
                 {t("Call ")}
                 {site.phone}
-                {harborPhone ? (
+                {lanternPhone ? (
                   <>
-                    {t(" and dial the extension, or ask the front desk. For Harbor, you can also call ")}
-                    {harborPhone}.
+                    {t(" and dial the extension, or ask the front desk. For Lantern, you can also call ")}
+                    {lanternPhone}.
                   </>
                 ) : (
                   t(" and dial the extension, or ask the front desk.")
@@ -244,7 +244,7 @@ export default async function TeamPage() {
               </li>
             ))}
             {copy.pet && (
-              <li className="tm-thor">
+              <li className="tm-pet">
                 <span className="tm-paw" aria-hidden="true">
                   <Icon name="paw" />
                 </span>
@@ -272,7 +272,7 @@ export default async function TeamPage() {
             </h2>
             {council && (
               <>
-                <div className="tm-bill">
+                <div className="tm-council">
                   <Monogram name={council.name} size={64} tone="var(--slate)" />
                   <div>
                     {nameOf(council)}

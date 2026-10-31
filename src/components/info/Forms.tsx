@@ -38,7 +38,7 @@ function Done({ innerRef, title, children, onReset, resetLabel }: { innerRef: Re
   );
 }
 
-const interestOptions = ["Independent Living", "Assisted Living Services", "Harbor Memory Care", "Not sure yet", "Something else"];
+const interestOptions = ["Independent Living", "Assisted Living Services", "Lantern Memory Care", "Not sure yet", "Something else"];
 const heardOptions = (localPress: string | null) => ["Choose one", "Google or another search", "A friend or family member", "A resident", "My doctor, hospital or care advisor", "Facebook", "Driving past", ...(localPress ? [localPress] : []), "An event at the community", "Other"];
 
 export function EnquiryForm({ phone }: { phone: string }) {

@@ -4,7 +4,7 @@ import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
 import { PageHero } from "@/components/PageHero";
 import { Icon } from "@/components/Icon";
-import { purpose } from "@/data/tenfold";
+import { purpose } from "@/data/wrenhaven";
 import { getCommunity } from "@/lib/community-server";
 import { teamCopy } from "@/data/communities/copy/team";
 import { CareersApply } from "@/components/info/Forms";
@@ -53,7 +53,7 @@ export default async function CareersPage() {
       <section className="sec-tight tone-white">
         <div className="wrap cr-purpose">
           <p className="cr-quote">{t(purpose)}</p>
-          <p className="small muted">{t("Our purpose, shared by every Tenfold Senior Living community")}</p>
+          <p className="small muted">{t("Our purpose, shared by every Wrenhaven Senior Living community")}</p>
         </div>
       </section>
 
@@ -67,9 +67,9 @@ export default async function CareersPage() {
             </h2>
             <p className="muted">{t("Full-time team members are eligible for the full benefits package. Ask our recruiter about part-time eligibility.")}</p>
             <div className="cr-ben-photo">
-              {/* Bruceville Point publishes a photo of its own dining team; elsewhere a kitchen photo. */}
-              {c.slug === "bruceville-point" ? (
-                <Image src="/img/bp/server.jpg" alt={t("A smiling server carrying a tray of water glasses in the kitchen")} fill sizes="(max-width: 860px) 100vw, 40vw" style={{ objectPosition: "50% 25%" }} />
+              {/* Kestrel Point shows a photo of its dining team; elsewhere a kitchen photo. */}
+              {c.slug === "kestrel-point" ? (
+                <Image src="/img/kp/server.jpg" alt={t("A smiling server carrying a tray of water glasses in the kitchen")} fill sizes="(max-width: 860px) 100vw, 40vw" style={{ objectPosition: "50% 25%" }} />
               ) : (
                 <Image src="/img/chef-kitchen.jpg" alt={t("A chef plating food in the kitchen")} fill sizes="(max-width: 860px) 100vw, 40vw" />
               )}

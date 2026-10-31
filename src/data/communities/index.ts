@@ -1,22 +1,22 @@
-// Every Tenfold community's content, by URL slug. Pages read the current one through
+// Every Wrenhaven community's content, by URL slug. Pages read the current one through
 // getCommunity() (Server Components, src/lib/community-server.ts) or useCommunity() (Client Components, src/lib/community.tsx).
 import type { Award, CalEvent, DayMenu, FaqGroup, FaqItem, Living, LivingKey, Plan, Space, Steward, Story, TeamMember, Testimonial, Venue } from "@/data/shared";
-import * as pclSite from "./prairie-city-landing/site";
-import * as pclCalendar from "./prairie-city-landing/calendar";
-import * as pclMenus from "./prairie-city-landing/menus";
-import * as pclInfo from "./prairie-city-landing/info";
-import * as pclArticles from "./prairie-city-landing/articles";
-import * as bpSite from "./bruceville-point/site";
-import * as bpCalendar from "./bruceville-point/calendar";
-import * as bpMenus from "./bruceville-point/menus";
-import * as bpInfo from "./bruceville-point/info";
-import * as bpArticles from "./bruceville-point/articles";
+import * as abSite from "./alder-bend/site";
+import * as abCalendar from "./alder-bend/calendar";
+import * as abMenus from "./alder-bend/menus";
+import * as abInfo from "./alder-bend/info";
+import * as abArticles from "./alder-bend/articles";
+import * as kpSite from "./kestrel-point/site";
+import * as kpCalendar from "./kestrel-point/calendar";
+import * as kpMenus from "./kestrel-point/menus";
+import * as kpInfo from "./kestrel-point/info";
+import * as kpArticles from "./kestrel-point/articles";
 
 import { communitySlugs, isCommunity, type CommunitySlug } from "@/lib/sites";
 
 export { communitySlugs, isCommunity, type CommunitySlug };
 
-type Facts = typeof pclSite.site & { opened?: string; apartments?: { independentAssisted: number; harbor: number } };
+type Facts = typeof abSite.site & { opened?: string; apartments?: { independentAssisted: number; lantern: number } };
 interface NavItem { label: string; href: string; children?: { label: string; href: string }[] }
 
 export interface Community {
@@ -26,7 +26,7 @@ export interface Community {
   awards: Award[];
   welcome: { intro: string; points: { title: string; text: string }[] };
   living: Record<LivingKey, Living>;
-  pricing: Omit<typeof pclSite.pricing, "independentRange"> & { independentRange: readonly [number, number] };
+  pricing: Omit<typeof abSite.pricing, "independentRange"> & { independentRange: readonly [number, number] };
   plans: Plan[];
   spaces: Space[];
   team: TeamMember[];
@@ -78,14 +78,14 @@ const bundle = (slug: CommunitySlug, site: object, calendar: object, menus: obje
   ({ slug, ...site, ...calendar, ...menus, ...info, ...articles }) as unknown;
 
 export const communities: Record<CommunitySlug, Community> = {
-  "prairie-city-landing": bundle("prairie-city-landing", pclSite, pclCalendar, pclMenus, pclInfo, pclArticles) as Community,
-  "bruceville-point": bundle("bruceville-point", bpSite, bpCalendar, bpMenus, bpInfo, bpArticles) as Community,
+  "alder-bend": bundle("alder-bend", abSite, abCalendar, abMenus, abInfo, abArticles) as Community,
+  "kestrel-point": bundle("kestrel-point", kpSite, kpCalendar, kpMenus, kpInfo, kpArticles) as Community,
 };
 
 // Compile-time check that each community's modules really have the Community shape (the bundle cast above can't see it).
 type Check<T extends Community> = T;
-export type _pcl = Check<{ slug: CommunitySlug } & typeof pclSite & typeof pclCalendar & typeof pclMenus & typeof pclInfo & typeof pclArticles>;
-export type _bp = Check<{ slug: CommunitySlug } & typeof bpSite & typeof bpCalendar & typeof bpMenus & typeof bpInfo & typeof bpArticles>;
+export type _ab = Check<{ slug: CommunitySlug } & typeof abSite & typeof abCalendar & typeof abMenus & typeof abInfo & typeof abArticles>;
+export type _kp = Check<{ slug: CommunitySlug } & typeof kpSite & typeof kpCalendar & typeof kpMenus & typeof kpInfo & typeof kpArticles>;
 
 export const getCommunityBySlug = (slug: CommunitySlug) => communities[slug];
 

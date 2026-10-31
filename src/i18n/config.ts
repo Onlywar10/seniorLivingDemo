@@ -12,10 +12,10 @@ export const htmlLang: Record<Lang, string> = { en: "en", es: "es", zh: "zh-Hans
 /** Each language named in itself, for the switcher. */
 export const langNames: Record<Lang, string> = { en: "English", es: "Español", zh: "中文" };
 
-export const LANG_COOKIE = "pcl-lang";
+export const LANG_COOKIE = "wh-lang";
 /** Request headers set by the proxy for the page render. */
-export const LANG_HEADER = "x-pcl-lang";
-export const SUGGEST_HEADER = "x-pcl-lang-suggest";
+export const LANG_HEADER = "x-wh-lang";
+export const SUGGEST_HEADER = "x-wh-lang-suggest";
 
 const PREFIX = /^\/(en|es|zh)(?=\/|$|[?#])/;
 

@@ -17,11 +17,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const { pricing } = await getCommunity();
   return {
     title: t("Floor Plans & Pricing"),
-    description: t(`Studio, one- and two-bedroom apartments from ${money(pricing.independentRange[0])} a month, Assisted Living Services in every apartment, and Harbor Memory Care. No second-person fee.`),
+    description: t(`Studio, one- and two-bedroom apartments from ${money(pricing.independentRange[0])} a month, Assisted Living Services in every apartment, and Lantern Memory Care. No second-person fee.`),
   };
 }
 
-const KINDS: PlanKind[] = ["independent", "assisted", "harbor"];
+const KINDS: PlanKind[] = ["independent", "assisted", "lantern"];
 
 export default async function FloorPlansPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const { type } = await searchParams;
@@ -115,13 +115,13 @@ export default async function FloorPlansPage({ searchParams }: { searchParams: P
               </Link>
             </article>
             <article className="fp-pc fp-pc-hb">
-              <h3>{t(living.harbor.name)}</h3>
+              <h3>{t(living.lantern.name)}</h3>
               <p className="fp-pc-range">
-                {t("from ")}{money(pricing.harbor[0].from)}
+                {t("from ")}{money(pricing.lantern[0].from)}
                 <span>{t(" a month")}</span>
               </p>
               <ul className="fp-pc-list">
-                {pricing.harbor.map((r) => (
+                {pricing.lantern.map((r) => (
                   <li key={r.name}>
                     <span>{t(r.name)}</span>
                     <b>{t("from ")}{money(r.from)}</b>
@@ -132,8 +132,8 @@ export default async function FloorPlansPage({ searchParams }: { searchParams: P
                   <b>{t("by assessment")}</b>
                 </li>
               </ul>
-              <Link href="/living/harbor-memory-care" className="link-arrow">
-                {t("About Harbor ")}<Icon name="arrow" />
+              <Link href="/living/lantern-memory-care" className="link-arrow">
+                {t("About Lantern ")}<Icon name="arrow" />
               </Link>
             </article>
           </div>

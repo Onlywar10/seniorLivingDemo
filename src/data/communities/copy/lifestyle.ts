@@ -1,75 +1,76 @@
 // Lifestyle page copy that differs between communities.
-// Bruceville Point lines are drawn from its data files and brucevillepoint.com (/events-adventures/, /fitness/).
-// BP photos are stand-ins from public/img. // TODO photo
 import type { CommunitySlug } from "@/lib/sites";
 
 export interface LifestyleCopy {
   metaDescription: string;
   hero: { photo: string; alt: string };
-  /** YUSM letter → the longer explanation and where to see it. */
+  /**
+   * LIVE letter (L, I, V, E, matching `pillars` in src/data/wrenhaven.ts) → the longer explanation and where to see it.
+   * Listed in pillar order: the Lifestyle page falls back to position if a letter isn't found.
+   */
   deeper: Record<string, { more: string; where: [string, string][] }>;
   tiles: { href: string; title: string; text: string; photo: string }[];
 }
 
 export const lifestyleCopy: Record<CommunitySlug, LifestyleCopy> = {
-  "prairie-city-landing": {
+  "alder-bend": {
     metaDescription:
-      "Life at Prairie City Landing is YUSM — Youthful, Useful, Spontaneous and Mobile. Explore the activity calendar, dining, fitness, Events & Adventures and our amazing spaces.",
+      "Life at Alder Bend is LIVE: Lively, Independent, Valued and Engaged. See the activity calendar, dining, fitness, Events & Adventures and the spaces residents share.",
     hero: { photo: "/img/lunar-new-year.jpg", alt: "Residents celebrating Lunar New Year with lion dancers" },
     deeper: {
-      Y: {
-        more: "Youthful isn’t about age. It’s the feeling of learning something new, laughing until your sides hurt and trying the thing you always meant to. Visiting artists teach in the Art Studio, the Speaker Series brings authors and adventurers to the theatre, and the Friday happy hour has live music every week.",
+      L: {
+        more: "Lively has nothing to do with your birthday. It’s picking up a new skill, a good belly laugh, finally trying the thing you kept putting off. Visiting artists teach in the Art Studio, the Speaker Series brings travelers and writers to the Theatre, and Friday happy hour always has a live band.",
         where: [["Art classes & clubs", "/calendar"], ["Amazing Spaces", "/spaces"]],
       },
-      U: {
-        more: "Everyone has something to give. Residents lead clubs, plant the raised beds, craft alongside the Folsom High School Senior Assistance Club and run the Resident Council. At the Friday Activity Meeting, residents shape next week’s calendar with our Events & Adventures Director.",
-        where: [["Activity Meeting", "/calendar"], ["Purpose & Values", "/about"]],
-      },
-      S: {
-        more: "Say yes to the unexpected. Join the bus to a Gold Rush-era mine, a wine tasting in the foothills or a last-minute lunch at a new restaurant — or skip it all for a quiet afternoon. Your day, your decisions.",
+      I: {
+        more: "Your days are yours to plan. Hop on the bus to the Copper Creek Mine, spend an afternoon tasting in the Juniper Hills, try the new place in Old Town for lunch, or stay home with a book. Nobody here keeps a schedule for you.",
         where: [["Events & Adventures", "/events-adventures"], ["Upcoming trips", "/events-adventures#trips"]],
       },
-      M: {
-        more: "Fitness keeps you from ‘stepping back’ from life. Our full-time Fitness Director teaches more than 25 classes a week — from Better Balance and chair yoga to Zumba, tai chi and nature walks in local parks.",
+      V: {
+        more: "A lifetime of know-how doesn’t retire. Residents run clubs, tend the raised beds, make crafts with students from Fairhollow’s schools and sit on the Resident Council. Each Friday at the Activity Meeting, they plan the coming week alongside our Events & Adventures Director.",
+        where: [["Activity Meeting", "/calendar"], ["Purpose & Values", "/about"]],
+      },
+      E: {
+        more: "Staying active keeps you in the middle of things. Our full-time Fitness Director leads more than 25 classes a week, from balance work and chair yoga to Zumba, tai chi and Monday walks around Millpond Lake.",
         where: [["Fitness", "/fitness"], ["This week’s classes", "/fitness#classes"]],
       },
     },
     tiles: [
-      { href: "/calendar", title: "Activity Calendar", text: "Classes, clubs, trips, music and movies, every day of the month.", photo: "/img/drum-circle.jpg" },
-      { href: "/dining", title: "Dining", text: "Three restaurants with menus that change daily.", photo: "/img/dish-plated.jpg" },
-      { href: "/events-adventures", title: "Events & Adventures", text: "Everyday enjoyment to once-in-a-lifetime bucket-list items.", photo: "/img/car-wash.jpg" },
-      { href: "/fitness", title: "Fitness", text: "More than 25 classes a week with Jason Cherry.", photo: "/img/fitness-bike.jpg" },
-      { href: "/spaces", title: "Amazing Spaces", text: "Theatre, salon, courtyard, art studio and more.", photo: "/img/fire-table.jpg" },
+      { href: "/calendar", title: "Activity Calendar", text: "Classes, clubs, outings, music and movies, every day of the month.", photo: "/img/drum-circle.jpg" },
+      { href: "/dining", title: "Dining", text: "Three restaurants, with menus that change every day.", photo: "/img/dish-plated.jpg" },
+      { href: "/events-adventures", title: "Events & Adventures", text: "Little pleasures every day, and the occasional big adventure.", photo: "/img/car-wash.jpg" },
+      { href: "/fitness", title: "Fitness", text: "Over 25 classes a week with Devin Marsh.", photo: "/img/fitness-bike.jpg" },
+      { href: "/spaces", title: "Amazing Spaces", text: "A theatre, salon, courtyard, art studio and more.", photo: "/img/fire-table.jpg" },
     ],
   },
-  "bruceville-point": {
+  "kestrel-point": {
     metaDescription:
-      "Life at Bruceville Point is YUSM — Youthful, Useful, Spontaneous and Mobile. Explore the activity calendar, dining, fitness, Events & Adventures and our amazing spaces.",
-    hero: { photo: "/img/friends-walking.jpg", alt: "Residents walking and laughing together in the park" }, // TODO photo
+      "Life at Kestrel Point is LIVE: Lively, Independent, Valued and Engaged. See the activity calendar, dining, fitness, Events & Adventures and the spaces residents share.",
+    hero: { photo: "/img/friends-walking.jpg", alt: "Residents walking and laughing together in the park" },
     deeper: {
-      Y: {
-        more: "Youthful isn’t about age. It’s the feeling of learning something new, laughing until your sides hurt and trying the thing you always meant to. Visiting instructors teach in the Art Studio, the monthly Paint and Sip brings residents, families and Care Partners together at the easel, and happy hour in the Bistro has live music.",
+      L: {
+        more: "Lively has nothing to do with your birthday. It’s picking up a new skill, a good belly laugh, finally trying the thing you kept putting off. Visiting instructors teach in the Art Studio, the monthly Paint and Sip puts residents, families and Care Partners side by side at the easel, and happy hour in the Bistro comes with live music.",
         where: [["Art classes & clubs", "/calendar"], ["Amazing Spaces", "/spaces"]],
       },
-      U: {
-        more: "Everyone has something to give. Residents lead clubs, plant the courtyard’s raised beds and serve on the Resident Council. At the Friday Activity Meeting, residents shape next week’s calendar with our Events & Adventures Director.",
-        where: [["Activity Meeting", "/calendar"], ["Purpose & Values", "/about"]],
-      },
-      S: {
-        more: "Say yes to the unexpected. Join the bus to the Aerospace Museum of California, a sunny afternoon in a local park or a last-minute lunch out — or skip it all for a quiet afternoon. Your day, your decisions.",
+      I: {
+        more: "Your days are yours to plan. Take the bus to a museum in Calder, spend a sunny afternoon at the Meadowbrook Wildlife Refuge, go out for a spur-of-the-moment lunch, or stay home with a book. Nobody here keeps a schedule for you.",
         where: [["Events & Adventures", "/events-adventures"], ["Upcoming trips", "/events-adventures#trips"]],
       },
-      M: {
-        more: "Fitness keeps you from ‘stepping back’ from life. Our full-time Fitness Director teaches more than 25 classes a week — from Step Aerobics and Better Balance to strength training, bocce and disc golf.",
+      V: {
+        more: "A lifetime of know-how doesn’t retire. Residents run clubs, plant the courtyard’s raised beds and sit on the Resident Council. Each Friday at the Activity Meeting, they plan the coming week alongside our Events & Adventures Director.",
+        where: [["Activity Meeting", "/calendar"], ["Purpose & Values", "/about"]],
+      },
+      E: {
+        more: "Staying active keeps you in the middle of things. Our full-time Fitness Director leads more than 25 classes a week, from step aerobics and balance work to strength training, bocce and disc golf.",
         where: [["Fitness", "/fitness"], ["This week’s classes", "/fitness#classes"]],
       },
     },
     tiles: [
-      { href: "/calendar", title: "Activity Calendar", text: "Classes, clubs, trips, music and movies, every day of the month.", photo: "/img/theatre.jpg" }, // TODO photo
-      { href: "/dining", title: "Dining", text: "Three restaurants with menus that change daily.", photo: "/img/dish-plated.jpg" }, // TODO photo
-      { href: "/events-adventures", title: "Events & Adventures", text: "Everyday enjoyment to once-in-a-lifetime bucket-list items.", photo: "/img/courtyard-bbq.jpg" }, // TODO photo
-      { href: "/fitness", title: "Fitness", text: "More than 25 classes a week with Tina Trillo.", photo: "/img/fitness-center.jpg" }, // TODO photo
-      { href: "/spaces", title: "Amazing Spaces", text: "Theatre, salon, courtyard, art studio and more.", photo: "/img/courtyard-palms.jpg" }, // TODO photo
+      { href: "/calendar", title: "Activity Calendar", text: "Classes, clubs, outings, music and movies, every day of the month.", photo: "/img/theatre.jpg" },
+      { href: "/dining", title: "Dining", text: "Three restaurants, with menus that change every day.", photo: "/img/dish-plated.jpg" },
+      { href: "/events-adventures", title: "Events & Adventures", text: "Little pleasures every day, and the occasional big adventure.", photo: "/img/courtyard-bbq.jpg" },
+      { href: "/fitness", title: "Fitness", text: "Over 25 classes a week with Kara Lindqvist.", photo: "/img/fitness-center.jpg" },
+      { href: "/spaces", title: "Amazing Spaces", text: "A theatre, salon, courtyard, art studio and more.", photo: "/img/courtyard-palms.jpg" },
     ],
   },
 };

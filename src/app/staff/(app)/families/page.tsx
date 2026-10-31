@@ -15,7 +15,7 @@ export default async function FamiliesPage() {
     <>
       <PageHead title="Families & contacts" sub={`Everyone who hears from ${s.brand.name}, how they like to hear, and in which language.`} />
       <div className="sx-kpis">
-        <Kpi label="Residents" value={community.residents} note={`${community.harborResidents} in Harbor`} />
+        <Kpi label="Residents" value={community.residents} note={`${community.lanternResidents} in Lantern`} />
         <Kpi label="Families opted in" value={community.families} note={`${community.contacts} contacts in all`} />
         <Kpi label="Reachable by text" value={community.smsReachable} note={`${Math.round((community.smsReachable / community.families) * 100)}% of families`} />
         <Kpi label="Reachable by email" value={community.emailReachable} note={`${Math.round((community.emailReachable / community.families) * 100)}% of families`} />

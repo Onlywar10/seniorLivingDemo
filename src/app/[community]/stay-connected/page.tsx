@@ -27,7 +27,7 @@ function weekPreview(eventsOn: Community["eventsOn"]): PreviewItem[] {
     const d = addDays(t, i);
     const evs = eventsOn(d);
     const rank = (c: (typeof evs)[number]) => (c.special ? 0 : c.cat === "trips" && !/Shopping Trip/.test(c.title) ? 1 : c.cat === "music" ? 2 : 9);
-    const best = evs.filter((e) => rank(e) < 9 && !e.harbor && e.cat !== "harbor").sort((a, b) => rank(a) - rank(b) || a.start - b.start).slice(0, 1);
+    const best = evs.filter((e) => rank(e) < 9 && !e.lantern && e.cat !== "lantern").sort((a, b) => rank(a) - rank(b) || a.start - b.start).slice(0, 1);
     best.forEach((e) => out.push({ wd: dow(d), md: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`, time: fmtTime(e.start), title: e.title }));
   }
   return out;

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { Overview } from "@/components/staff/Overview";
 import { Avatar, Badge, Card, Delta, HBars, Kpi, LineChart, Meter, fmt, pctChange } from "@/components/staff/ui";
-import { cats, isHarbor } from "@/data/shared";
+import { cats, isLantern } from "@/data/shared";
 import { ago, atToday, dailyVisits, siteHref, staffPeople, user } from "@/data/staff";
 import { getStaffCommunity } from "@/data/staff/server";
 import { dayShort, fmtRange, fmtTime, greeting, iso, longDate, nowMinutes, today } from "@/lib/clock";
@@ -19,8 +19,8 @@ export default async function Dashboard() {
   const approver = s.people[s.roles.approver];
   const t = today();
   const now = nowMinutes();
-  const todays = eventsOn(t).filter((e) => !isHarbor(e) || e.cat !== "harbor");
-  const harborToday = eventsOn(t).filter((e) => e.cat === "harbor").length;
+  const todays = eventsOn(t).filter((e) => !isLantern(e) || e.cat !== "lantern");
+  const lanternToday = eventsOn(t).filter((e) => e.cat === "lantern").length;
   const trips = eventsBetween(t, 8, iso(t))
     .flatMap((d) => d.events.filter((e) => e.cap && e.cat === "trips").map((e) => ({ ...e, d: d.date })))
     .slice(0, 6);
@@ -123,7 +123,7 @@ export default async function Dashboard() {
           </ul>
         </Card>
 
-        <Card title={`Today at ${s.brand.name}`} sub={`${todays.length} events · plus ${harborToday} in Harbor`} action={<Link className="sx-btn sx-btn-sm" href={siteHref(s.slug, "/calendar")} target="_blank">On the website</Link>}>
+        <Card title={`Today at ${s.brand.name}`} sub={`${todays.length} events · plus ${lanternToday} in Lantern`} action={<Link className="sx-btn sx-btn-sm" href={siteHref(s.slug, "/calendar")} target="_blank">On the website</Link>}>
           <ul className="sx-today">
             {upcoming.slice(0, 9).map((e) => {
               const endM = e.end ?? e.start + 60;

@@ -10,14 +10,14 @@ export function availability(p: Plan): { text: string; tone: "open" | "wait" } {
   return { text: "Waitlist", tone: "wait" };
 }
 
-export const bedLabel = (p: Plan) => (p.kind === "harbor" ? "Private room" : p.beds === 0 ? "Studio" : `${p.beds} bedroom${p.beds > 1 ? "s" : ""}`);
+export const bedLabel = (p: Plan) => (p.kind === "lantern" ? "Private room" : p.beds === 0 ? "Studio" : `${p.beds} bedroom${p.beds > 1 ? "s" : ""}`);
 /** "1 bath", "2 baths", "Shared bath"; null where the community doesn't publish the bath count. */
 export const bathLabel = (p: Plan) => (p.baths === null ? null : p.baths === 0.5 ? "Shared bath" : `${p.baths} bath${p.baths > 1 ? "s" : ""}`);
 
 /** A plan with a wrap-around balcony (its features say so). */
 export const wrapBalcony = (p: Plan) => p.features.some((f) => /wrap-around balcony/i.test(f));
 
-export const interestFor: Record<PlanKind, string> = { independent: "independent", assisted: "assisted", harbor: "harbor" };
+export const interestFor: Record<PlanKind, string> = { independent: "independent", assisted: "assisted", lantern: "lantern" };
 
 export interface Spot {
   x: number;
@@ -26,7 +26,7 @@ export interface Spot {
   text: string;
 }
 export interface Stop {
-  key: string; // room key on the plan (or "courtyard" for Harbor)
+  key: string; // room key on the plan (or "courtyard" for Lantern)
   title: string;
   photo: string;
   alt: string;
@@ -34,11 +34,11 @@ export interface Stop {
   spots: Spot[];
 }
 
-/** What the tour needs to know about the community: its city (for the bedroom's ceiling fan) and Harbor's entry. */
+/** What the tour needs to know about the community: its city (for the bedroom's ceiling fan) and Lantern's entry. */
 export interface TourPlace {
   city: string;
-  /** Harbor's shared living room, just outside the residents' rooms. */
-  harborEntry: Pick<Stop, "photo" | "alt" | "caption" | "spots">;
+  /** Lantern's shared living room, just outside the residents' rooms. */
+  lanternEntry: Pick<Stop, "photo" | "alt" | "caption" | "spots">;
 }
 
 /** Tour stops for a plan: only the rooms it has, in walking order. */
@@ -47,8 +47,8 @@ export function tourStops(p: Plan, place: TourPlace): Stop[] {
   const care = p.kind !== "independent";
   const stops: Stop[] = [];
 
-  if (p.kind === "harbor") {
-    stops.push({ key: "entry", title: "Entry", ...place.harborEntry });
+  if (p.kind === "lantern") {
+    stops.push({ key: "entry", title: "Entry", ...place.lanternEntry });
     stops.push({
       key: "bedroom",
       title: roomName("bedroom", p),
@@ -57,7 +57,7 @@ export function tourStops(p: Plan, place: TourPlace): Stop[] {
       caption: "A private room with space for a favorite chair, family photos and familiar furniture from home.",
       spots: [
         { x: 74, y: 40, label: "Natural light", text: "Oversized windows bring in morning light, which helps keep days and nights in rhythm." },
-        { x: 40, y: 44, label: "Emergency pull cord", text: "Emergency pull cords in every room reach the Harbor team right away." },
+        { x: 40, y: 44, label: "Emergency pull cord", text: "Emergency pull cords in every room reach the Lantern team right away." },
         { x: 45, y: 80, label: "Bring what matters", text: "Your own bed, quilt and keepsakes make the room feel like home from the first night." },
       ],
     });
@@ -77,13 +77,13 @@ export function tourStops(p: Plan, place: TourPlace): Stop[] {
     }
     stops.push({
       key: "courtyard",
-      title: "Harbor courtyard",
-      photo: "/img/harbor-garden.jpg",
-      alt: "Harbor’s secured courtyard with lawn, garden chairs and a shade tree",
-      caption: "Harbor’s own secured courtyard, open whenever the weather is good.",
+      title: "Lantern courtyard",
+      photo: "/img/lantern-garden.jpg",
+      alt: "Lantern’s secured courtyard with lawn, garden chairs and a shade tree",
+      caption: "Lantern’s own secured courtyard, open whenever the weather is good.",
       spots: [
         { x: 18, y: 80, label: "Secured courtyard", text: "Walk, sit in the sun or putt on the green, safely, whenever you like." },
-        { x: 68, y: 78, label: "Gardening", text: "Raised planters for Harbor’s gardening club, one of residents’ favorite roles." },
+        { x: 68, y: 78, label: "Gardening", text: "Raised planters for Lantern’s gardening club, one of residents’ favorite roles." },
       ],
     });
     return stops;

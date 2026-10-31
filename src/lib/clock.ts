@@ -1,4 +1,4 @@
-// Every date on the site is computed from the current day in Folsom's time zone,
+// Every date on the site is computed from the current day in Fairhollow's time zone,
 // so the calendar, menus and news always read as today's.
 
 export const TZ = "America/Los_Angeles";

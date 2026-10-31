@@ -12,16 +12,16 @@ export interface InfoCopy {
 }
 
 export const infoCopy: Record<CommunitySlug, InfoCopy> = {
-  "prairie-city-landing": {
-    newsPlace: "the Landing",
-    guidesMetaDescription: "Free guides to choosing and paying for senior living: care options, costs, funding sources, insurance, VA Aid and Attendance, safety and staying social.",
-    dinnerPerk: "The daily specials from the Cypress Room and Natoma Café.",
-    paper: "Large-print calendars are at the front desk every month, and we’re happy to mail one to you. Just ask when you call.",
+  "alder-bend": {
+    newsPlace: "Alder Bend",
+    guidesMetaDescription: "Free, plain-English guides for families: comparing care options, what senior living costs, ways to pay for it, insurance, VA Aid and Attendance, home safety and staying social.",
+    dinnerPerk: "The daily specials from the Juniper Room and Millpond Café.",
+    paper: "Each month’s large-print calendar is waiting at the front desk, and we’ll gladly post one to you. Just mention it when you call.",
   },
-  "bruceville-point": {
-    newsPlace: "Bruceville Point",
-    guidesMetaDescription: "Free Tenfold guides to choosing and paying for senior living: independent living, assisted living, memory care, funding care, staying at home and making the decision as a family.",
-    dinnerPerk: "The daily specials from the Cypress Room and Stone Lakes Cafe.",
+  "kestrel-point": {
+    newsPlace: "Kestrel Point",
+    guidesMetaDescription: "Free Wrenhaven guides for families: independent living, assisted living and memory care explained, paying for care, staying at home, and deciding together.",
+    dinnerPerk: "The daily specials from the Juniper Room and Meadowbrook Cafe.",
     paper: null,
   },
 };

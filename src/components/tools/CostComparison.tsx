@@ -15,27 +15,27 @@ interface Line {
   label: string;
   hint?: string;
   value: number;
-  pcl: string; // what covers it at the community
+  comm: string; // what covers it at the community
 }
 
-// Typical monthly figures for a Sacramento-area household.
+// Typical monthly figures for a Calder-area household.
 const BASE: Line[] = [
-  { id: "housing", label: "Mortgage or rent", hint: "Enter 0 if your home is paid off", value: 1850, pcl: "Your monthly rent" },
-  { id: "tax", label: "Property tax & homeowners insurance", value: 780, pcl: "No property tax or homeowners insurance" },
-  { id: "hoa", label: "HOA dues", value: 120, pcl: "No HOA dues" },
-  { id: "util", label: "Utilities", hint: "Electric, gas, water, sewer and garbage", value: 420, pcl: "All utilities included" },
-  { id: "net", label: "Internet, cable & phone", value: 210, pcl: "Full internet and cable included" },
-  { id: "maint", label: "Home maintenance & repairs", hint: "Roof, HVAC, appliances, plumbing", value: 450, pcl: "All maintenance and handyman services included" },
-  { id: "clean", label: "Housekeeping & yard care", value: 360, pcl: "Weekly housekeeping included" },
-  { id: "food", label: "Groceries & meals out", value: 850, pcl: "Access to all three restaurants included" },
-  { id: "car", label: "Transportation & car costs", hint: "Payment, insurance, fuel, upkeep", value: 640, pcl: "Scheduled transportation included" },
-  { id: "gym", label: "Fitness membership", value: 65, pcl: "25+ fitness classes a week included" },
-  { id: "fun", label: "Entertainment & outings", value: 250, pcl: "Events & Adventures included" },
-  { id: "pendant", label: "Emergency response pendant", value: 45, pcl: "24-hour emergency response included" },
+  { id: "housing", label: "Mortgage or rent", hint: "Enter 0 if your home is paid off", value: 1850, comm: "Your monthly rent" },
+  { id: "tax", label: "Property tax & homeowners insurance", value: 780, comm: "No property tax or homeowners insurance" },
+  { id: "hoa", label: "HOA dues", value: 120, comm: "No HOA dues" },
+  { id: "util", label: "Utilities", hint: "Electric, gas, water, sewer and garbage", value: 420, comm: "All utilities included" },
+  { id: "net", label: "Internet, cable & phone", value: 210, comm: "Full internet and cable included" },
+  { id: "maint", label: "Home maintenance & repairs", hint: "Roof, HVAC, appliances, plumbing", value: 450, comm: "All maintenance and handyman services included" },
+  { id: "clean", label: "Housekeeping & yard care", value: 360, comm: "Weekly housekeeping included" },
+  { id: "food", label: "Groceries & meals out", value: 850, comm: "Access to all three restaurants included" },
+  { id: "car", label: "Transportation & car costs", hint: "Payment, insurance, fuel, upkeep", value: 640, comm: "Scheduled transportation included" },
+  { id: "gym", label: "Fitness membership", value: 65, comm: "25+ fitness classes a week included" },
+  { id: "fun", label: "Entertainment & outings", value: 250, comm: "Events & Adventures included" },
+  { id: "pendant", label: "Emergency response pendant", value: 45, comm: "24-hour emergency response included" },
 ];
 
 /** The household lines, with what covers each one at this community. */
-const startLines = (c: Community): Line[] => BASE.map((l) => ({ ...l, pcl: toolsCopy[c.slug].covers[l.id as keyof ToolsCovers] ?? l.pcl }));
+const startLines = (c: Community): Line[] => BASE.map((l) => ({ ...l, comm: toolsCopy[c.slug].covers[l.id as keyof ToolsCovers] ?? l.comm }));
 type ToolsCovers = (typeof toolsCopy)[keyof typeof toolsCopy]["covers"];
 
 type AptId = "studio" | "1br" | "2br";
@@ -43,7 +43,7 @@ const aptIds: AptId[] = ["studio", "1br", "2br"];
 /** Apartment sizes from the community's starting prices (studio, one bedroom, two bedroom). */
 const aptsFor = (c: Community) => c.pricing.independent.slice(0, 3).map((r, i) => ({ id: aptIds[i], label: r.name, fee: r.from }));
 
-const CARE_RATE = 36; // typical Sacramento-area home care, per hour
+const CARE_RATE = 36; // typical Calder-area home care, per hour
 const WEEKS = 4.33;
 
 export function CostComparison() {
@@ -65,9 +65,9 @@ export function CostComparison() {
   const care = Math.round(hours * WEEKS * rate);
   const home = lines.reduce((s, l) => s + (l.value || 0), 0) + care;
   const fee = APTS.find((a) => a.id === apt)!.fee;
-  const pcl = fee + (assisted ? pricing.assistedBase : 0) + personal;
-  const diff = home - pcl;
-  const max = Math.max(home, pcl, 1);
+  const comm = fee + (assisted ? pricing.assistedBase : 0) + personal;
+  const diff = home - comm;
+  const max = Math.max(home, comm, 1);
 
   const set = (id: string, v: string) => {
     const n = Math.max(0, Math.round(Number(v.replace(/[^\d.]/g, "")) || 0));
@@ -141,14 +141,14 @@ export function CostComparison() {
           </p>
         </section>
 
-        {/* PCL */}
-        <section className="cc-panel cc-panel-pcl" aria-labelledby="cc-pcl-h">
+        {/* AB */}
+        <section className="cc-panel cc-panel-comm" aria-labelledby="cc-wh-h">
           <div className="cc-panel-h">
-            <span className="cc-ic cc-ic-pcl">
+            <span className="cc-ic cc-ic-comm">
               <Icon name="building" />
             </span>
             <div>
-              <h2 id="cc-pcl-h">{t(`At ${name}`)}</h2>
+              <h2 id="cc-wh-h">{t(`At ${name}`)}</h2>
               <p>{t("One monthly rent that covers almost every line on the left.")}</p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export function CostComparison() {
               .map((l) => (
                 <li key={l.id}>
                   <span>
-                    <Icon name="check" /> {t(l.pcl)}
+                    <Icon name="check" /> {t(l.comm)}
                   </span>
                   <s aria-label={t(`instead of ${money(l.value)}`)}>{l.value ? money(l.value) : ""}</s>
                 </li>
@@ -227,9 +227,9 @@ export function CostComparison() {
               <input id="cc-personal" inputMode="numeric" value={personal.toLocaleString("en-US")} onChange={(e) => setPersonal(Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0))} onFocus={(e) => e.target.select()} />
             </div>
           </div>
-          <p className="cc-total cc-total-pcl">
+          <p className="cc-total cc-total-comm">
             <span>{t(`Total at ${name}`)}</span>
-            <strong>{money(pcl)}</strong>
+            <strong>{money(comm)}</strong>
             <small>{t("a month")}</small>
           </p>
         </section>
@@ -259,10 +259,10 @@ export function CostComparison() {
                 : copy.same)}
           </p>
         </div>
-        <div className="cc-bars" role="img" aria-label={t(`Your costs at home: ${money(home)} a month. At ${name}: ${money(pcl)} a month.`)}>
+        <div className="cc-bars" role="img" aria-label={t(`Your costs at home: ${money(home)} a month. At ${name}: ${money(comm)} a month.`)}>
           {[
             { name: "Your costs at home", total: home, segs: groups },
-            { name: `At ${name}`, total: pcl, segs: pclSegs },
+            { name: `At ${name}`, total: comm, segs: pclSegs },
           ].map((b) => (
             <div key={b.name} className="cc-bar-row">
               <div className="cc-bar-lbl">

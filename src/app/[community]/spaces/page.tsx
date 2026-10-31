@@ -32,7 +32,7 @@ export default async function Spaces() {
             {t("Room to ")}<em>{t("gather,")}</em>{t(" room to breathe.")}
           </>
         }
-        lede="Amazing spaces get people out of their apartments. Take a tour of the places residents meet for coffee, class, cocktails and conversation."
+        lede="Good rooms bring people together. Take a look around the places where residents meet for coffee, classes, cocktails and a chat."
         photo={copy.heroPhoto}
         alt={copy.heroAlt}
         crumbs={[

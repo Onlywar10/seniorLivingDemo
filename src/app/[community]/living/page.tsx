@@ -29,17 +29,17 @@ export default async function LivingPage() {
   const fromLine: Record<LivingKey, string> = {
     independent: `From ${money(pricing.independent[0].from)} a month`,
     assisted: `${money(pricing.assistedBase)} a month base support fee, plus care plan`,
-    harbor: `From ${money(pricing.harbor[0].from)} a month`,
+    lantern: `From ${money(pricing.lantern[0].from)} a month`,
   };
   const maxSqft = Math.max(...c.plans.filter((p) => p.kind === "independent").map((p) => p.sqft ?? 0));
   const people = keyPeople(c);
   const led = (m: (typeof people)["relations"]) => (m ? (m.unnamed ? m.role : `${m.name}, ${m.role}`) : "");
   const compare: [string, Record<LivingKey, string>][] = [
     ["Your home", { independent: `Studio, one- and two-bedroom apartments up to ${maxSqft.toLocaleString("en-US")} sq ft`, ...copy.compareHome }],
-    ["Monthly", { independent: fromLine.independent, assisted: fromLine.assisted, harbor: fromLine.harbor }],
-    ["Support", { independent: "24-hour team on site and an emergency response system", assisted: "Medication management, personal care, escorts and provider coordination", harbor: "Care Partners trained in memory care, around the clock" }],
-    ["Life & activities", { independent: "Events & Adventures, 25+ fitness classes a week, three restaurants", assisted: "Everything in Independent Living, with escorts to meals and activities", harbor: "Harbor’s own Events & Adventures and weekly outings, plus every community event" }],
-    ["Led by", { independent: led(people.relations), assisted: led(people.residentServices), harbor: led(people.harbor) }],
+    ["Monthly", { independent: fromLine.independent, assisted: fromLine.assisted, lantern: fromLine.lantern }],
+    ["Support", { independent: "24-hour team on site and an emergency response system", assisted: "Medication management, personal care, escorts and provider coordination", lantern: "Care Partners trained in memory care, around the clock" }],
+    ["Life & activities", { independent: "Events & Adventures, 25+ fitness classes a week, three restaurants", assisted: "Everything in Independent Living, with escorts to meals and activities", lantern: "Lantern’s own Events & Adventures and weekly outings, plus every community event" }],
+    ["Led by", { independent: led(people.relations), assisted: led(people.residentServices), lantern: led(people.lantern) }],
   ];
   return (
     <>
@@ -50,7 +50,7 @@ export default async function LivingPage() {
             {t("Choose how you live — and ")}<em>{t("never")}</em>{t(" have to move to get help.")}
           </>
         }
-        lede="Luxury apartment homes for a truly independent lifestyle, Assisted Living Services delivered discreetly in every apartment, and Harbor, our memory care neighborhood."
+        lede="Spacious apartment homes for living on your own terms, Assisted Living Services brought quietly to any apartment, and Lantern, our memory care neighborhood."
         photo="/img/apt-dining.jpg"
         alt="A sunlit apartment dining area set for two"
         crumbs={[["Living Options", "/living"]]}

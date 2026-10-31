@@ -4,7 +4,7 @@ import { communities, type Community } from "@/data/communities";
 import { usePath } from "@/i18n/client";
 import { communityOf, withinCommunity } from "./sites";
 
-/** The community of the current page, or null on the Tenfold parent site. */
+/** The community of the current page, or null on the Wrenhaven parent site. */
 export function useMaybeCommunity(): Community | null {
   const slug = communityOf(usePath());
   return slug ? communities[slug] : null;
@@ -17,5 +17,5 @@ export function useCommunity(): Community {
   return communities[slug];
 }
 
-/** The current path inside the community ("/bruceville-point/dining" → "/dining"), for active navigation states. */
+/** The current path inside the community ("/kestrel-point/dining" → "/dining"), for active navigation states. */
 export const useCommunityPath = () => withinCommunity(usePath());

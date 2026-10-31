@@ -19,12 +19,12 @@ export interface TourDay {
   slots: TourSlot[];
   happening: { time: string; title: string }[];
 }
-export type Interest = "independent" | "assisted" | "harbor" | "unsure";
+export type Interest = "independent" | "assisted" | "lantern" | "unsure";
 
 const interests: { key: Interest; label: string; note: string }[] = [
   { key: "independent", label: "Independent Living", note: "Apartment homes and a full calendar" },
   { key: "assisted", label: "Assisted Living Services", note: "Support in any apartment" },
-  { key: "harbor", label: "Harbor Memory Care", note: "Our secured memory care neighborhood" },
+  { key: "lantern", label: "Lantern Memory Care", note: "Our secured memory care neighborhood" },
   { key: "unsure", label: "Not sure yet", note: "We’ll help you work it out" },
 ];
 

@@ -1,5 +1,5 @@
 // Community-specific copy for the Fitness page (src/app/[community]/fitness).
-// Facts come from each community's site.ts (fitness, team, instructors) and calendar.ts.
+// People and classes are listed in each community's site.ts (fitness, team, instructors) and calendar.ts.
 import type { CommunitySlug } from "@/lib/sites";
 
 export interface FitnessCopy {
@@ -18,31 +18,30 @@ export interface FitnessCopy {
 }
 
 export const fitnessCopy: Record<CommunitySlug, FitnessCopy> = {
-  "prairie-city-landing": {
-    metaDescription: "More than 25 fitness classes a week at Prairie City Landing, led by full-time Fitness Director Jason Cherry: Better Balance, chair yoga, tai chi, Zumba, nature walks and the monthly Healthy Happy Hour.",
+  "alder-bend": {
+    metaDescription: "Over 25 classes a week at Alder Bend with our full-time Fitness Director, Devin Marsh: balance work, chair yoga, tai chi, Zumba, Monday nature walks and a monthly Healthy Happy Hour.",
     classesPerWeek: "25+",
-    directorBio: "Jason is full-time on site and teaches more than 25 classes a week. He is the author of “Social Fitness”, and leads the Monday nature walks and the monthly Healthy Happy Hour.",
+    directorBio: "Devin is here full-time and teaches more than 25 classes a week. He believes the best workout is one you do with friends, which is why he wrote “Social Fitness” for our news page. You’ll find him leading the Monday nature walks and the monthly Healthy Happy Hour.",
     directorStory: { slug: "social-fitness", label: "Read “Social Fitness” " },
-    monthly: { date: "2026-11-18", titleStarts: "Healthy Happy Hour", text: "Music, nutritious snacks and choreography — a happy hour that counts as a workout. Everyone is welcome, whatever your fitness level." },
-    instructorNames: ["Sonya", "Shaun", "Showen", "Rhea"],
+    monthly: { date: "2026-11-18", titleStarts: "Healthy Happy Hour", text: "Good music, healthy snacks and some easy choreography: the only happy hour that counts as exercise. Come as you are, at any fitness level." },
+    instructorNames: ["Sonya", "Shaun", "Mei", "Rhea"],
     gallery: [
       { src: "/img/fitness-center.jpg", alt: "The fitness center with exercise machines", title: "The Fitness Center" },
       { src: "/img/namaste.jpg", alt: "A resident in a seated yoga pose outdoors", title: "Mindful meditation" },
       { src: "/img/trail-walk.jpg", alt: "Residents on a nature walk", title: "Monday nature walks" },
       { src: "/img/bocce-women.jpg", alt: "Two residents playing bocce in the courtyard", title: "Bocce in the courtyard" },
       { src: "/img/gym.jpg", alt: "The class studio set up with chairs", title: "The class studio" },
-      { src: "/img/friends-walking.jpg", alt: "Residents walking and laughing together in the park", title: "Walk to End Alzheimer’s" },
+      { src: "/img/friends-walking.jpg", alt: "Residents walking and laughing together in the park", title: "Calder Valley Memory Walk" },
     ],
   },
-  "bruceville-point": {
-    metaDescription: "More than 25 fitness classes a week at Bruceville Point, led by full-time Fitness Director Tina Trillo: Step Aerobics, strength training, sit and stretch, bocce, disc golf, axe throwing and outings to local trails and parks.",
+  "kestrel-point": {
+    metaDescription: "Over 25 classes a week at Kestrel Point with our full-time Fitness Director, Kara Lindqvist: step aerobics, strength training, sit and stretch, bocce, disc golf, axe throwing and walks along the river.",
     classesPerWeek: "25+",
     instructorNames: [],
-    // TODO photo: stand-ins until Bruceville Point's own photos are added
     gallery: [
       { src: "/img/fitness-center.jpg", alt: "A gym with exercise machines", title: "The Gym" },
       { src: "/img/gym.jpg", alt: "A class floor set up with chairs", title: "Group exercise" },
-      { src: "/img/trail-walk.jpg", alt: "Residents on a nature walk", title: "Outings to local trails and parks" },
+      { src: "/img/trail-walk.jpg", alt: "Residents on a nature walk", title: "Walks along the river" },
       { src: "/img/bocce-women.jpg", alt: "Two residents playing bocce in the courtyard", title: "Bocce on the courtyard court" },
       { src: "/img/namaste.jpg", alt: "A resident in a seated stretch outdoors", title: "Mindfulness" },
     ],

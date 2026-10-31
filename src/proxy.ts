@@ -4,9 +4,9 @@ import { communityOf, COMMUNITY_HEADER } from "./lib/sites";
 
 const YEAR = 60 * 60 * 24 * 365;
 
-// Addresses from before the Tenfold parent site existed, when Prairie City Landing was the whole site.
+// Addresses from before the Wrenhaven parent site existed, when Alder Bend was the whole site.
 // Pages the parent site also has (/about, /lifestyle, /contact, /living/independent-living…) now belong to the parent.
-const LEGACY_PCL = /^\/(living$|floor-plans|care-assessment|cost-comparison|calendar|dining|events-adventures|fitness|spaces|team|news|guides|faq|tour|stay-connected)(?=\/|$)/;
+const LEGACY_AB = /^\/(living$|floor-plans|care-assessment|cost-comparison|calendar|dining|events-adventures|fitness|spaces|team|news|guides|faq|tour|stay-connected)(?=\/|$)/;
 
 function remember(res: NextResponse, lang: Lang) {
   res.cookies.set(LANG_COOKIE, lang, { path: "/", maxAge: YEAR, sameSite: "lax" });
@@ -19,7 +19,7 @@ function remember(res: NextResponse, lang: Lang) {
  *   /en/… and ?lang=xx are tidied into the canonical address and the choice is remembered. A plain address follows the
  *   remembered choice; with no choice yet it renders in English and, when the browser asks for Spanish or Chinese first,
  *   the page offers to switch.
- * - Community: /prairie-city-landing/… and /bruceville-point/… are community sites; the rest is the Tenfold parent site.
+ * - Community: /alder-bend/… and /kestrel-point/… are community sites; the rest is the Wrenhaven parent site.
  *   The community is passed to the page in a request header.
  */
 export function proxy(req: NextRequest) {
@@ -40,8 +40,8 @@ export function proxy(req: NextRequest) {
   }
 
   const bare = stripLang(pathname);
-  if (LEGACY_PCL.test(bare)) {
-    url.pathname = localePath(isLang(first) ? first : "en", `/prairie-city-landing${bare}`);
+  if (LEGACY_AB.test(bare)) {
+    url.pathname = localePath(isLang(first) ? first : "en", `/alder-bend${bare}`);
     return NextResponse.redirect(url, 308);
   }
 

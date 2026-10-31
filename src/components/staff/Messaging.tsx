@@ -9,15 +9,15 @@ type Tpl = Template;
 /** Composer translation previews: a language, how many families read it, and the templates in it. */
 type Translation = { lang: string; code: string; n: number; tpl: Record<string, string> };
 
-export function Composer({ templates, families, harborFamilies, contacts, translations, alsoTranslated, defaultEvent }: { templates: Tpl[]; families: number; harborFamilies: number; contacts: { resident: string; contact: string }[]; translations: Translation[]; alsoTranslated: string; defaultEvent: string }) {
-  const [aud, setAud] = useState<"all" | "harbor" | "one">("all");
+export function Composer({ templates, families, lanternFamilies, contacts, translations, alsoTranslated, defaultEvent }: { templates: Tpl[]; families: number; lanternFamilies: number; contacts: { resident: string; contact: string }[]; translations: Translation[]; alsoTranslated: string; defaultEvent: string }) {
+  const [aud, setAud] = useState<"all" | "lantern" | "one">("all");
   const [one, setOne] = useState(contacts[0].resident);
   const [tpl, setTpl] = useState("event");
   const [event, setEvent] = useState(defaultEvent);
   const t = templates.find((x) => x.k === tpl)!;
   const [text, setText] = useState(t.text.replace("{event}", event));
   const [sent, setSent] = useState<"idle" | "busy" | "done">("idle");
-  const count = aud === "all" ? families : aud === "harbor" ? harborFamilies : 1;
+  const count = aud === "all" ? families : aud === "lantern" ? lanternFamilies : 1;
 
   const applyTpl = (k: string, ev = event) => {
     setTpl(k);
@@ -30,7 +30,7 @@ export function Composer({ templates, families, harborFamilies, contacts, transl
         <legend className="sx-lbl" style={{ marginBottom: 6 }}>Send to</legend>
         <div className="aud">
           <label><input type="radio" name="aud" checked={aud === "all"} onChange={() => setAud("all")} />All families<small>{families} families · text and email</small></label>
-          <label><input type="radio" name="aud" checked={aud === "harbor"} onChange={() => setAud("harbor")} />Harbor families<small>{harborFamilies} families</small></label>
+          <label><input type="radio" name="aud" checked={aud === "lantern"} onChange={() => setAud("lantern")} />Lantern families<small>{lanternFamilies} families</small></label>
           <label><input type="radio" name="aud" checked={aud === "one"} onChange={() => setAud("one")} />One resident’s family<small>Choose a resident</small></label>
         </div>
       </fieldset>

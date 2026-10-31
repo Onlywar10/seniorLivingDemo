@@ -20,7 +20,7 @@ export default async function ApartmentsPage() {
   const avail = rows.reduce((n, r) => n + r.available, 0);
   const notice = rows.reduce((n, r) => n + r.notice, 0);
   const occ = ((units - avail) / units) * 100;
-  const kinds = (["independent", "assisted", "harbor"] as const).map((k) => {
+  const kinds = (["independent", "assisted", "lantern"] as const).map((k) => {
     const r = rows.filter((x) => x.kind === k);
     const u = r.reduce((n, x) => n + x.units, 0), a = r.reduce((n, x) => n + x.available, 0);
     return { k, u, occ: ((u - a) / u) * 100 };
@@ -66,7 +66,7 @@ export default async function ApartmentsPage() {
               {kinds.map((k) => (
                 <li key={k.k}>
                   <div className="top"><b>{planKindLabel[k.k]}</b><span>{k.occ.toFixed(1)}% · {k.u} units</span></div>
-                  <Meter v={k.occ} tone={k.k === "harbor" ? "var(--brick)" : "var(--green)"} />
+                  <Meter v={k.occ} tone={k.k === "lantern" ? "var(--brick)" : "var(--green)"} />
                 </li>
               ))}
             </ul>

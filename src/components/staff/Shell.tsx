@@ -50,7 +50,7 @@ const navFor = (approvals: number, unread: number): { group: string; items: Item
 export function Shell({ children, badges }: { children: ReactNode; badges: { approvals: number; unread: number } }) {
   const path = usePathname();
   const { scope, current, site } = useStaffCommunity();
-  const name = current ? current.name : "Tenfold Senior Living";
+  const name = current ? current.name : "Wrenhaven Senior Living";
   const unread = badges.unread;
   const nav = navFor(badges.approvals, unread);
   const [open, setOpen] = useState(false);

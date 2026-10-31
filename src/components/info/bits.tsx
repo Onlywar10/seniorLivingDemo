@@ -46,7 +46,7 @@ export function SmsConsent({
   name?: string;
 }) {
   const { t } = useT();
-  const sender = useMaybeCommunity()?.site.name ?? "Tenfold Senior Living";
+  const sender = useMaybeCommunity()?.site.name ?? "Wrenhaven Senior Living";
   const controlled = checked !== undefined;
   return (
     <label className="check inf-sms" htmlFor={id}>
@@ -67,7 +67,7 @@ export function SmsConsent({
   );
 }
 
-/** Small confetti-dot row used as a section divider. */
+/** Small row of dots used as a section divider. */
 export function DotRule() {
   return (
     <span className="inf-dotrule" aria-hidden="true">

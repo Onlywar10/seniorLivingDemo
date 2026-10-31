@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const scope = await getStaffScope();
   const site = scope === "all" ? null : communities[scope].site;
   return {
-    title: site ? { default: `Team · ${site.name}`, template: `%s · ${site.short} Team` } : { default: "Team · Tenfold Senior Living", template: "%s · Tenfold Team" },
+    title: site ? { default: `Team · ${site.name}`, template: `%s · ${site.short} Team` } : { default: "Team · Wrenhaven Senior Living", template: "%s · Wrenhaven Team" },
     robots: { index: false, follow: false },
   };
 }

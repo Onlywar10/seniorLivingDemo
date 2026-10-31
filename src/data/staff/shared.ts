@@ -6,13 +6,13 @@ import { isCommunity, type CommunitySlug } from "@/lib/sites";
 
 /* ------------------------------------------------------------ community selection */
 
-/** The community the staff screens show, or "all" for the Tenfold-wide overview. */
+/** The community the staff screens show, or "all" for the Wrenhaven-wide overview. */
 export type StaffScope = CommunitySlug | "all";
-export const STAFF_COOKIE = "pcl-staff-community";
-export const DEFAULT_STAFF_COMMUNITY: CommunitySlug = "prairie-city-landing";
+export const STAFF_COOKIE = "wh-staff-community";
+export const DEFAULT_STAFF_COMMUNITY: CommunitySlug = "alder-bend";
 export const parseStaffScope = (v: string | null | undefined): StaffScope => (v === "all" ? "all" : isCommunity(v) ? v : DEFAULT_STAFF_COMMUNITY);
 
-/** A page on a community's public website: siteHref("bruceville-point", "/calendar") → "/bruceville-point/calendar". */
+/** A page on a community's public website: siteHref("kestrel-point", "/calendar") → "/kestrel-point/calendar". */
 export const siteHref = (scope: StaffScope, path = "/") => (scope === "all" ? path : path === "/" ? `/${scope}` : `/${scope}${path}`);
 
 /* ------------------------------------------------------------ people */
@@ -95,20 +95,20 @@ export interface Thread {
 }
 
 export interface Contact {
-  resident: string; apt: string; harbor?: boolean; contact: string; relation: string;
+  resident: string; apt: string; lantern?: boolean; contact: string; relation: string;
   phone: string; email: string; channel: "SMS" | "Email" | "SMS + email"; lang: string;
   sms: boolean; emailOpt: boolean; photos: boolean;
 }
 
 /** A family contact with a stable invented phone number (in the community's area code) and email. */
 export function contactMaker(prefixes: string[], area = "916") {
-  return (resident: string, apt: string, contact: string, relation: string, channel: Contact["channel"], lang = "English", opts = "111", harbor = false): Contact => {
+  return (resident: string, apt: string, contact: string, relation: string, channel: Contact["channel"], lang = "English", opts = "111", lantern = false): Contact => {
     const h = hash(contact);
     const local = contact.toLowerCase().split(" ")[0].replace(/[^a-z]/g, "");
     const last = contact.toLowerCase().split(" ").slice(-1)[0].normalize("NFD").replace(/[^a-z]/g, "");
     const domains = ["gmail.com", "yahoo.com", "comcast.net", "icloud.com", "outlook.com", "sbcglobal.net"];
     return {
-      resident, apt, harbor, contact, relation, channel, lang,
+      resident, apt, lantern, contact, relation, channel, lang,
       phone: `(${area}) ${prefixes[h % prefixes.length]}-${String(1000 + (h % 8999)).padStart(4, "0")}`,
       email: `${local}.${last}@${domains[h % domains.length]}`,
       sms: opts[0] === "1", emailOpt: opts[1] === "1", photos: opts[2] === "1",
@@ -137,7 +137,7 @@ export interface WrongFact {
 
 export interface Waiter { name: string; plan: string; joinedDays: number; deposit: boolean; note?: string }
 
-export interface Tour { days: number; time: number; who: string; for: string; interest: "Independent Living" | "Assisted Living" | "Harbor Memory Care"; source: string; lunch?: boolean; note?: string; with: PersonKey }
+export interface Tour { days: number; time: number; who: string; for: string; interest: "Independent Living" | "Assisted Living" | "Lantern Memory Care"; source: string; lunch?: boolean; note?: string; with: PersonKey }
 
 export interface Enquiry { name: string; mins: number; source: string; interest: string; status: "New" | "Contacted" | "Tour booked" | "Nurturing"; msg: string }
 
@@ -156,14 +156,14 @@ export interface StaffData {
   /** How the community appears on staff screens, texts, emails and flyers. */
   brand: {
     name: string; short: string; city: string; phone: string; domain: string; facebook: string;
-    /** "Hello from Folsom!" */
+    /** "Hello from Fairhollow!" */
     hello: string;
   };
   people: Record<PersonKey, StaffPerson>;
-  /** Who does what, so screens can say "Waiting for Cheryl" or "for Cynthia Bazin". */
-  roles: { approver: PersonKey; tours: PersonKey; harbor: PersonKey; menus: PersonKey; calendar: PersonKey; gbpReplies: PersonKey };
+  /** Who does what, so screens can say "Waiting for Renata" or "for Priya Nandakumar". */
+  roles: { approver: PersonKey; tours: PersonKey; lantern: PersonKey; menus: PersonKey; calendar: PersonKey; gbpReplies: PersonKey };
 
-  community: { residents: number; harborResidents: number; apartments: number; occupied: number; families: number; harborFamilies: number; contacts: number; smsReachable: number; emailReachable: number };
+  community: { residents: number; lanternResidents: number; apartments: number; occupied: number; families: number; lanternFamilies: number; contacts: number; smsReachable: number; emailReachable: number };
   languages: { k: string; n: number }[];
   /** Website traffic relative to the baseline curve in dailyVisits(). */
   visitScale: number;
@@ -191,7 +191,7 @@ export interface StaffData {
   contacts: Contact[];
   importNote: string;
   residentNames: string[];
-  harborNames: string[];
+  lanternNames: string[];
 
   // publishing
   publish: {
@@ -209,8 +209,8 @@ export interface StaffData {
     /** Translated texts go out in these languages. */
     otherLangs: string;
     translated: number;
-    harborTranslated: number;
-    harborEmails: number;
+    lanternTranslated: number;
+    lanternEmails: number;
     digestExtra: { title: string; when: string; photo: string };
   };
   photoPresets: PhotoPreset[];
@@ -256,8 +256,8 @@ export interface StaffData {
 }
 
 /** A stable RSVP list and waitlist for a capped event. */
-export function rsvpFor(d: Pick<StaffData, "residentNames" | "harborNames">, id: string, taken: number, waitlist: number, harbor = false) {
-  const pool = harbor ? [...d.harborNames, ...d.residentNames] : d.residentNames;
+export function rsvpFor(d: Pick<StaffData, "residentNames" | "lanternNames">, id: string, taken: number, waitlist: number, lantern = false) {
+  const pool = lantern ? [...d.lanternNames, ...d.residentNames] : d.residentNames;
   const start = hash(id) % pool.length;
   const pick = (n: number, from: number) => Array.from({ length: n }, (_, i) => pool[(from + i * 7) % pool.length]);
   const all = pick(taken + waitlist, start);

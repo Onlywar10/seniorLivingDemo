@@ -13,7 +13,7 @@ interface Prefs {
 
 const Ctx = createContext<Prefs>({ text: "md", contrast: false, setText: () => {}, setContrast: () => {} });
 
-const KEY = "pcl.prefs";
+const KEY = "wh.prefs";
 
 /** Reader preferences: text size and high contrast. Remembered per browser. (The language is in the URL.) */
 export function PrefsProvider({ children }: { children: ReactNode }) {

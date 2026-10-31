@@ -24,7 +24,7 @@ export default async function PublishPage() {
       <Publisher
         rooms={[...Object.values(c.rooms), "All floors"]}
         families={community.families}
-        harborFamilies={community.harborFamilies}
+        lanternFamilies={community.lanternFamilies}
         smsReachable={community.smsReachable}
         emailReachable={community.emailReachable}
         digest={nextDigest()}

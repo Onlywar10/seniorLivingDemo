@@ -8,7 +8,7 @@ import { Badge, XIcon } from "./ui";
 
 export interface EdEvent {
   id: string; date: string; start: number; end?: number; title: string; room: string; cat: string; color: string; catLabel: string;
-  cap?: number; taken?: number; waitlist?: number; harbor?: boolean; leader?: string; desc?: string; rule?: string;
+  cap?: number; taken?: number; waitlist?: number; lantern?: boolean; leader?: string; desc?: string; rule?: string;
   going?: string[]; waiting?: string[]; clash?: string; isNew?: boolean;
 }
 
@@ -17,7 +17,7 @@ const toMin = (s: string) => { const [h, m] = s.split(":").map(Number); return (
 export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }: { events: EdEvent[]; weekStarts: string[]; todayIso: string; rooms: string[] }) {
   const [events, setEvents] = useState(initial);
   const [w, setW] = useState(0);
-  const [filter, setFilter] = useState<"all" | "harbor" | "trips" | "conflicts">("all");
+  const [filter, setFilter] = useState<"all" | "lantern" | "trips" | "conflicts">("all");
   const [open, setOpen] = useState<EdEvent | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [toast, setToast] = useState("");
@@ -29,7 +29,7 @@ export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }:
   }, [toast]);
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => iso(addDays(fromIso(weekStarts[w]), i))), [w, weekStarts]);
-  const show = (e: EdEvent) => (filter === "harbor" ? e.harbor : filter === "trips" ? !!e.cap : filter === "conflicts" ? !!e.clash : true);
+  const show = (e: EdEvent) => (filter === "lantern" ? e.lantern : filter === "trips" ? !!e.cap : filter === "conflicts" ? !!e.clash : true);
   const clashes = events.filter((e) => e.clash && e.date >= todayIso);
   const weekOf = (date: string) => weekStarts.findIndex((ws) => date >= ws && date <= iso(addDays(fromIso(ws), 6)));
   const first = fromIso(days[0]), last = fromIso(days[6]);
@@ -50,7 +50,7 @@ export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }:
         </div>
         <div>
           <div className="sx-chips" role="group" aria-label="Show">
-            {([["all", "All events"], ["harbor", "Harbor"], ["trips", "Trips & sign-ups"], ["conflicts", "Room conflicts"]] as const).map(([k, l]) => (
+            {([["all", "All events"], ["lantern", "Lantern"], ["trips", "Trips & sign-ups"], ["conflicts", "Room conflicts"]] as const).map(([k, l]) => (
               <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>
             ))}
           </div>
@@ -176,7 +176,7 @@ function EventDrawer({ e, onClose }: { e: EdEvent; onClose: () => void }) {
     >
       <dl className="sx-dl">
         <dt>Room</dt><dd>{e.room}</dd>
-        <dt>Category</dt><dd><span className="sx-dot" style={{ background: e.color }} />{e.catLabel}{e.harbor ? " · Harbor" : ""}</dd>
+        <dt>Category</dt><dd><span className="sx-dot" style={{ background: e.color }} />{e.catLabel}{e.lantern ? " · Lantern" : ""}</dd>
         {e.leader && (<><dt>Led by</dt><dd>{e.leader}</dd></>)}
         <dt>Repeats</dt><dd>{e.rule ?? "One-time event"}</dd>
         {e.cap ? (<><dt>Seats</dt><dd>{e.taken} of {e.cap} taken{e.waitlist ? ` · ${e.waitlist} on the waitlist` : ` · ${e.cap - (e.taken ?? 0)} left`}</dd></>) : null}
@@ -211,7 +211,7 @@ function EventDrawer({ e, onClose }: { e: EdEvent; onClose: () => void }) {
 }
 
 function AddDrawer({ date, rooms, events, onClose, onSave }: { date: string; rooms: string[]; events: EdEvent[]; onClose: () => void; onSave: (e: EdEvent) => void }) {
-  const [f, setF] = useState({ title: "Holiday Card Making", date, time: "14:00", end: "15:00", room: "Art Studio", cap: "", repeat: "once", harbor: false });
+  const [f, setF] = useState({ title: "Holiday Card Making", date, time: "14:00", end: "15:00", room: "Art Studio", cap: "", repeat: "once", lantern: false });
   const start = toMin(f.time), end = toMin(f.end);
   const clash = events.find((e) => e.date === f.date && e.room === f.room && f.room !== "Lobby" && f.room !== "All floors" && start < (e.end ?? e.start + 60) && end > e.start);
   const d = fromIso(f.date || date);
@@ -230,9 +230,9 @@ function AddDrawer({ date, rooms, events, onClose, onSave }: { date: string; roo
             disabled={!f.title}
             onClick={() =>
               onSave({
-                id: `new-${Date.now()}`, date: f.date, start, end, title: f.title, room: f.room, cat: f.harbor ? "harbor" : "clubs",
-                color: f.harbor ? "var(--c-harbor)" : "var(--c-clubs)", catLabel: f.harbor ? "Harbor" : "Clubs & games", cap: Number(f.cap) || undefined,
-                taken: Number(f.cap) ? 0 : undefined, harbor: f.harbor, rule: f.repeat === "weekly" ? `Every ${dayName(d)}` : undefined, going: Number(f.cap) ? [] : undefined, isNew: true,
+                id: `new-${Date.now()}`, date: f.date, start, end, title: f.title, room: f.room, cat: f.lantern ? "lantern" : "clubs",
+                color: f.lantern ? "var(--c-lantern)" : "var(--c-clubs)", catLabel: f.lantern ? "Lantern" : "Clubs & games", cap: Number(f.cap) || undefined,
+                taken: Number(f.cap) ? 0 : undefined, lantern: f.lantern, rule: f.repeat === "weekly" ? `Every ${dayName(d)}` : undefined, going: Number(f.cap) ? [] : undefined, isNew: true,
               })
             }
           >
@@ -253,7 +253,7 @@ function AddDrawer({ date, rooms, events, onClose, onSave }: { date: string; roo
           <label>Max people<input type="number" min={0} value={f.cap} onChange={set("cap")} placeholder="No limit" /></label>
         </div>
         <label>Repeats<select value={f.repeat} onChange={set("repeat")}><option value="once">Does not repeat</option><option value="weekly">Every {dayName(d)}</option></select></label>
-        <label className="sx-check"><input type="checkbox" checked={f.harbor} onChange={(ev) => setF({ ...f, harbor: ev.target.checked })} /> Show in the Harbor calendar</label>
+        <label className="sx-check"><input type="checkbox" checked={f.lantern} onChange={(ev) => setF({ ...f, lantern: ev.target.checked })} /> Show in the Lantern calendar</label>
         {clash ? (
           <div className="sx-callout" role="alert">
             <Icon name="alert" />

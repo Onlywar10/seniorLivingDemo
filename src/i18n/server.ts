@@ -13,7 +13,7 @@ export async function getLang(): Promise<Lang> {
   return isLang(l) ? l : "en";
 }
 
-/** The community of the current request (null on Tenfold parent pages), as set by src/proxy.ts. */
+/** The community of the current request (null on Wrenhaven parent pages), as set by src/proxy.ts. */
 export async function getCommunitySlug(): Promise<CommunitySlug | null> {
   const c = (await headers()).get(COMMUNITY_HEADER);
   return isCommunity(c) ? c : null;

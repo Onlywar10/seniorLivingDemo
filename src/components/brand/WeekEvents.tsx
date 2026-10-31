@@ -2,7 +2,7 @@ import { cats, seatsLeft, type CalEvent } from "@/data/shared";
 import { getT } from "@/i18n/server";
 import { fmtRange, fromIso, dayShort, iso, today } from "@/lib/clock";
 
-/** A compact, day-by-day list of events, used for Harbor, fitness and trips. */
+/** A compact, day-by-day list of events, used for Lantern, fitness and trips. */
 export async function WeekEvents({ days, showSeats = false, empty = "Nothing scheduled." }: { days: { date: string; events: CalEvent[] }[]; showSeats?: boolean; empty?: string }) {
   const { t } = await getT();
   const td = iso(today());

@@ -3,7 +3,7 @@
 import Link from "@/i18n/Link";
 import { useT } from "@/i18n/client";
 import { useEffect, useMemo, useState } from "react";
-import { cats, filters, isHarbor, type Cat, type CalEvent } from "@/data/shared";
+import { cats, filters, isLantern, type Cat, type CalEvent } from "@/data/shared";
 import { useCommunity } from "@/lib/community";
 import { dayName, fmtRange, fromIso, nowMinutes, shortDate } from "@/lib/clock";
 import { Icon } from "@/components/Icon";
@@ -16,15 +16,15 @@ export interface CalDay { date: string; events: CalEvent[] }
 interface Hrefs {
   today: string; week: string; month: string;
   prev: string; next: string; prevLabel: string; nextLabel: string;
-  backToToday: string; published?: string; day: string; harbor: string; all: string;
+  backToToday: string; published?: string; day: string; lantern: string; all: string;
 }
 
 const isNow = (e: CalEvent, todayIso: string, now: number) => e.date === todayIso && e.start <= now && now < (e.end ?? e.start + 60);
 const priority = (e: CalEvent) => (e.special ? 3 : 0) + (e.cap ? 2 : 0) + (e.cat === "music" ? 1 : 0);
 
 /** The interactive calendar: views, filters, event detail and RSVP. */
-export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month, todayInRange, hrefs, phone, phoneHref }: {
-  view: CalView; harbor: boolean; todayIso: string; nowMin: number; label: string; days: CalDay[]; month: number;
+export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, month, todayInRange, hrefs, phone, phoneHref }: {
+  view: CalView; lantern: boolean; todayIso: string; nowMin: number; label: string; days: CalDay[]; month: number;
   todayInRange: boolean; hrefs: Hrefs; phone: string; phoneHref: string;
 }) {
   const { t } = useT();
@@ -42,9 +42,9 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
 
   const toggle = (c: Cat) => setActive((a) => (a.includes(c) ? a.filter((x) => x !== c) : [...a, c]));
   const match = (e: CalEvent) => {
-    if (harbor && !isHarbor(e)) return false;
+    if (lantern && !isLantern(e)) return false;
     if (!active.length) return true;
-    return active.some((c) => (c === "harbor" ? isHarbor(e) : e.cat === c));
+    return active.some((c) => (c === "lantern" ? isLantern(e) : e.cat === c));
   };
 
   // Apply local RSVPs to seat counts.
@@ -57,17 +57,17 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
   const shown = useMemo(
     () => days.map((d) => ({ ...d, events: d.events.filter(match).map(withSeats) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [days, active, harbor, rsvps],
+    [days, active, lantern, rsvps],
   );
   const visible = shown.flatMap((d) => (month >= 0 ? (fromIso(d.date).getUTCMonth() === month ? d.events : []) : d.events));
   const nowEvents = shown.find((d) => d.date === todayIso)?.events.filter((e) => isNow(e, todayIso, now)) ?? [];
 
   const openEv = openId ? days.flatMap((d) => d.events).find((e) => e.id === openId) ?? null : null;
 
-  const chipList: Cat[] = harbor ? filters.filter((c) => c !== "harbor") : filters;
+  const chipList: Cat[] = lantern ? filters.filter((c) => c !== "lantern") : filters;
 
   const subscribe = () => {
-    const name = harbor ? `${c.site.name} · Harbor` : c.site.name;
+    const name = lantern ? `${c.site.name} · Lantern` : c.site.name;
     const file = `${c.slug}-${view === "month" ? label.toLowerCase().replace(/\s+/g, "-") : (days[0]?.date ?? "calendar")}.ics`;
     downloadIcs(visible, name, file, icsPlace(c.site));
   };
@@ -107,9 +107,9 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
   const empty = <p className="cal-empty">{t("Nothing on with these filters.")}</p>;
 
   return (
-    <div className={`cal cal-view-${view}${harbor ? " cal-harbor" : ""}`}>
+    <div className={`cal cal-view-${view}${lantern ? " cal-lantern" : ""}`}>
       <div className="cal-print-head" aria-hidden="true">
-        <strong>{c.site.name}{harbor ? " · Harbor" : ""}</strong>{t(" · Activity Calendar · ")}{t(label)}
+        <strong>{c.site.name}{lantern ? " · Lantern" : ""}</strong>{t(" · Activity Calendar · ")}{t(label)}
         <span className="cal-print-sub" data-no-translate>{c.site.name} · {c.site.addressLine} · {c.site.phone} · {c.site.licence}</span>
       </div>
 
@@ -117,7 +117,7 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
         <div className="cal-nav">
           <Link className="cal-arrow" href={hrefs.prev} scroll={false} aria-label={t(hrefs.prevLabel)}><Icon name="left" /></Link>
           <Link className="cal-arrow" href={hrefs.next} scroll={false} aria-label={t(hrefs.nextLabel)}><Icon name="right" /></Link>
-          <h2 id="cal-heading" className="cal-label" aria-live="polite">{harbor ? <><span className="cal-harbor-mark">Harbor</span> · </> : null}{t(label)}</h2>
+          <h2 id="cal-heading" className="cal-label" aria-live="polite">{lantern ? <><span className="cal-lantern-mark">Lantern</span> · </> : null}{t(label)}</h2>
         </div>
         <div className="cal-actions">
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => window.print()}><Icon name="printer" /> {t("Print large-print calendar")}</button>
@@ -146,10 +146,10 @@ export function CalendarApp({ view, harbor, todayIso, nowMin, label, days, month
             <span className="cal-dot" aria-hidden="true" /> {t(cats[c].label)}
           </button>
         ))}
-        {harbor ? (
+        {lantern ? (
           <Link className="cal-chip cal-chip-link" href={hrefs.all}>{t("Whole community calendar")}</Link>
         ) : (
-          <Link className="cal-chip cal-chip-link" href={hrefs.harbor}>{t("Harbor calendar")}</Link>
+          <Link className="cal-chip cal-chip-link" href={hrefs.lantern}>{t("Lantern calendar")}</Link>
         )}
       </div>
 

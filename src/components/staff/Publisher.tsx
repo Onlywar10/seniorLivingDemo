@@ -9,13 +9,13 @@ import type { StaffData } from "@/data/staff/shared";
 import { useStaffCommunity } from "./StaffCommunity";
 
 type Kind = "event" | "menu" | "photo" | "pdf";
-type Aud = "everyone" | "harbor";
+type Aud = "everyone" | "lantern";
 type Chan = "web" | "sms" | "email" | "flyer" | "facebook" | "gbp";
 
 export interface PublisherProps {
   rooms: string[];
   families: number;
-  harborFamilies: number;
+  lanternFamilies: number;
   smsReachable: number;
   emailReachable: number;
   digest: string;
@@ -96,10 +96,10 @@ export function Publisher(p: PublisherProps) {
   const taken = kind === "event" ? Math.min(cap, p.wine.taken) : 0;
   const left = Math.max(0, cap - taken);
   const img = file && !file.pdf ? file.url : f.photo;
-  const harbor = aud === "harbor";
-  const families = harbor ? p.harborFamilies : p.families;
+  const lantern = aud === "lantern";
+  const families = lantern ? p.lanternFamilies : p.families;
   const sms = families;
-  const emails = harbor ? copy.harborEmails : p.emailReachable;
+  const emails = lantern ? copy.lanternEmails : p.emailReachable;
   const titleEs = esTitles[f.title] ?? f.title;
   const needsApproval = chans.has("facebook") && (kind === "photo" || (!!file && !file.pdf));
 
@@ -128,7 +128,7 @@ export function Publisher(p: PublisherProps) {
   };
 
   if (stage === "done") {
-    const delivered = sms - (harbor ? 0 : 3);
+    const delivered = sms - (lantern ? 0 : 3);
     const failed = sms - delivered;
     const where = kind === "menu" ? "dining page and today’s menu boards" : kind === "photo" ? "news page and home page" : "activity calendar and home page";
     return (
@@ -138,7 +138,7 @@ export function Publisher(p: PublisherProps) {
           <div>
             <h2>Published. Here’s where it went.</h2>
             <p>
-              “{f.title}” · {harbor ? "Harbor families" : "everyone"} · just now
+              “{f.title}” · {lantern ? "Lantern families" : "everyone"} · just now
             </p>
           </div>
         </div>
@@ -155,7 +155,7 @@ export function Publisher(p: PublisherProps) {
               <Icon name="sms" />
               <b>{sms} families texted</b>
               <span>
-                {delivered} delivered · {failed} failed{failed ? " (landline numbers, sent by email instead)" : ""} · {harbor ? copy.harborTranslated : copy.translated} in {copy.otherLangs}
+                {delivered} delivered · {failed} failed{failed ? " (landline numbers, sent by email instead)" : ""} · {lantern ? copy.lanternTranslated : copy.translated} in {copy.otherLangs}
               </span>
             </li>
           )}
@@ -256,8 +256,8 @@ export function Publisher(p: PublisherProps) {
               <button type="button" aria-pressed={aud === "everyone"} onClick={() => setAud("everyone")}>
                 Everyone · {p.families} families
               </button>
-              <button type="button" aria-pressed={aud === "harbor"} onClick={() => setAud("harbor")}>
-                Harbor families · {p.harborFamilies}
+              <button type="button" aria-pressed={aud === "lantern"} onClick={() => setAud("lantern")}>
+                Lantern families · {p.lanternFamilies}
               </button>
             </div>
           </fieldset>
@@ -321,10 +321,10 @@ export function Publisher(p: PublisherProps) {
             <div className="pv-web">
               <div className="pv-web-bar">
                 <span>{brand.domain}/{kind === "menu" ? "dining" : kind === "photo" ? "news" : "calendar"}</span>
-                <span>{harbor ? "Harbor" : "All events"}</span>
+                <span>{lantern ? "Lantern" : "All events"}</span>
               </div>
               <div className="pv-web-day">{dayName(d)}, {monthName(d)} {d.getUTCDate()}</div>
-              <div className="pv-web-card" style={harbor ? { borderLeftColor: "var(--c-harbor)" } : kind === "menu" ? { borderLeftColor: "var(--olive)" } : undefined}>
+              <div className="pv-web-card" style={lantern ? { borderLeftColor: "var(--c-lantern)" } : kind === "menu" ? { borderLeftColor: "var(--olive)" } : undefined}>
                 <div className="pv-web-img">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />

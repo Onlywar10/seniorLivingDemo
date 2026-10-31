@@ -45,7 +45,7 @@ export default async function IndependentLiving() {
         eyebrow="Independent Living"
         title={
           <>
-            {t("A truly ")}<em>{t("independent")}</em>{t(" lifestyle.")}
+            {t("Your place, ")}<em>{t("your pace")}</em>{t(".")}
           </>
         }
         lede={il.lede}
@@ -75,7 +75,7 @@ export default async function IndependentLiving() {
               <h2 id="br-apt-h">
                 {t("Real apartment homes, ")}<em>{t("not rooms.")}</em>
               </h2>
-              <p className="muted">{t("Bring the sectional, the dining table and the art you love. Every apartment is designed for living the way you always have — with more time for the things you enjoy.")}</p>
+              <p className="muted">{t("Bring the big sofa, the dining table and the paintings you can’t part with. These apartments are made for living the way you always have, minus the chores.")}</p>
               <ul className="br-checks" style={{ marginTop: 22 }}>
                 {il.points.slice(0, 7).map((p) => (
                   <li key={p}>

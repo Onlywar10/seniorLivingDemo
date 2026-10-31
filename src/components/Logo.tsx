@@ -4,7 +4,7 @@ import Link from "@/i18n/Link";
 import { useT } from "@/i18n/client";
 import { useCommunity } from "@/lib/community";
 
-/** Prairie City Landing wordmark with the Tenfold confetti crescent. */
+/** The community wordmark beside the Wrenhaven mark. */
 export function Logo({ light = false, href = "/" }: { light?: boolean; href?: string }) {
   const { t } = useT();
   const { site } = useCommunity();
@@ -20,7 +20,7 @@ export function Logo({ light = false, href = "/" }: { light?: boolean; href?: st
   );
 }
 
-/** Decorative confetti crescent, placed absolutely by the caller. */
+/** The Wrenhaven mark as a decoration, placed absolutely by the caller. */
 export function Dots({ size = 220, style, className = "" }: { size?: number; style?: React.CSSProperties; className?: string }) {
   // eslint-disable-next-line @next/next/no-img-element
   return <img src="/img/brand/dots.png" alt="" aria-hidden="true" width={size} height={size} className={`dots-deco ${className}`} style={style} />;

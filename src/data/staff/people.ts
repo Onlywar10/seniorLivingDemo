@@ -4,41 +4,41 @@ import type { PersonKey, StaffPerson } from "./shared";
 
 /** The signed-in staff user. The same person whichever community they're looking at. */
 export const user = {
-  name: "Toni Glenn",
-  first: "Toni",
-  initials: "TG",
+  name: "Nora Castellano",
+  first: "Nora",
+  initials: "NC",
   role: "Events & Adventures Director",
-  email: "tglenn@prairiecitylanding.com",
+  email: "ncastellano@alderbend.example",
 };
 
-export const pclPeople: Record<PersonKey, StaffPerson> = {
-  toni: { name: "Toni Glenn", initials: "TG", role: "Events & Adventures Director", color: "#ad4f36" },
-  jason: { name: "Jason Cherry", initials: "JC", role: "Fitness Director", color: "#47704c" },
-  cheryl: { name: "Cheryl Martin", initials: "CM", role: "Executive Director", color: "#2e4d33" },
-  cynthia: { name: "Cynthia Bazin", initials: "CB", role: "Community Relations Director", color: "#4c87a2" },
-  conrad: { name: "Conrad Caguimbal", initials: "CC", role: "Culinary Director", color: "#968b53" },
-  mickei: { name: "Mickei Butler", initials: "MB", role: "Dining Experience Director", color: "#b0882a" },
-  douglas: { name: "Douglas Wigner", initials: "DW", role: "Business Office Director", color: "#425968" },
-  janelle: { name: "Janelle Zweber", initials: "JZ", role: "Harbor Memory Care Director", color: "#be4142" },
-  jan: { name: "Jan McLennon", initials: "JM", role: "Resident Services Director", color: "#6b5aa6" },
-  shirley: { name: "Shirley Richard", initials: "SR", role: "Lead Ambassador", color: "#7a6a3a" },
+export const abPeople: Record<PersonKey, StaffPerson> = {
+  nora: { name: "Nora Castellano", initials: "NC", role: "Events & Adventures Director", color: "#ad4f36" },
+  devin: { name: "Devin Marsh", initials: "DM", role: "Fitness Director", color: "#47704c" },
+  renata: { name: "Renata Holloway", initials: "RH", role: "Executive Director", color: "#2e4d33" },
+  priya: { name: "Priya Nandakumar", initials: "PN", role: "Community Relations Director", color: "#4c87a2" },
+  rafael: { name: "Rafael Domingo", initials: "RD", role: "Culinary Director", color: "#968b53" },
+  simone: { name: "Simone Archer", initials: "SA", role: "Dining Experience Director", color: "#b0882a" },
+  leonard: { name: "Leonard Fisk", initials: "LF", role: "Business Office Director", color: "#425968" },
+  maribel: { name: "Maribel Ortiz", initials: "MO", role: "Lantern Memory Care Director", color: "#be4142" },
+  colleen: { name: "Colleen Ashby", initials: "CA", role: "Resident Services Director", color: "#6b5aa6" },
+  opal: { name: "Opal Merriweather", initials: "OM", role: "Lead Ambassador", color: "#7a6a3a" },
 };
 
-/** Bruceville Point's published team (src/data/communities/bruceville-point/site.ts `team`). */
-export const bpPeople: Record<PersonKey, StaffPerson> = {
-  marianne: { name: "Marianne Richardson", initials: "MR", role: "Executive Director", color: "#2e4d33" },
-  jaime: { name: "Jaime Cervantes", initials: "JC", role: "Community Relations Director", color: "#4c87a2" },
-  nicole: { name: "Nicole Grayson", initials: "NG", role: "Resident Services Director", color: "#6b5aa6" },
-  amrita: { name: "Amrita Sapkota", initials: "AS", role: "Harbor Director", color: "#be4142" },
-  timothy: { name: "Timothy Smith", initials: "TS", role: "Events and Adventures Director", color: "#ad4f36" },
-  monica: { name: "Monica Thayer", initials: "MT", role: "Events and Adventures Assistant", color: "#c46a4a" },
-  tina: { name: "Tina Trillo", initials: "TT", role: "Fitness Director", color: "#47704c" },
-  danyale: { name: "Danyale Liberati Shaw", initials: "DS", role: "Dining Experience Director", color: "#b0882a" },
-  eric: { name: "Eric Auclair", initials: "EA", role: "Culinary Director", color: "#968b53" },
-  breah: { name: "Breah Taylor", initials: "BT", role: "Business Office Director", color: "#425968" },
-  joe: { name: "Joe Mora", initials: "JM", role: "Maintenance Director", color: "#5b6b4a" },
-  betty: { name: "Betty Phelps", initials: "BP", role: "Lead Ambassador", color: "#7a6a3a" },
+/** Kestrel Point's published team (src/data/communities/kestrel-point/site.ts `team`). */
+export const kpPeople: Record<PersonKey, StaffPerson> = {
+  joanna: { name: "Joanna Kessel", initials: "JK", role: "Executive Director", color: "#2e4d33" },
+  mateo: { name: "Mateo Ruiz", initials: "MR", role: "Community Relations Director", color: "#4c87a2" },
+  tessa: { name: "Tessa Morrow", initials: "TM", role: "Resident Services Director", color: "#6b5aa6" },
+  anjali: { name: "Anjali Rao", initials: "AR", role: "Lantern Director", color: "#be4142" },
+  grant: { name: "Grant Ellison", initials: "GE", role: "Events and Adventures Director", color: "#ad4f36" },
+  callie: { name: "Callie Brooks", initials: "CB", role: "Events and Adventures Assistant", color: "#c46a4a" },
+  kara: { name: "Kara Lindqvist", initials: "KL", role: "Fitness Director", color: "#47704c" },
+  celeste: { name: "Celeste Okonkwo", initials: "CO", role: "Dining Experience Director", color: "#b0882a" },
+  julien: { name: "Julien Marchand", initials: "JM", role: "Culinary Director", color: "#968b53" },
+  imani: { name: "Imani Price", initials: "IP", role: "Business Office Director", color: "#425968" },
+  ray: { name: "Ray Castillo", initials: "RC", role: "Maintenance Director", color: "#5b6b4a" },
+  june: { name: "June Tolliver", initials: "JT", role: "Lead Ambassador", color: "#7a6a3a" },
 };
 
 /** Every staff person, across communities (keys are unique). */
-export const staffPeople: Record<PersonKey, StaffPerson> = { ...pclPeople, ...bpPeople };
+export const staffPeople: Record<PersonKey, StaffPerson> = { ...abPeople, ...kpPeople };

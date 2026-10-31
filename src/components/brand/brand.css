@@ -171,7 +171,7 @@
 .br-compare tbody th { color: var(--ink-2); font-weight: 600; font-size: 0.92rem; width: 22%; }
 .br-compare td { vertical-align: top; font-size: 0.96rem; }
 
-/* ---------- Harbor ---------- */
+/* ---------- Lantern ---------- */
 .br-turn { display: grid; grid-template-columns: auto auto 1fr; gap: clamp(16px, 3vw, 36px); align-items: center; }
 .br-turn s { font-family: var(--font-display), serif; font-size: clamp(1.6rem, 3.6vw, 2.8rem); color: #a9b1b6; text-decoration-color: var(--terra); text-decoration-thickness: 3px; }
 .br-turn .icon { width: 40px; height: 40px; color: var(--butter); }
@@ -189,8 +189,8 @@
 .br-prog { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; }
 .br-prog li { padding: 10px 18px; border-radius: 999px; background: var(--paper); border: 1.5px solid var(--rule); font-weight: 500; }
 
-/* ---------- YUSM ---------- */
-.br-yusm { display: grid; gap: clamp(20px, 3vw, 32px); }
+/* ---------- LIVE ---------- */
+.br-live { display: grid; gap: clamp(20px, 3vw, 32px); }
 .br-y { display: grid; grid-template-columns: 180px 1fr 0.9fr; gap: clamp(20px, 4vw, 48px); align-items: center; background: var(--paper); border-radius: 28px; padding: clamp(20px, 3vw, 32px); box-shadow: var(--shadow); }
 .br-y-letter { font-family: var(--font-display), serif; font-size: clamp(5rem, 10vw, 8.5rem); line-height: 0.9; color: var(--terra-deep); text-align: center; }
 .br-y:nth-child(2) .br-y-letter { color: var(--green); }
@@ -214,7 +214,7 @@
 .br-value p { margin: 0; color: var(--ink-2); }
 @media (max-width: 960px) { .br-values { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .br-values { grid-template-columns: 1fr; } }
-.br-tenfold-logo { width: 220px; height: auto; margin-bottom: 24px; }
+.br-wrenhaven-logo { width: 220px; height: auto; margin-bottom: 24px; }
 .br-awards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2vw, 24px); list-style: none; }
 .br-award { text-align: center; padding: 30px 22px; border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); display: grid; gap: 4px; justify-items: center; }
 .br-award .br-award-ic { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; background: var(--butter-tint); color: var(--olive); margin-bottom: 8px; }

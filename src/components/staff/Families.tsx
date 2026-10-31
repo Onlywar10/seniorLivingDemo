@@ -7,12 +7,12 @@ import { Badge } from "./ui";
 
 export function ContactTable({ contacts }: { contacts: Contact[] }) {
   const [q, setQ] = useState("");
-  const [f, setF] = useState<"all" | "harbor" | "sms" | "email" | "other" | "nophoto">("all");
+  const [f, setF] = useState<"all" | "lantern" | "sms" | "email" | "other" | "nophoto">("all");
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return contacts.filter((c) => {
       if (s && !`${c.resident} ${c.contact} ${c.apt} ${c.relation}`.toLowerCase().includes(s)) return false;
-      if (f === "harbor") return c.harbor;
+      if (f === "lantern") return c.lantern;
       if (f === "sms") return c.channel !== "Email";
       if (f === "email") return c.channel !== "SMS";
       if (f === "other") return c.lang !== "English";
@@ -30,7 +30,7 @@ export function ContactTable({ contacts }: { contacts: Contact[] }) {
             <input className="sx-input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or apartment" />
           </label>
           <div className="sx-chips" role="group" aria-label="Filter">
-            {([["all", "All"], ["harbor", "Harbor"], ["sms", "Texts"], ["email", "Email"], ["other", "Other languages"], ["nophoto", "No photo consent"]] as const).map(([k, l]) => (
+            {([["all", "All"], ["lantern", "Lantern"], ["sms", "Texts"], ["email", "Email"], ["other", "Other languages"], ["nophoto", "No photo consent"]] as const).map(([k, l]) => (
               <button key={k} type="button" aria-pressed={f === k} onClick={() => setF(k)}>{l}</button>
             ))}
           </div>
@@ -55,7 +55,7 @@ export function ContactTable({ contacts }: { contacts: Contact[] }) {
               <tr key={c.contact}>
                 <td>
                   <b>{c.resident}</b>
-                  <small>Apt {c.apt}{c.harbor ? " · " : ""}{c.harbor && <Badge tone="bad">Harbor</Badge>}</small>
+                  <small>Apt {c.apt}{c.lantern ? " · " : ""}{c.lantern && <Badge tone="bad">Lantern</Badge>}</small>
                 </td>
                 <td>
                   <b>{c.contact}</b>
@@ -143,7 +143,7 @@ export function ImportContacts() {
         <input type="file" accept=".csv,text/csv" onChange={(e) => { const fl = e.target.files?.[0]; if (fl) read(fl); }} />
         <Icon name="upload" />
         <b>{file ? file.name : "Drop a spreadsheet here (CSV)"}</b>
-        <span className="sx-hint">{file ? `${file.rows.length} rows · ${file.head.length} columns` : "An export from Yardi, PointClickCare or Excel works. Or click to choose a file."}</span>
+        <span className="sx-hint">{file ? `${file.rows.length} rows · ${file.head.length} columns` : "An export from your resident records system or a spreadsheet works. Or click to choose a file."}</span>
       </label>
       {file && !done && (
         <>

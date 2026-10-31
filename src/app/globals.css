@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------
-   Tenfold Senior Living · design tokens and shared styles (parent site, every community, staff)
-   Palette as on the Tenfold websites: slate structure, brick-red actions, gold highlights, blue-grey and sage accents,
+   Wrenhaven Senior Living · design tokens and shared styles (parent site, every community, staff)
+   Palette as on the Wrenhaven websites: slate structure, brick-red actions, gold highlights, blue-grey and sage accents,
    cool sage-tinted grounds, Libre Baskerville headings, Montserrat text, confetti dots.
    Page-specific styles live next to each page; shared patterns live here.
 ------------------------------------------------------------------ */
@@ -44,7 +44,7 @@
   --c-music: #b0882a;
   --c-movies: #425968;
   --c-community: #968b53;
-  --c-harbor: #be4142;
+  --c-lantern: #be4142;
 
   --radius: 18px;
   --radius-s: 10px;
@@ -229,7 +229,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .crumbs a { color: var(--ink-2); text-decoration: none; }
 .crumbs a:hover { text-decoration: underline; }
 
-/* Confetti dots: the Tenfold motif */
+/* Confetti dots: the Wrenhaven motif */
 .dots-deco { position: absolute; pointer-events: none; opacity: 0.9; z-index: 0; }
 
 /* ---------- Utility bar ---------- */
@@ -249,7 +249,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 @media (max-width: 620px) { .utility-inner { flex-direction: column; align-items: flex-start; gap: 4px; padding: 6px 0; } }
 
 /* ---------- Header ---------- */
-.header { position: sticky; top: 0; z-index: 40; background: rgba(245, 247, 244, 0.94); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 4px solid var(--sky); /* blue-grey band, as on the Tenfold websites */ }
+.header { position: sticky; top: 0; z-index: 40; background: rgba(245, 247, 244, 0.94); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 4px solid var(--sky); /* blue-grey band, as on the Wrenhaven websites */ }
 .header-inner { display: flex; align-items: center; gap: 24px; min-height: var(--header-h); }
 .logo { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: var(--green-ink); flex: none; }
 .logo img { width: 46px; height: 46px; object-fit: contain; }

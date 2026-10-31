@@ -14,8 +14,8 @@ const body = Montserrat({ variable: "--font-body", subsets: ["latin"], weight: [
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
-    title: { default: t("Tenfold Senior Living · Different By Design"), template: "%s · Tenfold Senior Living" },
-    description: t("Luxury senior living communities in Folsom and Elk Grove, California: Independent Living, Assisted Living Services and Harbor Memory Care."),
+    title: { default: t("Wrenhaven Senior Living · Home on Your Terms"), template: "%s · Wrenhaven Senior Living" },
+    description: t("Luxury senior living communities in Fairhollow and Rivermead, California: Independent Living, Assisted Living Services and Lantern Memory Care."),
     icons: { icon: "/img/brand/dots.png" },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false, noimageindex: true } },
   };
@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = { themeColor: "#24363f" };
 
-/** The document for every site: the Tenfold parent site, each community and the staff system. Each brings its own chrome. */
+/** The document for every site: the Wrenhaven parent site, each community and the staff system. Each brings its own chrome. */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Rendered per request so the calendar, menus and "today" are always current.
   await connection();

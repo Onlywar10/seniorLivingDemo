@@ -26,7 +26,7 @@ export default async function MessagesPage() {
 
       <div className="sx-grid g-2">
         <Card title="New message">
-          <Composer templates={templates} families={community.families} harborFamilies={community.harborFamilies} contacts={contacts.map((c) => ({ resident: c.resident, contact: c.contact }))} translations={s.translations} alsoTranslated={s.alsoTranslated} defaultEvent={s.composerEvent} />
+          <Composer templates={templates} families={community.families} lanternFamilies={community.lanternFamilies} contacts={contacts.map((c) => ({ resident: c.resident, contact: c.contact }))} translations={s.translations} alsoTranslated={s.alsoTranslated} defaultEvent={s.composerEvent} />
         </Card>
         <Card title="Replies" sub={`${unread} unread · translated automatically`} pad={false}>
           <Inbox threads={threads.map((t) => ({ ...t, when: ago(t.mins), msgs: t.msgs.map((m) => ({ ...m, when: ago(m.mins) })) }))} suggestions={s.suggestions} me={user.name} />

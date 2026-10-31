@@ -5,7 +5,7 @@ import { getT } from "@/i18n/server";
 import "./home.css";
 import "@/components/brand/brand.css";
 import { cats, money, tagLabels, type CalEvent, type LivingKey } from "@/data/shared";
-import { yusm } from "@/data/tenfold";
+import { pillars } from "@/data/wrenhaven";
 import { homeCopy } from "@/data/communities/copy/home";
 import { getCommunity } from "@/lib/community-server";
 import { addDays, greeting, iso, longDate, nowMinutes, shortDate, fromIso, today } from "@/lib/clock";
@@ -189,21 +189,21 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ---------- YUSM ---------- */}
-      <section className="sec tone-green on-dark hm-yusm" aria-labelledby="hm-yusm-h">
+      {/* ---------- LIVE ---------- */}
+      <section className="sec tone-green on-dark hm-live" aria-labelledby="hm-live-h">
         <Dots size={340} style={{ left: -120, bottom: -120, opacity: 0.18 }} />
         <div className="wrap">
-          <div className="hm-yusm-head">
+          <div className="hm-live-head">
             <div>
               <p className="eyebrow">{t("Our philosophy")}</p>
-              <h2 id="hm-yusm-h">
-                {t("Life here is ")}<em>{t("YUSM.")}</em>
+              <h2 id="hm-live-h">
+                {t("Life here is ")}<em>{t("LIVE.")}</em>
               </h2>
             </div>
-            <p>{t(`Four words shape every class, menu, outing and conversation at ${site.name}: Youthful, Useful, Spontaneous and Mobile.`)}</p>
+            <p>{t(`Four words sit behind every class, menu, outing and conversation at ${site.name}: Lively, Independent, Valued and Engaged.`)}</p>
           </div>
-          <ol className="hm-yusm-grid">
-            {yusm.map((y) => (
+          <ol className="hm-live-grid">
+            {pillars.map((y) => (
               <li key={y.letter}>
                 <span className="hm-y-ph">
                   <Image src={y.photo} alt="" fill sizes="(max-width: 640px) 100vw, 25vw" />
@@ -216,8 +216,8 @@ export default async function Home() {
               </li>
             ))}
           </ol>
-          <Link className="btn btn-light" href="/lifestyle#yusm">
-            {t("What YUSM means here ")}<Icon name="arrow" />
+          <Link className="btn btn-light" href="/lifestyle#live">
+            {t("What LIVE means here ")}<Icon name="arrow" />
           </Link>
         </div>
       </section>
@@ -268,7 +268,7 @@ export default async function Home() {
             <div className="sec-head">
               <p className="eyebrow">{t("Events & Adventures")}</p>
               <h2 id="hm-ea-h">
-                {t("From everyday enjoyment to ")}<em>{t("bucket-list")}</em>{t(" moments.")}
+                {t("Small pleasures, ")}<em>{t("big days out")}</em>{t(" and everything between.")}
               </h2>
             </div>
             <Link className="link-arrow" href="/events-adventures">
@@ -310,8 +310,8 @@ export default async function Home() {
                 <dd>{t(`${money(pricing.assistedBase)} a month base fee, plus care plan`)}</dd>
               </div>
               <div>
-                <dt>{t("Harbor Memory Care")}</dt>
-                <dd>{t(`From ${money(pricing.harbor[0].from)} a month`)}</dd>
+                <dt>{t("Lantern Memory Care")}</dt>
+                <dd>{t(`From ${money(pricing.lantern[0].from)} a month`)}</dd>
               </div>
             </dl>
             <div className="hm-second">
@@ -399,7 +399,7 @@ export default async function Home() {
             </span>
             <div>
               <h2 id="hm-stay-h">{t("Stay connected")}</h2>
-              <p>{t("Get the monthly activity calendar, new menus and Events & Adventures stories in your inbox — or follow along on Facebook.")}</p>
+              <p>{t("Have the monthly calendar, new menus and the latest Events & Adventures stories sent to your inbox, or follow along on Facebook.")}</p>
             </div>
             <div className="btn-row">
               <Link className="btn btn-green" href="/stay-connected">

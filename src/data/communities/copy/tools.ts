@@ -19,33 +19,33 @@ export interface ToolsCopy {
 }
 
 export const toolsCopy: Record<CommunitySlug, ToolsCopy> = {
-  "prairie-city-landing": {
+  "alder-bend": {
     wants: {
-      fitness: "More than 25 fitness classes a week with Jason Cherry, our full-time Fitness Director",
-      trips: "Events & Adventures outings every week, from wineries to Gold Rush-era mine tours",
-      arts: "Art Studio classes with visiting artists, plus live music on the calendar every week",
+      fitness: "Over 25 fitness classes a week with Devin Marsh, our full-time Fitness Director",
+      trips: "Outings every week, from Juniper Hills wineries to the Copper Creek Mine tour",
+      arts: "Art Studio classes with visiting artists, and live music every week",
       garden: "Raised planters and a cutting garden in the courtyard",
       pets: "Dogs and cats welcome, with their own outdoor area in the courtyard",
       faith: "Religious services in the Theatre, and faith gatherings on the calendar",
       chores: "Weekly housekeeping, all maintenance and handyman services included",
     },
-    social: " Here, friends are as close as the Rendezvous: morning coffee, happy hour, Monday trivia and the Friday Activity Meeting, where residents shape next week’s calendar.",
+    social: " Here, company is never further than the Perch: coffee in the morning, happy hour, Monday trivia and the Friday Activity Meeting, where residents plan the week ahead.",
     covers: {},
     buys: "three restaurants, a 24-hour team, weekly housekeeping, transportation and a calendar full of things to do",
-    same: "And at Prairie City Landing, the housekeeping, maintenance, transportation and calendar come with it.",
+    same: "And at Alder Bend, the housekeeping, maintenance, transportation and calendar come with it.",
     guidesCover: ["understanding the cost of senior living", ", ", "ten senior living funding sources", "", ", insurance options and VA Aid and Attendance. Download any of them, free."],
   },
-  "bruceville-point": {
+  "kestrel-point": {
     wants: {
-      fitness: "More than 25 fitness classes a week with Tina Trillo, our full-time Fitness Director",
-      trips: "Events & Adventures outings, from museum tours to park walks, axe throwing and disc golf",
+      fitness: "Over 25 fitness classes a week with Kara Lindqvist, our full-time Fitness Director",
+      trips: "Outings of every kind, from museums in Calder to refuge walks, axe throwing and disc golf",
       arts: "Art Studio classes with visiting instructors, plus the monthly Paint and Sip",
       garden: "Raised planters for herbs and vegetables and a cutting garden of lavender and tea roses in the courtyard",
       pets: "Dogs and cats welcome, with their own exercise area in the courtyard",
       faith: "A Non-Denominational Service with a visiting chaplain",
       chores: "Weekly housekeeping, all maintenance and handyman services included",
     },
-    social: " Here, friends are as close as the Bistro: morning coffee, a daily happy hour and Bingo in the Bistro every week.",
+    social: " Here, company is never further than the Bistro: coffee in the morning, happy hour every day and weekly Bingo.",
     covers: {
       food: "Three restaurants on site",
       car: "Outings with our drivers, departing from the Lobby",
@@ -53,7 +53,7 @@ export const toolsCopy: Record<CommunitySlug, ToolsCopy> = {
       fun: "Events & Adventures on the calendar",
     },
     buys: "a 24-hour team, weekly housekeeping, all maintenance, utilities and a calendar full of things to do",
-    same: "And at Bruceville Point, the housekeeping, maintenance, utilities and calendar come with it.",
+    same: "And at Kestrel Point, the housekeeping, maintenance, utilities and calendar come with it.",
     guidesCover: ["funding care, senior living 101 and the family decision toolkit. Download any of them, free."],
   },
 };

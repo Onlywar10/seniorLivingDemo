@@ -31,5 +31,5 @@ export function LangProvider({ lang, dict, suggest, children }: { lang: Lang; di
  */
 export const useT = () => useContext(LangCtx);
 
-/** The current path without its language prefix ("/zh/bruceville-point/dining" → "/bruceville-point/dining"), for the language switcher. */
+/** The current path without its language prefix ("/zh/kestrel-point/dining" → "/kestrel-point/dining"), for the language switcher. */
 export const usePath = () => stripLang(usePathname() ?? "/");

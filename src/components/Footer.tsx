@@ -8,7 +8,7 @@ import { Logo, Dots } from "./Logo";
 import { Icon } from "./Icon";
 
 const cols = [
-  { title: "Living Options", links: [["Independent Living", "/living/independent-living"], ["Assisted Living Services", "/living/assisted-living"], ["Harbor Memory Care", "/living/harbor-memory-care"], ["Floor Plans & Pricing", "/floor-plans"], ["Care Assessment", "/care-assessment"], ["Cost Comparison", "/cost-comparison"]] },
+  { title: "Living Options", links: [["Independent Living", "/living/independent-living"], ["Assisted Living Services", "/living/assisted-living"], ["Lantern Memory Care", "/living/lantern-memory-care"], ["Floor Plans & Pricing", "/floor-plans"], ["Care Assessment", "/care-assessment"], ["Cost Comparison", "/cost-comparison"]] },
   { title: "Life Here", links: [["Activity Calendar", "/calendar"], ["Dining & Menus", "/dining"], ["Events & Adventures", "/events-adventures"], ["Fitness", "/fitness"], ["Amazing Spaces", "/spaces"], ["Stay Connected", "/stay-connected"]] },
   { title: "About", links: [["Our Team", "/team"], ["Purpose & Values", "/about"], ["All Are Welcome", "/all-are-welcome"], ["News", "/news"], ["Senior Living Guides", "/guides"], ["FAQs", "/faq"], ["Careers", "/careers"], ["Info & Directions", "/contact"]] },
 ];
@@ -54,9 +54,9 @@ export function Footer() {
         </div>
         <div className="footer-family">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <Link href="~/" aria-label={t("Tenfold Senior Living home")}>
+          <Link href="~/" aria-label={t("Wrenhaven Senior Living home")}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/img/brand/tenfold-white.png" alt={t("Tenfold Senior Living")} width={116} height={52} />
+            <img src="/img/brand/wrenhaven-white.png" alt={t("Wrenhaven Senior Living")} width={116} height={52} />
           </Link>
           <p>
             {t(`${site.name} is owned, designed, built and operated by `)}

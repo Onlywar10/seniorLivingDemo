@@ -12,20 +12,20 @@ export interface ContactCopy {
 }
 
 export const contactCopy: Record<CommunitySlug, ContactCopy> = {
-  "prairie-city-landing": {
-    metaDescription: "Address, directions, phone numbers, visiting hours and a department directory for Prairie City Landing, 645 Willard Drive, Folsom, CA 95630.",
-    lede: "Just off US-50 next to Folsom High School, minutes from historic downtown Folsom. Visitors are always welcome.",
+  "alder-bend": {
+    metaDescription: "Address, directions, phone numbers, visiting hours and a department directory for Alder Bend, 120 Alder Bend Way, Fairhollow, CA 95921.",
+    lede: "On the east side of Fairhollow, a short drive from Old Town and the shores of Millpond Lake. Visitors are always welcome.",
     heroPhoto: "/img/exterior.jpg",
-    heroAlt: "The front entrance of Prairie City Landing",
-    localPress: "Folsom Telegraph or Style Magazine",
-    faqMetaDescription: "Answers about living at Prairie City Landing: what’s included, care, pets, visiting, parking, mail, moving in and the community fee.",
+    heroAlt: "The front entrance of Alder Bend",
+    localPress: "Fairhollow Courier or Calder Valley Living",
+    faqMetaDescription: "Answers about living at Alder Bend: what’s included, care, pets, visiting, parking, mail, moving in and the community fee.",
   },
-  "bruceville-point": {
-    metaDescription: "Address, directions, phone numbers, visiting information and who to ask for at Bruceville Point, 9730 Backer Ranch Road, Elk Grove, CA 95757.",
-    lede: "Just off Bruceville Road, a few blocks south of Elk Grove Boulevard, minutes from Old Town Elk Grove. Visitors are always welcome.",
-    heroPhoto: "/img/exterior.jpg", // TODO photo
+  "kestrel-point": {
+    metaDescription: "Address, directions, phone numbers, visiting information and who to ask for at Kestrel Point, 4400 Kestrel Point Drive, Rivermead, CA 95934.",
+    lede: "In south Rivermead, a few minutes from the river and the Meadowbrook Wildlife Refuge, and about twenty minutes from downtown Calder. Visitors are always welcome.",
+    heroPhoto: "/img/exterior.jpg",
     heroAlt: "The front entrance of the community",
     localPress: null,
-    faqMetaDescription: "Answers about living at Bruceville Point: what’s included, care, pets, visiting, parking, Harbor and moving in.",
+    faqMetaDescription: "Answers about living at Kestrel Point: what’s included, care, pets, visiting, parking, Lantern and moving in.",
   },
 };

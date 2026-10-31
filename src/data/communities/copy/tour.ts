@@ -3,7 +3,7 @@
 import type { CommunitySlug } from "@/lib/sites";
 
 export interface TourCopy {
-  /** A free lunch with an in-person tour: published by Prairie City Landing only. */
+  /** A free lunch with an in-person tour: published by Alder Bend only. */
   lunchOnUs: boolean;
   metaDescription: string;
   lede: string;
@@ -20,46 +20,46 @@ export interface TourCopy {
 }
 
 export const tourCopy: Record<CommunitySlug, TourCopy> = {
-  "prairie-city-landing": {
+  "alder-bend": {
     lunchOnUs: true,
-    metaDescription: "Book an in-person or video tour of Prairie City Landing in Folsom with Community Relations Director Cynthia Bazin. Lunch is on us.",
-    lede: "Choose a time that suits you, in person or by video. Cynthia will show you the apartments and the spaces, introduce you to a few residents, and answer every question — and lunch is on us.",
+    metaDescription: "Book an in-person or video tour of Alder Bend in Fairhollow with Community Relations Director Priya Nandakumar. Lunch is on us.",
+    lede: "Pick a time that works for you, in person or on video. Priya will walk you through the apartments and common spaces, introduce a few neighbors and take every question you have. Lunch is our treat.",
     hoursFact: " Tours daily, 9:00 am–5:00 pm",
-    videoNote: "A live walk-through with Cynthia from wherever you are.",
-    lunchNote: " Stay for lunch in Natoma Café or the Cypress Room after your tour.",
+    videoNote: "A live walk-through with Priya from wherever you are.",
+    lunchNote: " Stay for lunch in Millpond Café or the Juniper Room after your tour.",
     expectVideo: [
-      ["Cynthia calls you", "She’ll start the video call from her phone and walk you through the Lobby, the Rendezvous and the courtyard live."],
+      ["Priya calls you", "She’ll start the video call from her phone and walk you through the Lobby, the Perch and the courtyard live."],
       ["See an apartment", "We’ll visit an available apartment that suits what you’re looking for, and talk through floor plans and pricing."],
       ["Your questions", "Bring the whole family onto the call. Nothing is too small to ask."],
       ["Visit in person when you’re ready", "Many families follow a video tour with an in-person visit and lunch."],
     ],
     expectInPerson: [
-      ["Arrive at the Lobby", "Park in the visitor spaces right outside the main entrance. The front desk will let Cynthia know you’re here."],
-      ["See the community", "An available apartment, the Rendezvous, the Fitness Center, the Art Studio and the courtyard — and whatever is happening that day."],
+      ["Arrive at the Lobby", "Park in the visitor spaces right outside the main entrance. The front desk will let Priya know you’re here."],
+      ["See the community", "An available apartment, the Perch, the Fitness Center, the Art Studio and the courtyard — and whatever is happening that day."],
       ["Talk it through", "Pricing, availability, care options and timing. No pressure, and no decisions on the day."],
     ],
-    expectLunch: ["Lunch is on us", "Join Cynthia for lunch in Natoma Café or the Cypress Room. Residents often stop by to say hello."],
-    finding: ["Just off US-50, next to Folsom High School", "Free visitor parking at the main entrance", "Covered drop-off at the Lobby"],
+    expectLunch: ["Lunch is on us", "Join Priya for lunch in Millpond Café or the Juniper Room. Residents often stop by to say hello."],
+    finding: ["On the east side of Fairhollow, a short drive from Old Town", "Free visitor parking at the main entrance", "Covered drop-off at the Lobby"],
   },
-  "bruceville-point": {
+  "kestrel-point": {
     lunchOnUs: false,
-    metaDescription: "Book an in-person or video tour of Bruceville Point in Elk Grove with Community Relations Director Jaime Cervantes.",
-    lede: "Choose a time that suits you, in person or by video. Jaime will show you the apartments and the spaces, introduce you to a few residents, and answer every question.",
+    metaDescription: "Book an in-person or video tour of Kestrel Point in Rivermead with Community Relations Director Mateo Ruiz.",
+    lede: "Pick a time that works for you, in person or on video. Mateo will walk you through the apartments and common spaces, introduce a few neighbors and take every question you have.",
     hoursFact: " Tours by appointment",
-    videoNote: "A live walk-through with Jaime from wherever you are.",
-    lunchNote: " Join us in Stone Lakes Cafe or the Cypress Room after your tour.",
+    videoNote: "A live walk-through with Mateo from wherever you are.",
+    lunchNote: " Join us in Meadowbrook Cafe or the Juniper Room after your tour.",
     expectVideo: [
-      ["Jaime calls you", "Jaime starts the video call and walks you through the Lobby, the Bistro and the courtyard live."],
+      ["Mateo calls you", "Mateo starts the video call and walks you through the Lobby, the Bistro and the courtyard live."],
       ["See an apartment", "We’ll visit an available apartment that suits what you’re looking for, and talk through floor plans and pricing."],
       ["Your questions", "Bring the whole family onto the call. Nothing is too small to ask."],
       ["Visit in person when you’re ready", "Many families follow a video tour with an in-person visit and lunch."],
     ],
     expectInPerson: [
-      ["Arrive at the Lobby", "Park in the visitor spaces outside the main entrance. The front desk will let Jaime know you’re here."],
+      ["Arrive at the Lobby", "Park in the visitor spaces outside the main entrance. The front desk will let Mateo know you’re here."],
       ["See the community", "An available apartment, the Bistro, the Gym, the Art Studio and the courtyard — and whatever is happening that day."],
       ["Talk it through", "Pricing, availability, care options and timing. No pressure, and no decisions on the day."],
     ],
-    expectLunch: ["Stay for lunch", "Join Jaime for lunch in Stone Lakes Cafe or the Cypress Room. Residents often stop by to say hello."],
-    finding: ["Just off Bruceville Road, a few blocks south of Elk Grove Boulevard", "Visitor parking outside the main entrance", "Secure gated access — if the gate is closed, call the front desk"],
+    expectLunch: ["Stay for lunch", "Join Mateo for lunch in Meadowbrook Cafe or the Juniper Room. Residents often stop by to say hello."],
+    finding: ["In south Rivermead, a few minutes from the river", "Visitor parking outside the main entrance", "Secure gated access — if the gate is closed, call the front desk"],
   },
 };

@@ -79,7 +79,7 @@
 .fp-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 20px 0; flex-wrap: wrap; }
 .fp-kind { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); }
 .fp-kind-assisted { color: var(--sky); }
-.fp-kind-harbor { color: var(--brick); }
+.fp-kind-lantern { color: var(--brick); }
 .fp-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
 .fp-badge-open { background: var(--green-tint); color: var(--green-ink); }
 .fp-badge-wait { background: var(--butter-tint); color: #5f5520; }
