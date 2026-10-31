@@ -3564,4 +3564,5 @@ export const zh: Record<string, string> = {
   "Wrenhaven Senior Living": "Wrenhaven Senior Living",
   "Wrenhaven": "Wrenhaven",
   "Zumba": "尊巴舞",
+  "Open photo: Lake days": "打开照片：湖畔时光",
 };

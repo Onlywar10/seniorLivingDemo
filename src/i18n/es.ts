@@ -3563,4 +3563,5 @@ export const es: Record<string, string> = {
   "Wrenhaven Senior Living": "Wrenhaven Senior Living",
   "Wrenhaven": "Wrenhaven",
   "Zumba": "Zumba",
+  "Open photo: Lake days": "Abrir foto: Días de lago",
 };
