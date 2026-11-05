@@ -94,8 +94,21 @@ export const cats: Record<Cat, { label: string; color: string }> = {
 /** Public filters, in display order. */
 export const filters: Cat[] = ["fitness", "faith", "clubs", "trips", "music", "lantern"];
 
+/**
+ * Who an event is for, which decides what the public website shows and how people sign up:
+ * - public: open to anyone (an open house). Full details and a public sign-up form; each sign-up is a sales lead.
+ * - family: for families already on the community's list (a family barbecue). The website says it's happening;
+ *   families RSVP from the personal link in their weekly message, and staff approve each RSVP.
+ * - resident: a resident activity or outing (the default). The website shows name, day, time and description only;
+ *   residents sign up with the activities team, families ask for a seat through their personal link.
+ */
+export type EventKind = "public" | "family" | "resident";
+export const eventKindLabel: Record<EventKind, string> = { public: "Public event", family: "Family event", resident: "Resident activity" };
+
 export interface CalEvent {
   id: string;
+  /** Defaults to "resident". */
+  kind?: EventKind;
   date: string; // yyyy-mm-dd
   start: number; // minutes since midnight
   end?: number;
@@ -114,7 +127,22 @@ export interface CalEvent {
 }
 
 export const isLantern = (e: CalEvent) => e.lantern || e.cat === "lantern";
+/** Staff screens only: the public site never shows seat counts (see toPublic). */
 export const seatsLeft = (e: CalEvent) => (e.cap ? Math.max(0, e.cap - (e.taken ?? 0)) : undefined);
+export const kindOf = (e: CalEvent): EventKind => e.kind ?? "resident";
+
+/**
+ * What the public website may know about an event. Seat counts, waitlists and seat limits never leave the staff system,
+ * and resident activities lose their place too, so no pickup point or departure time ("the bus leaves the Lobby") is public.
+ * Public and family events keep their place: an open house has to say where to come.
+ */
+export function toPublic(e: CalEvent): CalEvent {
+  const rest: CalEvent = { ...e };
+  delete rest.cap;
+  delete rest.taken;
+  delete rest.waitlist;
+  return kindOf(e) === "resident" ? { ...rest, room: "" } : rest;
+}
 
 // ---------------------------------------------------------------- dining
 

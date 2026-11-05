@@ -1,6 +1,7 @@
 // The activity calendar. Weekly program plus dated events (November 2026 is the published month).
 import { addDays, dow, fromIso, hash, iso } from "@/lib/clock";
 import { cats, filters, isLantern, seatsLeft, type CalEvent, type Cat } from "@/data/shared";
+import { specialsOn } from "../specials";
 
 export { cats, filters, isLantern, seatsLeft };
 export type { CalEvent, Cat };
@@ -127,7 +128,7 @@ const dated: Record<string, Dated[]> = {
   "2026-10-29": [{ start: t(10, 30), title: "Lantern Pumpkin Painting", room: rooms.lantern, cat: "lantern", lantern: true, special: true }],
   "2026-10-30": [{ start: t(15), end: t(16), title: "Halloween Happy Hour: Costumes Encouraged", desc: "Live music, costume parade and prizes.", room: rooms.perch, cat: "music", replaces: "Happy Hour with Live Music", special: true }],
   "2026-10-31": [
-    { start: t(16), end: t(17, 30), title: "Trick-or-Treat Hallway for Grandkids", desc: "Residents hand out treats; families welcome.", room: "All floors", cat: "community", special: true },
+    { start: t(16), end: t(17, 30), title: "Trick-or-Treat Hallway for Grandkids", kind: "family", desc: "Residents hand out treats; families welcome.", room: "All floors", cat: "community", special: true },
     { start: t(9, 30), title: "Bus Trip: Juniper Hills Apple Orchards", room: rooms.lobby, cat: "trips", cap: 14, replaces: "Saturday Bus Trip", special: true },
   ],
 
@@ -272,7 +273,7 @@ export function eventsOn(date: Date, todayIso = iso(date)): CalEvent[] {
   let base: Seed[] = [...weekly[wd], ...lanternDaily[wd].map((e) => ({ ...e, lantern: true }))].filter((e) => !replaced.has(e.title));
   if (quietDays.has(key)) base = base.filter((e) => quietKeep.has(e.title));
   // The weekly shopping trips run Monday and Tuesday; on dated shopping days the destination replaces the generic title.
-  const all = [...base, ...extra.map(({ replaces: _r, retitle: _t, ...e }) => e)];
+  const all = [...base, ...extra.map(({ replaces: _r, retitle: _t, ...e }) => e), ...specialsOn(key, { openHouseRoom: "Lobby and model apartments", barbecueRoom: rooms.courtyard, lunchAt: "the Juniper Dining Room" })];
   return all
     .map((e) => {
       const id = `${key}-${slug(e.title)}-${e.start}`;

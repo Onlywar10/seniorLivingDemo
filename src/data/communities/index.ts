@@ -1,6 +1,6 @@
 // Every Wrenhaven community's content, by URL slug. Pages read the current one through
 // getCommunity() (Server Components, src/lib/community-server.ts) or useCommunity() (Client Components, src/lib/community.tsx).
-import type { Award, CalEvent, DayMenu, FaqGroup, FaqItem, Living, LivingKey, Plan, Space, Steward, Story, TeamMember, Testimonial, Venue } from "@/data/shared";
+import { toPublic, type Award, type CalEvent, type DayMenu, type FaqGroup, type FaqItem, type Living, type LivingKey, type Plan, type Space, type Steward, type Story, type TeamMember, type Testimonial, type Venue } from "@/data/shared";
 import * as abSite from "./alder-bend/site";
 import * as abCalendar from "./alder-bend/calendar";
 import * as abMenus from "./alder-bend/menus";
@@ -49,8 +49,12 @@ export interface Community {
   nav: NavItem[];
   // ----- calendar.ts
   rooms: Record<string, string>;
+  /** The public calendar: no seat counts, waitlists or seat limits, and no place for resident activities (toPublic). */
   eventsOn: (date: Date, todayIso?: string) => CalEvent[];
   eventsBetween: (start: Date, days: number, todayIso?: string) => { date: Date; events: CalEvent[] }[];
+  /** Staff screens only: every event in full, with seats, waitlists and departure points. */
+  staffEventsOn: (date: Date, todayIso?: string) => CalEvent[];
+  staffEventsBetween: (start: Date, days: number, todayIso?: string) => { date: Date; events: CalEvent[] }[];
   // ----- menus.ts
   venues: Record<string, Venue>;
   venueOrder: string[];
@@ -74,8 +78,18 @@ export interface Community {
   authorOf: (s: Story) => string;
 }
 
-const bundle = (slug: CommunitySlug, site: object, calendar: object, menus: object, info: object, articles: object) =>
-  ({ slug, ...site, ...calendar, ...menus, ...info, ...articles }) as unknown;
+type Calendar = { eventsOn: Community["eventsOn"]; eventsBetween: Community["eventsBetween"] };
+
+/** The public site reads redacted events; the staff system reads them in full. */
+const split = (cal: Calendar) => ({
+  eventsOn: (d: Date, t?: string) => cal.eventsOn(d, t).map(toPublic),
+  eventsBetween: (s: Date, n: number, t?: string) => cal.eventsBetween(s, n, t).map((x) => ({ date: x.date, events: x.events.map(toPublic) })),
+  staffEventsOn: cal.eventsOn,
+  staffEventsBetween: cal.eventsBetween,
+});
+
+const bundle = (slug: CommunitySlug, site: object, calendar: Calendar, menus: object, info: object, articles: object) =>
+  ({ slug, ...site, ...calendar, ...split(calendar), ...menus, ...info, ...articles }) as unknown;
 
 export const communities: Record<CommunitySlug, Community> = {
   "alder-bend": bundle("alder-bend", abSite, abCalendar, abMenus, abInfo, abArticles) as Community,
@@ -84,8 +98,8 @@ export const communities: Record<CommunitySlug, Community> = {
 
 // Compile-time check that each community's modules really have the Community shape (the bundle cast above can't see it).
 type Check<T extends Community> = T;
-export type _ab = Check<{ slug: CommunitySlug } & typeof abSite & typeof abCalendar & typeof abMenus & typeof abInfo & typeof abArticles>;
-export type _kp = Check<{ slug: CommunitySlug } & typeof kpSite & typeof kpCalendar & typeof kpMenus & typeof kpInfo & typeof kpArticles>;
+export type _ab = Check<{ slug: CommunitySlug } & ReturnType<typeof split> & typeof abSite & typeof abCalendar & typeof abMenus & typeof abInfo & typeof abArticles>;
+export type _kp = Check<{ slug: CommunitySlug } & ReturnType<typeof split> & typeof kpSite & typeof kpCalendar & typeof kpMenus & typeof kpInfo & typeof kpArticles>;
 
 export const getCommunityBySlug = (slug: CommunitySlug) => communities[slug];
 

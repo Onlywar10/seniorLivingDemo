@@ -37,7 +37,7 @@ export const articleBodies: Record<string, string[]> = {
   ],
   "honoring-our-veterans-november-11": [
     "Our residents include veterans of the Army, Navy, Marines, Air Force and Coast Guard, along with the husbands, wives, sons and daughters of many more. Veterans Day is our chance to thank all of them, and we give it the whole day.",
-    "We start early. The bus leaves the Lobby at 7:30 am for the Fairhollow Veterans Day Parade in Old Town. There are 18 seats, so sign up at the front desk or with Nora in Events & Adventures. We will bring blankets and a flask of coffee.",
+    "We start early for the Fairhollow Veterans Day Parade in Old Town, with blankets and a flask of coffee. Residents: sign up with Nora and the activities team. Families: ask for a seat from your weekly message.",
     "At 11:00 am Millpond Café hosts a Veterans’ Lunch for every resident veteran and one guest. At 2:00 pm the Theatre holds a ceremony for veterans and their families only, with the names and branches of service read aloud. Families are very welcome; just let us know you are coming so a seat is waiting.",
     "Wartime veterans and their surviving spouses may qualify for the VA Aid and Attendance benefit, which can help with the cost of senior living. Our free guide explains the basics, and Priya Nandakumar is glad to go through it with you.",
   ],

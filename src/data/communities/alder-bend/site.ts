@@ -166,7 +166,7 @@ export const spaces: Space[] = [
   { key: "living", name: "Living Room", kind: "Library & lounge", text: "The library, the Scrabble Club, the Book Club and the best armchairs in the house for an afternoon with a novel.", photo: "/img/living-room.jpg", alt: "The Living Room with armchairs and bookshelves" },
   { key: "courtyard", name: "Courtyard", kind: "Outdoor living room", text: "A fire table, outdoor dining, gas grills, raised garden beds, a cutting garden, and a fenced corner for dogs and cats.", photo: "/img/courtyard-palms.jpg", alt: "The courtyard with palms, lawn and outdoor seating" },
   { key: "lounge", name: "2nd Floor Lounge", kind: "Lounge", text: "A calm upstairs spot for crafts and jigsaws, and for visits from Thor, our therapy dog.", photo: "/img/lounge.jpg", alt: "The second-floor lounge" },
-  { key: "lobby", name: "Lobby", kind: "Arrivals", text: "Bright, open and the meeting point for every bus trip.", photo: "/img/lobby.jpg", alt: "The double-height lobby with a staircase and sofas" },
+  { key: "lobby", name: "Lobby", kind: "Arrivals", text: "Bright, open and the first place every guest sees.", photo: "/img/lobby.jpg", alt: "The double-height lobby with a staircase and sofas" },
 ];
 
 export const team: TeamMember[] = [
@@ -345,7 +345,7 @@ export const faqs = [
   { q: "What’s included in the monthly rent?", a: "Housekeeping every week; utilities, internet and cable; maintenance and handyman help; the 24-hour emergency response system; scheduled transportation; Events & Adventures; the fitness program; and use of all three restaurants." },
   { q: "If I need more help later, will I have to move?", a: "No. Our resident services team can bring Assisted Living Services to any apartment. Support starts at a base fee of $850 a month, with personal care priced by care plan." },
   { q: "What is Lantern?", a: "Lantern is our secure memory care neighborhood. It has its own courtyard, its own Events & Adventures program and an outing every week. Studios start at $6,400 a month." },
-  { q: "Do you provide transportation?", a: "Yes, it is included. The bus covers shopping trips, appointments and every outing on the calendar, all leaving from the Lobby." },
+  { q: "Do you provide transportation?", a: "Yes, it is included. The bus covers shopping trips, appointments and every outing on the calendar." },
   { q: "Can my family join me for a meal?", a: "Yes, any time. Book lunch online or ask our Dining Experience Director to save you a table." },
   { q: "Are you licensed?", a: "Yes. The California Department of Social Services licenses Alder Bend as a Residential Care Facility for the Elderly, RCFE License #100000101." },
   { q: "How do I schedule a tour?", a: "Book online whenever it suits you, or call Priya Nandakumar, our Community Relations Director, at (916) 555-0140. Lunch in one of our restaurants is on us." },

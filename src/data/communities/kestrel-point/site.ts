@@ -201,7 +201,7 @@ export const spaces: Space[] = [
   { key: "club", name: "Club Room", kind: "Private dining", text: "Book it for birthdays, anniversaries and family dinners, with catering from our kitchen and a patio next door for when the party spills outside.", photo: "/img/kp/club-room.jpg", alt: "The Club Room, with teal walls, a sofa and a table set for a private gathering" },
   { key: "courtyard", name: "Courtyard", kind: "Outdoor living room", text: "Our landscaped outdoor living room, with sunny and shady seating, a bocce court, a fire pit, gas BBQs for outdoor meals, raised beds for herbs and vegetables, and a cutting garden of lavender and roses.", photo: "/img/courtyard-bocce.jpg", alt: "A landscaped courtyard with a bocce court", more: ["An exercise area for dogs and cats, with seating that overlooks the courtyard", "Walking paths for a morning loop"] },
   { key: "lantern-courtyard", name: "Lantern Courtyard", kind: "Secure garden", text: "Lantern’s own secure courtyard, with raised planter boxes, seating, activity tables, walking paths and a putting green.", photo: "/img/lantern-garden.jpg", alt: "A secure garden courtyard with raised planters" },
-  { key: "lobby", name: "Lobby", kind: "Arrivals", text: "The front desk team greets every guest here, and every outing leaves from the door.", photo: "/img/lobby.jpg", alt: "A bright lobby with sofas" },
+  { key: "lobby", name: "Lobby", kind: "Arrivals", text: "The front desk team greets every guest here.", photo: "/img/lobby.jpg", alt: "A bright lobby with sofas" },
 ];
 
 export const team: TeamMember[] = [
@@ -407,7 +407,7 @@ export const faqs = [
   { q: "What’s included in the monthly rent?", a: "Your rent covers weekly housekeeping (including flat linens, washed in your own machine), an emergency response system backed by a team on site around the clock, gated entry, all maintenance and handyman help, and every utility, including internet and cable. Covered parking is also available." },
   { q: "If I need more help later, will I have to move?", a: "No. Our resident services team brings Assisted Living Services to whichever apartment you live in. Support starts with a $950 monthly base fee, and any personal care is priced according to your care plan." },
   { q: "What is Lantern?", a: "Lantern is our secure memory care neighborhood: 22 private apartments, a courtyard and putting green of its own, activities 12 hours a day and regular outings. Studios with a private bath start at $8,750 a month, and care level rates are set after a personal assessment." },
-  { q: "Do you provide transportation?", a: "Yes. Our drivers handle every Events & Adventures trip, from museum visits to walks in the park, leaving from the Lobby. The front desk can also arrange rides for shopping and appointments." },
+  { q: "Do you provide transportation?", a: "Yes. Our drivers handle every Events & Adventures trip, from museum visits to walks in the park. The front desk can also arrange rides for shopping and appointments." },
   { q: "Can my family join me for a meal?", a: "Please do. Family and friends are always welcome at the table. Book lunch online or ask our Dining Experience Director." },
   { q: "Are you licensed?", a: "Yes. The California Department of Social Services licenses Kestrel Point as a Residential Care Facility for the Elderly (RCFE License #100000202)." },
   { q: "How do I schedule a tour?", a: "Book a time online, or call Mateo Ruiz, our Community Relations Director, at (916) 555-0160. He will plan the visit around what you want to see." },

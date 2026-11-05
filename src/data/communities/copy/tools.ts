@@ -48,7 +48,7 @@ export const toolsCopy: Record<CommunitySlug, ToolsCopy> = {
     social: " Here, company is never further than the Bistro: coffee in the morning, happy hour every day and weekly Bingo.",
     covers: {
       food: "Three restaurants on site",
-      car: "Outings with our drivers, departing from the Lobby",
+      car: "Outings with our drivers",
       gym: "25+ fitness classes a week on site",
       fun: "Events & Adventures on the calendar",
     },
