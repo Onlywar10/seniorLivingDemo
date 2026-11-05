@@ -4,6 +4,7 @@ import { getT } from "@/i18n/server";
 import { Icon } from "@/components/Icon";
 import { apartmentFeatures, comingCommunities, purpose, values, pillars } from "@/data/wrenhaven";
 import { summaries, intoCommunity, TfCta, TfHead } from "@/components/wrenhaven/parts";
+import { ExampleChat } from "@/components/wrenhaven/ExampleChat";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
@@ -121,6 +122,49 @@ export default async function WrenhavenHome() {
               </a>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ---------- Example chat ---------- */}
+      <section className="sec tone-sand" aria-labelledby="tf-chat-h">
+        <div className="wrap tf-split">
+          <div>
+            <TfHead
+              t={t}
+              id="tf-chat-h"
+              eyebrow="Questions, answered"
+              title={
+                <>
+                  {t("Ask us ")}
+                  <em>{t("anything")}</em>
+                </>
+              }
+              lede="Every Wrenhaven website has a chat that answers straight from that community’s own pages: prices, apartments, tonight’s dinner, today’s activities and upcoming events."
+            />
+            <ul className="tf-checks">
+              <li>
+                <Icon name="check" /> <span>{t("Answers any hour, in English, Spanish or Chinese")}</span>
+              </li>
+              <li>
+                <Icon name="check" /> <span>{t("Links to the page each answer comes from")}</span>
+              </li>
+              <li>
+                <Icon name="check" /> <span>{t("Offers a call back from a real person when you want one")}</span>
+              </li>
+            </ul>
+            <p className="muted">{t("Try it: pick a suggested question or type your own.")}</p>
+          </div>
+          <ExampleChat
+            communities={all.map((s) => ({
+              name: s.name,
+              city: s.city,
+              independent: s.from.independent,
+              assisted: s.from.assisted,
+              lantern: s.from.lantern,
+              home: intoCommunity(lang, s.slug),
+              plans: intoCommunity(lang, s.slug, "/floor-plans"),
+            }))}
+          />
         </div>
       </section>
 
