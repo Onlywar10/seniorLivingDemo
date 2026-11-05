@@ -1,0 +1,33 @@
+/* /phones: a calm, full-screen stage for presenting the phone walk-throughs. No site chrome. */
+.phs {
+  min-height: 100dvh; display: flex; flex-direction: column;
+  background: radial-gradient(1200px 700px at 30% 40%, #fbfaf6 0%, #eef0ea 55%, #e4e8e1 100%);
+  color: #22302a; font-family: var(--font-body), system-ui, sans-serif;
+  padding: 14px 24px 24px;
+}
+.phs-switch { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding-right: 48px; padding-left: 48px; }
+.phs-seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(34, 48, 42, 0.1); }
+.phs-seg a { padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #5a665f; text-decoration: none; white-space: nowrap; }
+.phs-seg a:hover { color: #22302a; }
+.phs-seg a[aria-current="page"] { background: #2e4d33; color: #fff; }
+.phs-seg a:focus-visible { outline: 2px solid #4c87a2; outline-offset: 1px; }
+
+.phs-stage { flex: 1; width: 100%; max-width: 1060px; margin: 0 auto; display: grid; align-content: center; gap: 14px; padding-top: 10px; }
+.phs-intro { display: grid; gap: 2px; max-width: 640px; }
+.phs-kicker { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #ad4f36; }
+.phs-who { margin: 0; font-family: var(--font-display), Georgia, serif; font-size: clamp(1.05rem, 1.6vw, 1.3rem); line-height: 1.4; color: #22302a; }
+
+/* The phone as large as the screen allows */
+.phs .ph-tour { grid-template-columns: auto minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: center; }
+.phs .ph.ph-lg { --ph-w: clamp(250px, calc((100dvh - 170px) / 2.067), 400px); font-size: 13.5px; }
+.phs .ph-tour-side { max-width: 460px; }
+.phs .ph-tour-side li button { padding: 10px 12px; }
+.phs .ph-tour-side b { font-size: 1rem; }
+.phs .ph-tour-side small { font-size: 0.92rem; line-height: 1.5; }
+
+@media (max-width: 720px) {
+  .phs { padding: 10px 12px 20px; }
+  .phs-switch { padding: 0 44px 0 0; justify-content: flex-start; }
+  .phs .ph-tour { grid-template-columns: 1fr; }
+  .phs .ph.ph-lg { --ph-w: min(320px, calc(100vw - 40px)); }
+}

@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { headers } from "next/headers";
 import { Libre_Baskerville, Montserrat } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
+import { PhoneStage } from "@/components/phone/PhoneStage";
 import { PrefsProvider } from "@/lib/prefs";
 import { LangProvider } from "@/i18n/client";
 import { dictionaries, getT } from "@/i18n/server";
@@ -35,6 +37,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LangProvider lang={lang} dict={dictionaries[lang]} suggest={isLang(s) ? s : null}>
           <PrefsProvider>{children}</PrefsProvider>
         </LangProvider>
+        {/* Shift+P or ?phones=… opens the phone walk-throughs over any page (nothing visible otherwise). */}
+        <Suspense fallback={null}>
+          <PhoneStage />
+        </Suspense>
       </body>
     </html>
   );
