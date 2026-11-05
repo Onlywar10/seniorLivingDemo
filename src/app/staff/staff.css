@@ -636,3 +636,75 @@ a.sx-kpi:hover { border-color: var(--green); }
 /* Grid children may shrink below their content on phones */
 .sx-card-body > *, .sx-grid > * { min-width: 0; }
 @media (max-width: 560px) { .sx-btn-lg { white-space: normal; text-align: center; height: auto; } }
+
+/* "Powered by Kinlight": the platform mark under the community's own branding */
+.sx-kinlight { display: flex; align-items: center; gap: 8px; margin: 8px 12px 0; padding: 7px 10px; border-radius: 10px; font-size: 12px; color: var(--sx-ink-3); text-decoration: none; }
+.sx-kinlight:hover { background: var(--sx-soft); color: var(--sx-ink-2); }
+.sx-kinlight i { width: 10px; height: 10px; border-radius: 50%; background: #f2a93b; box-shadow: 0 0 0 3px rgba(242, 169, 59, 0.22), 0 0 10px rgba(242, 169, 59, 0.6); }
+.sx-kinlight b { color: #1f2f4a; font-weight: 700; letter-spacing: 0.01em; }
+
+/* ===================================================================== alpha scope: phones, event kinds, scorecard, prospects
+   (Post once, Photo post, Messages, Menus, Calendar, Scorecard, Tours & enquiries) */
+.prev-wide { grid-column: 1 / -1; }
+.prev-phone { display: grid; justify-items: center; gap: 8px; }
+.prev-phone .pv-meta { margin: 0; }
+.pub-kind { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.pub-kind .sx-hint { margin: 0; }
+.pv-web-desc { color: var(--sx-ink-2); }
+.pv-web-tag { justify-self: start; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; background: var(--green-tint); color: var(--green-ink); }
+.pv-web-tag.public { background: var(--terra-tint, #f8e4dc); color: var(--terra-deep); }
+.pv-web-btn { justify-self: start; margin-top: 4px; padding: 4px 12px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; }
+.pv-web-note { font-weight: 700; color: var(--green-deep); }
+.pv-web-why { margin: 8px 0 0; }
+
+.pp-stage { display: grid; justify-items: center; padding: 6px 0; }
+.pp-ph-photo { position: relative; }
+.pp-ph-crop { position: absolute; top: 6px; right: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 0.78em; font-weight: 600; }
+.pp-ph-dest { flex-wrap: wrap; }
+.pp-ph-dest > * { flex: none; }
+.ph-staff-btn:disabled { opacity: 0.55; }
+button.ph-staff-btn { border: 0; font: inherit; font-weight: 600; cursor: pointer; width: 100%; }
+button.ph-staff-btn.ghost { border: 1.5px solid #cdd3cd; }
+.pp-approve { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.pp-approve .sx-hint { margin: 0; }
+@media (max-width: 560px) { .pp-approve { grid-template-columns: 1fr; justify-items: center; } }
+
+.msg-prev { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; }
+.msg-prev-side { display: grid; gap: 8px; align-content: start; }
+.msg-prev-side .sx-seg .icon { width: 14px; height: 14px; vertical-align: -2px; }
+@media (max-width: 560px) { .msg-prev { grid-template-columns: 1fr; justify-items: center; } }
+
+.mcard { background: #fffdf8; border: 1px solid #d2d9cd; border-radius: 4px; max-width: 360px; margin: 0 auto; padding: 18px 20px 14px; display: grid; gap: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); }
+.mcard header small { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--terra-deep); font-weight: 700; }
+.mcard h3 { margin: 2px 0 0; font-family: var(--font-display); font-weight: 400; font-size: 28px; color: var(--green-ink); line-height: 1.1; }
+.mcard header p { margin: 4px 0 0; font-size: 16px; font-weight: 700; }
+.mcard dl { margin: 0; display: grid; gap: 12px; border-top: 1px solid #e3ddcf; padding-top: 12px; }
+.mcard dt { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sx-ink-3); font-weight: 700; }
+.mcard dd { margin: 2px 0 0; font-size: 19px; line-height: 1.3; color: var(--sx-ink); display: grid; gap: 2px; }
+.mcard dd small { font-size: 14px; color: var(--sx-ink-2); }
+.mcard dd em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--green-deep); }
+.mcard footer { font-size: 13px; color: var(--sx-ink-2); border-top: 1px solid #e3ddcf; padding-top: 8px; }
+
+.ced-kind { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; background: var(--green-tint); color: var(--green-ink); vertical-align: 1px; }
+.ced-kind.public { background: var(--terra-tint, #f8e4dc); color: var(--terra-deep); }
+.ced-kinds { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.ced-kinds label { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 9px 11px; border: 1px solid var(--sx-line); border-radius: 10px; cursor: pointer; font-weight: 400; }
+.ced-kinds label.on { border-color: var(--green); background: var(--green-tint); }
+.ced-kinds input { margin-top: 3px; }
+.ced-kinds b { display: block; font-size: 14px; }
+.ced-kinds small { display: block; font-size: 12.5px; color: var(--sx-ink-2); line-height: 1.4; }
+
+.sc-code { display: inline-block; min-width: 28px; padding: 1px 6px; margin-right: 4px; border-radius: 6px; background: var(--sx-soft); color: var(--sx-ink-3); font-size: 11.5px; font-weight: 700; text-align: center; }
+
+.prs { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-height: 520px; }
+.prs-list { list-style: none; margin: 0; padding: 0; border-right: 1px solid var(--sx-line); max-height: 640px; overflow-y: auto; }
+.prs-list button { width: 100%; text-align: left; font: inherit; background: transparent; border: 0; border-bottom: 1px solid var(--sx-line-2); padding: 11px 16px; display: grid; gap: 2px; cursor: pointer; color: inherit; }
+.prs-list button:hover { background: var(--sx-soft); }
+.prs-list button[aria-pressed="true"] { background: var(--green-tint); box-shadow: inset 3px 0 0 var(--green); }
+.prs-list .top { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 14px; }
+.prs-list .sub { font-size: 12.5px; color: var(--sx-ink-3); }
+.prs-list .snip { font-size: 13px; color: var(--sx-ink-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.prs-list small { font-size: 12px; color: var(--sx-ink-3); }
+.prs-phone { display: grid; justify-items: center; align-content: start; gap: 10px; padding: 16px 20px; }
+.prs-phone .sx-hint { margin: 0; max-width: 240px; text-align: center; }
+@media (max-width: 760px) { .prs { grid-template-columns: 1fr; } .prs-list { border-right: 0; max-height: 360px; } }

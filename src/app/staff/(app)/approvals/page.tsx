@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { Approvals } from "@/components/staff/Approvals";
 import { Avatar, Badge, Card, PageHead } from "@/components/staff/ui";
@@ -16,7 +17,7 @@ export default async function ApprovalsPage() {
   const approver = s.people[s.roles.approver].name;
   return (
     <>
-      <PageHead title="Approvals" sub="Nothing with a resident’s photo, a price or a holiday menu goes public until a manager has seen it." />
+      <PageHead title="Approvals" sub="Nothing with a resident’s photo, a price or a holiday menu goes public until a manager has seen it, on the desktop or on their phone." />
       <Approvals items={approvals.map((a) => ({ ...a, when: ago(a.mins) }))} approver={approver} />
       <div className="sx-grid g-21">
         <Card title="Recently decided">
@@ -36,13 +37,23 @@ export default async function ApprovalsPage() {
             ))}
           </ul>
         </Card>
-        <Card title="Who approves what">
-          <ul className="sx-list">
-            {s.approvalRules.map((r) => (
-              <li key={r.what}><b>{r.what}</b><br /><span className="sx-hint">{r.who}</span></li>
-            ))}
-          </ul>
-        </Card>
+        <div className="sx-grid">
+          <Card title="Who approves what" action={<Link className="sx-btn sx-btn-sm" href="/staff/team">Team & roles</Link>}>
+            <ul className="sx-list">
+              {s.approvalRules.map((r) => (
+                <li key={r.what}><b>{r.what}</b><br /><span className="sx-hint">{r.who}</span></li>
+              ))}
+            </ul>
+            <p className="sx-note" style={{ marginBottom: 0 }}>
+              Change who approves what, and who may post, in <Link className="sx-link" href="/staff/team">Team & roles</Link>.
+            </p>
+          </Card>
+          <Card title="Approving on the go">
+            <p style={{ margin: 0 }}>
+              Approvers get each request on their phone as a notification, with the photo, the change or the menu, and can approve, crop or send it back in one tap. Nothing waits for them to be at a desk.
+            </p>
+          </Card>
+        </div>
       </div>
     </>
   );

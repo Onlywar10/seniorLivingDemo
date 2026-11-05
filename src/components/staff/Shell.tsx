@@ -9,14 +9,16 @@ import { CommunitySwitcher, useStaffCommunity } from "./StaffCommunity";
 import { XIcon } from "./ui";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
-type Item = { href: string; label: string; icon?: IconName; x?: "dash" | "repeat" | "trend" | "door" | "key" | "clipboard"; badge?: number };
+type Item = { href: string; label: string; icon?: IconName; x?: "dash" | "repeat" | "trend" | "door" | "key" | "clipboard" | "shield"; badge?: number };
 
-const navFor = (approvals: number, unread: number): { group: string; items: Item[] }[] => [
+const navFor = (approvals: number, unread: number, alertCount: number, signups: number): { group: string; items: Item[] }[] => [
   {
     group: "Overview",
     items: [
       { href: "/staff/dashboard", label: "Dashboard", x: "dash" },
+      { href: "/staff/alerts", label: "Alerts", icon: "bell", badge: alertCount },
       { href: "/staff/scorecard", label: "Monthly scorecard", icon: "chart" },
+      { href: "/staff/leadership", label: "All communities", icon: "building" },
     ],
   },
   {
@@ -27,13 +29,23 @@ const navFor = (approvals: number, unread: number): { group: string; items: Item
       { href: "/staff/calendar", label: "Calendar", icon: "calendar" },
       { href: "/staff/menus", label: "Menus", icon: "fork" },
       { href: "/staff/photo-post", label: "Photo post", icon: "image" },
+      { href: "/staff/library", label: "Library & print", icon: "printer" },
+    ],
+  },
+  {
+    group: "Events",
+    items: [
+      { href: "/staff/sign-ups", label: "Sign-ups & RSVPs", x: "clipboard", badge: signups },
+      { href: "/staff/attendance", label: "Attendance", icon: "users" },
+      { href: "/staff/suggestions", label: "Resident suggestions", icon: "star" },
     ],
   },
   {
     group: "Families",
     items: [
       { href: "/staff/messages", label: "Messages", icon: "sms", badge: unread },
-      { href: "/staff/families", label: "Families & contacts", icon: "users" },
+      { href: "/staff/families", label: "Families & contacts", icon: "heart" },
+      { href: "/staff/surveys", label: "Surveys", icon: "list" },
     ],
   },
   {
@@ -45,14 +57,20 @@ const navFor = (approvals: number, unread: number): { group: string; items: Item
       { href: "/staff/geo", label: "AI search (GEO)", icon: "sparkle" },
     ],
   },
+  {
+    group: "Settings",
+    items: [
+      { href: "/staff/team", label: "Team & roles", x: "shield" },
+    ],
+  },
 ];
 
-export function Shell({ children, badges }: { children: ReactNode; badges: { approvals: number; unread: number } }) {
+export function Shell({ children, badges }: { children: ReactNode; badges: { approvals: number; unread: number; alerts: number; signups: number } }) {
   const path = usePathname();
   const { scope, current, site } = useStaffCommunity();
   const name = current ? current.name : "Wrenhaven Senior Living";
   const unread = badges.unread;
-  const nav = navFor(badges.approvals, unread);
+  const nav = navFor(badges.approvals, unread, badges.alerts, badges.signups);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -103,6 +121,10 @@ export function Shell({ children, badges }: { children: ReactNode; badges: { app
             </div>
           ))}
         </nav>
+        <Link className="sx-kinlight" href="/kinlight" title="Kinlight, the platform this workspace runs on">
+          <i aria-hidden="true" />
+          <span>Powered by <b>Kinlight</b></span>
+        </Link>
         <div className="sx-user">
           <span className="sx-avatar" style={{ background: "var(--terra-deep)" }} aria-hidden="true">
             {user.initials}
@@ -130,9 +152,9 @@ export function Shell({ children, badges }: { children: ReactNode; badges: { app
             <Link href="/staff/publish" className="sx-btn sx-btn-primary sx-top-post" aria-label="New post">
               <Icon name="plus" /> <span>Post</span>
             </Link>
-            <Link href="/staff/messages" className="sx-bell" aria-label={`Messages: ${unread} unread replies`}>
+            <Link href="/staff/alerts" className="sx-bell" aria-label={`Alerts: ${badges.alerts} new`}>
               <Icon name="bell" />
-              {unread > 0 && <i />}
+              {badges.alerts > 0 && <i />}
             </Link>
             <Link href={site("/")} className="sx-site" target="_blank" rel="noopener" aria-label="View website (opens in a new tab)">
               <Icon name="globe" /> <span>View website</span>

@@ -52,14 +52,15 @@ const enquirySources = [
   { label: "Senior living referral service", value: 10 },
   { label: "AI search (ChatGPT and others)", value: 5 },
   { label: "Website chat", value: 7 },
+  { label: "Website: Open House sign-up", value: 4 },
   { label: "Referrals from residents and families", value: 4 },
   { label: "Facebook", value: 4 },
   { label: "Walk-in", value: 3 },
 ];
-const enquirySourcesPrev = [16, 9, 8, 3, 5, 3, 3, 2];
+const enquirySourcesPrev = [16, 9, 8, 3, 5, 1, 3, 3, 2];
 
 const activity: Activity[] = [
-  { who: "grant", mins: 28, text: "posted “Halloween Happy Hour: Costumes Encouraged” to the website, 155 families and Facebook" },
+  { who: "grant", mins: 28, text: "posted “Halloween Happy Hour: Costumes Encouraged” to the website, 155 families and this week’s digest" },
   { who: "kara", mins: 85, text: "sent “Mindfulness & Mocktails with Kara” flyer for approval", tone: "wait" },
   { who: "mateo", mins: 150, text: "booked a tour for the Gill family, Monday at 11:00 am, with lunch in Meadowbrook Cafe", tone: "info" },
   { who: "julien", mins: 240, text: "published today’s menus for the Juniper Room, Meadowbrook Cafe and the Bistro" },
@@ -82,8 +83,8 @@ const sends: Send[] = [
 ];
 
 const templates = [
-  { k: "event", label: "New event", text: "New on the KP calendar: {event}. Reply YES to save a seat for your loved one, or call the front desk at (916) 555-0160." },
-  { k: "photos", label: "Photos are up", text: "Photos from {event} are up! See them on our website and Facebook. Thank you for being part of the Kestrel Point family." },
+  { k: "event", label: "New event", text: "New on the KP calendar: {event}. Ask for a seat for your loved one from your personal link in this week’s message, or call the front desk at (916) 555-0160." },
+  { k: "photos", label: "Photos are up", text: "Photos from {event} are up! See them on our website. Thank you for being part of the Kestrel Point family." },
   { k: "reminder", label: "Reminder", text: "Reminder: {event}. Families are always welcome to join us." },
   { k: "change", label: "Schedule change", text: "Schedule change: {event}. We’re sorry for any inconvenience. Questions? Call (916) 555-0160." },
   { k: "lantern", label: "Lantern update", text: "Lantern update from Anjali: {event}. Thank you for sharing your loved one with us." },
@@ -102,7 +103,7 @@ const threads: Thread[] = [
     id: "t2", from: "Greg Halvorsen", relation: "Son", resident: "Marion Halvorsen", apt: "A305", lang: "English", unread: true, mins: 70,
     subject: "Juniper Hills waitlist",
     msgs: [
-      { me: true, text: "Juniper Hills Orchards trip on Saturday at 9:30 am from the Lobby: 2 seats left. Reply YES to save a seat.", mins: 60 * 118 },
+      { me: true, text: "Juniper Hills Orchards trip on Saturday at 9:30 am from the Lobby: 2 seats left. Ask for a seat for Marion from your personal link: kp.link/r/8Hm3", mins: 60 * 118 },
       { who: "Greg", text: "Mom just missed out on Juniper Hills. Is she on the waitlist? She’s been talking about the apple pie all week.", mins: 70 },
     ],
   },
@@ -110,7 +111,7 @@ const threads: Thread[] = [
     id: "t3", from: "Wei Chen", relation: "Son", resident: "Mei-Ling Chen", apt: "C118", lang: "Chinese", unread: false, mins: 60 * 21,
     subject: "Photos",
     msgs: [
-      { me: true, text: "9 photos from Pumpkin Carving around the Fire Pit are up on our website and Facebook.", original: "“火坑旁雕南瓜”活动的 9 张照片已发布在我们的网站和 Facebook 上。", mins: 60 * 22 },
+      { me: true, text: "9 photos from Pumpkin Carving around the Fire Pit are up on our website.", original: "“火坑旁雕南瓜”活动的 9 张照片已发布在我们的网站上。", mins: 60 * 22 },
       { who: "Wei", text: "Thank you for the photos. My mother looks very happy. We will visit on Sunday for the violin duo.", original: "谢谢你们的照片。我母亲看起来很开心。我们周日会来听小提琴二重奏。", mins: 60 * 21 },
       { me: true, text: "Wonderful! The violin duo plays in Meadowbrook Cafe at 3:00 pm on Sunday. We’ll save you seats next to Mei-Ling.", original: "太好了！小提琴二重奏周日下午 3:00 在 Meadowbrook Cafe 演出。我们会在 Mei-Ling 旁边为您留座。", mins: 60 * 20 },
     ],
@@ -208,13 +209,13 @@ const approvals: Approval[] = [
   {
     id: "a1", by: "kara", mins: 85, kind: "Flyer (PDF)", title: "Mindfulness & Mocktails with Kara",
     detail: "Wednesday, November 18 · 3:00 pm · The Bistro. A short mindfulness session, then nutritious snacks and mocktails.",
-    photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (155)", "Large-print flyer", "Facebook"],
+    photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (155)", "Weekly email digest", "Large-print flyer"],
     note: "Mocktail recipes on the back.",
   },
   {
     id: "a2", by: "grant", mins: 60 * 3, kind: "News post with 8 photos", title: "Honoring our veterans",
     detail: "Veterans Day plans: the Flag Ceremony in the Courtyard at 9:30 am, Veterans’ Lunch in Meadowbrook Cafe, and the Veterans’ & Families Only Ceremony in the Theatre at 2:00 pm.",
-    photo: "/img/flag.jpg", channels: ["Website news", "Family email digest", "Facebook", "Google Business Profile"],
+    photo: "/img/flag.jpg", channels: ["Website news", "Family email digest", "Google Business Profile"],
     note: "All 8 residents pictured have photo consent on file.",
   },
   {
@@ -225,12 +226,12 @@ const approvals: Approval[] = [
   {
     id: "a4", by: "julien", mins: 60 * 31, kind: "Menu", title: "Thanksgiving dinner menu, Thursday, November 26",
     detail: "Juniper Room, 11:00 am–3:00 pm by reservation. Herb-roasted turkey, honey-glazed ham, wild mushroom Wellington, and pumpkin pie, pecan pie and apple crisp.",
-    photo: "/img/turkey.jpg", channels: ["Website dining", "Digital signage", "Family email digest"],
+    photo: "/img/turkey.jpg", channels: ["Website dining", "Family email digest", "Large-print menu cards"],
   },
   {
-    id: "a5", by: "callie", mins: 60 * 40, kind: "Facebook post with 5 photos", title: "Bocce Tournament: Round One sign-ups",
+    id: "a5", by: "callie", mins: 60 * 40, kind: "News post with 5 photos", title: "Bocce Tournament: Round One sign-ups",
     detail: "Five photos from last week’s practice on the courtyard court, inviting residents to sign up for Round One on Thursday, November 5.",
-    photo: "/img/bocce.jpg", channels: ["Facebook", "Website news"],
+    photo: "/img/bocce.jpg", channels: ["Website news", "Family email digest"],
     note: "All 5 residents pictured have photo consent on file.",
   },
 ];
@@ -239,7 +240,7 @@ const approvedRecently = [
   { title: "Paint and Sip: October story and 11 photos", by: "callie", mins: 60 * 30, ok: true },
   { title: "November activity calendar (287 events)", by: "grant", mins: 60 * 180, ok: true },
   { title: "Axe throwing: news post", by: "kara", mins: 60 * 24 * 12, ok: true },
-  { title: "Facebook post: pumpkin carving contest", by: "callie", mins: 60 * 46, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
+  { title: "Photo post: pumpkin carving contest", by: "callie", mins: 60 * 46, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
 ];
 
 /* ------------------------------------------------------------ SEO */
@@ -494,7 +495,7 @@ const photoPresets = [
   {
     k: "pumpkins", src: "/img/pumpkins.jpg", label: "Pumpkin carving",
     title: "Pumpkin carving around the Fire Pit",
-    caption: "Our residents brought their best ideas to the fire pit in the Courtyard for pumpkin carving. Vote for your favorite on Facebook on Friday!",
+    caption: "Our residents brought their best ideas to the fire pit in the Courtyard for pumpkin carving. Vote for your favorite in the Lobby on Friday!",
     people: residentsInPhotos.pumpkins,
   },
   {
@@ -536,8 +537,8 @@ export const staff: StaffData = {
     {
       lang: "Spanish", code: "es", n: 11,
       tpl: {
-        event: "Nuevo en el calendario de KP: {event}. Responda SÍ para reservar un lugar para su ser querido, o llame a la recepción al (916) 555-0160.",
-        photos: "¡Ya están las fotos de {event}! Véalas en nuestro sitio web y en Facebook. Gracias por ser parte de la familia de Kestrel Point.",
+        event: "Nuevo en el calendario de KP: {event}. Pida un lugar para su ser querido desde su enlace personal en el mensaje de esta semana, o llame a la recepción al (916) 555-0160.",
+        photos: "¡Ya están las fotos de {event}! Véalas en nuestro sitio web. Gracias por ser parte de la familia de Kestrel Point.",
         reminder: "Recordatorio: {event}. Las familias siempre son bienvenidas.",
         change: "Cambio de horario: {event}. Disculpe las molestias. ¿Preguntas? Llame al (916) 555-0160.",
         lantern: "Noticias de Lantern, de parte de Anjali: {event}. Gracias por confiarnos a su ser querido.",
@@ -546,8 +547,8 @@ export const staff: StaffData = {
     {
       lang: "Chinese", code: "zh", n: 6,
       tpl: {
-        event: "Kestrel Point 活动日历新增：{event}。回复 YES 为您的家人预留座位，或致电前台 (916) 555-0160。",
-        photos: "“{event}”的照片已发布！请在我们的网站和 Facebook 上查看。感谢您成为 Kestrel Point 大家庭的一员。",
+        event: "Kestrel Point 活动日历新增：{event}。请通过本周消息中的个人链接为您的家人申请座位，或致电前台 (916) 555-0160。",
+        photos: "“{event}”的照片已发布！请在我们的网站上查看。感谢您成为 Kestrel Point 大家庭的一员。",
         reminder: "提醒：{event}。欢迎家人随时参加。",
         change: "日程变更：{event}。给您带来不便，敬请谅解。如有疑问，请致电 (916) 555-0160。",
         lantern: "来自 Anjali 的 Lantern 消息：{event}。感谢您把家人托付给我们。",
@@ -572,7 +573,7 @@ export const staff: StaffData = {
       title: "Bus Trip: Wine Tasting in the Juniper Hills & Lunch",
       titleEs: "Excursión: cata de vinos en Juniper Hills y almuerzo",
       room: "Lobby",
-      desc: "A tasting of the Juniper Hills’ old-vine Zinfandel, then lunch. The bus leaves from the Lobby.",
+      desc: "A tasting of the Juniper Hills’ old-vine Zinfandel, then lunch.",
       photo: "/img/vineyard.jpg",
     },
     menu: {
@@ -591,7 +592,7 @@ export const staff: StaffData = {
       time: "14:00",
       room: "Courtyard",
       cap: "",
-      desc: "Our residents brought their best ideas to the fire pit this afternoon. Vote for your favorite on Facebook on Friday!",
+      desc: "Our residents brought their best ideas to the fire pit this afternoon. Vote for your favorite in the Lobby on Friday!",
       photo: "/img/pumpkins.jpg",
     },
     pdf: {
@@ -617,13 +618,12 @@ export const staff: StaffData = {
   },
   photoPresets,
   menus: {
-    sub: "Daily specials and soups for all three restaurants. Publishing updates the website dining page and the digital signage in the Lobby, Meadowbrook Cafe and the Bistro.",
-    screens: ["Lobby screen", "Meadowbrook Cafe screen", "The Bistro screen"],
+    sub: "Daily specials and soups for all three restaurants. Publishing updates the website dining page, the weekly family digest and the large-print menu cards for the Juniper Room, Meadowbrook Cafe and the Bistro.",
   },
   approvals,
   approvedRecently,
   approvalRules: [
-    { what: "Resident photos on Facebook or the website", who: "Joanna Kessel · checks photo consent is on file" },
+    { what: "Resident photos on the website, in family texts or the digest", who: "Joanna Kessel · checks photo consent is on file" },
     { what: "Pricing and availability", who: "Joanna Kessel · prepared by Imani Price" },
     { what: "Holiday and special-event menus", who: "Joanna Kessel · prepared by Julien Marchand" },
     { what: "Everyday events, menus and family texts", who: "Publish straight away, no approval needed" },

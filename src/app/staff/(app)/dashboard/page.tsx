@@ -15,7 +15,7 @@ export default async function Dashboard() {
   if (!sc) return <Overview screen="dashboard" />;
   const { s, c } = sc;
   const { activity, community, enquirySources, enquirySourcesPrev, weekKpis } = s;
-  const { eventsBetween, eventsOn } = c;
+  const { staffEventsBetween: eventsBetween, staffEventsOn: eventsOn } = c;
   const approver = s.people[s.roles.approver];
   const t = today();
   const now = nowMinutes();

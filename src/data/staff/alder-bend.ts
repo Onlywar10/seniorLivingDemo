@@ -47,14 +47,15 @@ const enquirySources = [
   { label: "Senior living referral service", value: 7 },
   { label: "AI search (ChatGPT and others)", value: 7 },
   { label: "Website chat", value: 6 },
+  { label: "Website: Open House sign-up", value: 5 },
   { label: "Referrals from residents and families", value: 5 },
   { label: "Facebook", value: 3 },
   { label: "Walk-in", value: 2 },
 ];
-const enquirySourcesPrev = [13, 8, 8, 3, 4, 4, 2, 2];
+const enquirySourcesPrev = [13, 8, 8, 3, 4, 1, 4, 2, 2];
 
 const activity: Activity[] = [
-  { who: "nora", mins: 34, text: "posted “Halloween Happy Hour: Costumes Encouraged” to the website, 186 families and Facebook" },
+  { who: "nora", mins: 34, text: "posted “Halloween Happy Hour: Costumes Encouraged” to the website, 186 families and this week’s digest" },
   { who: "devin", mins: 96, text: "sent “Healthy Happy Hour with Devin & Priya!” flyer for approval", tone: "wait" },
   { who: "priya", mins: 140, text: "booked a tour for the Andersons, Friday at 10:00 am, with lunch in the Juniper Room", tone: "info" },
   { who: "rafael", mins: 230, text: "published today’s menus for the Juniper Room, Millpond Café and The Perch" },
@@ -78,8 +79,8 @@ const sends: Send[] = [
 
 
 const templates = [
-  { k: "event", label: "New event", text: "New on the AB calendar: {event}. Reply YES to save a seat for your loved one, or call the front desk at (916) 555-0140." },
-  { k: "photos", label: "Photos are up", text: "Photos from {event} are up! See them on our website and Facebook. Thank you for being part of the AB family." },
+  { k: "event", label: "New event", text: "New on the AB calendar: {event}. Ask for a seat for your loved one from your personal link in this week’s message, or call the front desk at (916) 555-0140." },
+  { k: "photos", label: "Photos are up", text: "Photos from {event} are up! See them on our website. Thank you for being part of the AB family." },
   { k: "reminder", label: "Reminder", text: "Reminder: {event}. Families are always welcome to join us." },
   { k: "change", label: "Schedule change", text: "Schedule change: {event}. We’re sorry for any inconvenience. Questions? Call (916) 555-0140." },
   { k: "lantern", label: "Lantern update", text: "Lantern update from Maribel: {event}. Thank you for sharing your loved one with us." },
@@ -98,7 +99,7 @@ const threads: Thread[] = [
     id: "t2", from: "Tom Whitaker", relation: "Son", resident: "Dorothy Whitaker", apt: "1108", lang: "English", unread: true, mins: 75,
     subject: "Orchard trip waitlist",
     msgs: [
-      { me: true, text: "Juniper Hills apple orchards trip on Saturday at 9:30 am from the Lobby: 3 seats left. Reply YES to save a seat.", mins: 60 * 120 },
+      { me: true, text: "Juniper Hills apple orchards trip on Saturday at 9:30 am from the Lobby: 3 seats left. Ask for a seat for Dorothy from your personal link: ab.link/r/4Tw9", mins: 60 * 120 },
       { who: "Tom", text: "Mom says she’s on the waitlist for the orchard trip. Any chance a seat opens up? She’s been talking about the cider donuts all week.", mins: 75 },
     ],
   },
@@ -106,7 +107,7 @@ const threads: Thread[] = [
     id: "t3", from: "Ivan Petrov", relation: "Son", resident: "Galina Petrova", apt: "3105", lang: "Russian", unread: false, mins: 60 * 20,
     subject: "Photos",
     msgs: [
-      { me: true, text: "12 photos from Happy Hour: Wes on Guitar are up on our website and Facebook.", original: "12 фотографий с вечера «Happy Hour: Wes on Guitar» уже на нашем сайте и в Facebook.", mins: 60 * 21 },
+      { me: true, text: "12 photos from Happy Hour: Wes on Guitar are up on our website.", original: "12 фотографий с вечера «Happy Hour: Wes on Guitar» уже на нашем сайте.", mins: 60 * 21 },
       { who: "Ivan", text: "Thank you for the photos. Mother looks so happy. We will visit on Sunday for the violin concert.", original: "Спасибо за фотографии. Мама выглядит такой счастливой. Мы приедем в воскресенье на концерт скрипки.", mins: 60 * 20 },
       { me: true, text: "Wonderful! Lorenzo plays in Millpond Café at 3:00 pm on Sunday. We’ll save you seats next to Galina.", original: "Замечательно! Лоренцо играет в Millpond Café в воскресенье в 3:00. Мы оставим вам места рядом с Галиной.", mins: 60 * 19 },
     ],
@@ -205,13 +206,13 @@ const approvals: Approval[] = [
   {
     id: "a1", by: "devin", mins: 96, kind: "Flyer (PDF)", title: "Healthy Happy Hour with Devin & Priya!",
     detail: "Wednesday, November 18 · 3:00 pm · The Perch. Music, nutritious snacks and choreography.",
-    photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (186)", "Large-print flyer", "Facebook"],
+    photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (186)", "Weekly email digest", "Large-print flyer"],
     note: "Mocktail recipes on the back. Priya is bringing the playlist.",
   },
   {
     id: "a2", by: "nora", mins: 60 * 3 + 10, kind: "News post with 6 photos", title: "Honoring our veterans",
     detail: "Veterans Day plans: the bus to the parade at 7:30 am, Veterans’ Lunch in Millpond Café, and the Veterans’ & Families Only Ceremony at 2:00 pm.",
-    photo: "/img/flag.jpg", channels: ["Website news", "Family email digest", "Facebook", "Google Business Profile"],
+    photo: "/img/flag.jpg", channels: ["Website news", "Family email digest", "Google Business Profile"],
     note: "All 6 residents pictured have photo consent on file.",
   },
   {
@@ -222,7 +223,7 @@ const approvals: Approval[] = [
   {
     id: "a4", by: "rafael", mins: 60 * 30, kind: "Menu", title: "Thanksgiving dinner menu, Thursday, November 26",
     detail: "Juniper Room, 11:00 am–3:00 pm by reservation. Herb-roasted turkey, honey-glazed ham, wild mushroom Wellington, and pumpkin, pecan and apple desserts.",
-    photo: "/img/turkey.jpg", channels: ["Website dining", "Digital signage", "Family email digest"],
+    photo: "/img/turkey.jpg", channels: ["Website dining", "Family email digest", "Large-print menu cards"],
   },
 ];
 
@@ -230,7 +231,7 @@ const approvedRecently = [
   { title: "Calder Valley Memory Walk: story and 14 photos", by: "maribel", mins: 60 * 28, ok: true },
   { title: "November activity calendar (312 events)", by: "nora", mins: 60 * 190, ok: true },
   { title: "Paint and Sip with Talia: news post", by: "nora", mins: 60 * 24 * 19, ok: true },
-  { title: "Facebook post: “Guess the pumpkin” contest", by: "nora", mins: 60 * 50, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
+  { title: "Photo post: “Guess the pumpkin” contest", by: "nora", mins: 60 * 50, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
 ];
 
 /* ------------------------------------------------------------ SEO */
@@ -485,7 +486,7 @@ const photoPresets = [
   {
     k: "pumpkins", src: "/img/pumpkins.jpg", label: "Pumpkin carving",
     title: "Pumpkin carving in the Courtyard",
-    caption: "Our residents brought their best ideas to the Courtyard for pumpkin carving this afternoon. Vote for your favorite on Facebook on Friday!",
+    caption: "Our residents brought their best ideas to the Courtyard for pumpkin carving this afternoon. Vote for your favorite in the Lobby on Friday!",
     people: residentsInPhotos.pumpkins,
   },
   {
@@ -527,8 +528,8 @@ export const staff: StaffData = {
     {
       lang: "Spanish", code: "es", n: 14,
       tpl: {
-        event: "Nuevo en el calendario de AB: {event}. Responda SÍ para reservar un lugar para su ser querido, o llame a la recepción al (916) 555-0140.",
-        photos: "¡Ya están las fotos de {event}! Véalas en nuestro sitio web y en Facebook. Gracias por ser parte de la familia de AB.",
+        event: "Nuevo en el calendario de AB: {event}. Pida un lugar para su ser querido desde su enlace personal en el mensaje de esta semana, o llame a la recepción al (916) 555-0140.",
+        photos: "¡Ya están las fotos de {event}! Véalas en nuestro sitio web. Gracias por ser parte de la familia de AB.",
         reminder: "Recordatorio: {event}. Las familias siempre son bienvenidas.",
         change: "Cambio de horario: {event}. Disculpe las molestias. ¿Preguntas? Llame al (916) 555-0140.",
         lantern: "Noticias de Lantern, de parte de Maribel: {event}. Gracias por confiarnos a su ser querido.",
@@ -537,8 +538,8 @@ export const staff: StaffData = {
     {
       lang: "Russian", code: "ru", n: 6,
       tpl: {
-        event: "Новое в календаре AB: {event}. Ответьте ДА, чтобы забронировать место, или позвоните на ресепшн: (916) 555-0140.",
-        photos: "Фотографии с мероприятия «{event}» уже опубликованы на нашем сайте и в Facebook.",
+        event: "Новое в календаре AB: {event}. Попросите место по вашей личной ссылке в письме этой недели или позвоните на ресепшн: (916) 555-0140.",
+        photos: "Фотографии с мероприятия «{event}» уже опубликованы на нашем сайте.",
         reminder: "Напоминание: {event}. Семьи всегда желанные гости.",
         change: "Изменение в расписании: {event}. Вопросы? Звоните (916) 555-0140.",
         lantern: "Новости Lantern от Марибель: {event}. Спасибо, что доверяете нам.",
@@ -563,7 +564,7 @@ export const staff: StaffData = {
       title: "Bus Trip: Wine Tasting at Larkspur Cellars & Lunch",
       titleEs: "Excursión: cata de vinos en Larkspur Cellars y almuerzo",
       room: "Lobby",
-      desc: "A tasting of Larkspur Cellars’ Tempranillo and estate whites in the Juniper Hills, then lunch at the winery. The bus leaves from the Lobby.",
+      desc: "A tasting of Larkspur Cellars’ Tempranillo and estate whites in the Juniper Hills, then lunch at the winery.",
       photo: "/img/vineyard.jpg",
     },
     menu: {
@@ -582,7 +583,7 @@ export const staff: StaffData = {
       time: "14:00",
       room: "Courtyard",
       cap: "",
-      desc: "Our residents brought their best ideas to the Courtyard this afternoon. Vote for your favorite on Facebook on Friday!",
+      desc: "Our residents brought their best ideas to the Courtyard this afternoon. Vote for your favorite in the Lobby on Friday!",
       photo: "/img/pumpkins.jpg",
     },
     pdf: {
@@ -608,13 +609,12 @@ export const staff: StaffData = {
   },
   photoPresets,
   menus: {
-    sub: "Daily specials and soups for all three restaurants. Publishing updates the website dining page and the digital signage in the Lobby, Millpond Café and The Perch.",
-    screens: ["Lobby screen", "Millpond Café screen", "The Perch screen"],
+    sub: "Daily specials and soups for all three restaurants. Publishing updates the website dining page, the weekly family digest and the large-print menu cards for the Juniper Room, Millpond Café and The Perch.",
   },
   approvals,
   approvedRecently,
   approvalRules: [
-    { what: "Resident photos on Facebook or the website", who: "Renata Holloway · checks photo consent is on file" },
+    { what: "Resident photos on the website, in family texts or the digest", who: "Renata Holloway · checks photo consent is on file" },
     { what: "Pricing and availability", who: "Renata Holloway · prepared by Leonard Fisk" },
     { what: "Holiday and special-event menus", who: "Renata Holloway · prepared by Rafael Domingo" },
     { what: "Everyday events, menus and family texts", who: "Publish straight away, no approval needed" },

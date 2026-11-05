@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MenuEditor } from "@/components/staff/MenuEditor";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { PageHead } from "@/components/staff/ui";
-import { atToday } from "@/data/staff";
+import { atToday, nextDigest } from "@/data/staff";
 import { getStaffCommunity } from "@/data/staff/server";
 import { addDays, fromIso, iso, today } from "@/lib/clock";
 
@@ -31,7 +31,7 @@ export default async function MenusPage() {
         publisher={s.people[s.roles.menus].name}
         domain={s.brand.domain}
         community={s.brand.name}
-        screens={s.menus.screens}
+        digest={nextDigest()}
       />
     </>
   );

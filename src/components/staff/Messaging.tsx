@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Template, Thread } from "@/data/staff/shared";
+import type { StaffData, Template, Thread } from "@/data/staff/shared";
 import { Icon } from "../Icon";
+import { MailMessage, Phone, SmsThread } from "../phone/Phone";
 import { Badge, Meter } from "./ui";
 
 type Tpl = Template;
 /** Composer translation previews: a language, how many families read it, and the templates in it. */
 type Translation = { lang: string; code: string; n: number; tpl: Record<string, string> };
 
-export function Composer({ templates, families, lanternFamilies, contacts, translations, alsoTranslated, defaultEvent }: { templates: Tpl[]; families: number; lanternFamilies: number; contacts: { resident: string; contact: string }[]; translations: Translation[]; alsoTranslated: string; defaultEvent: string }) {
+type Brand = Pick<StaffData["brand"], "name" | "short" | "phone" | "domain" | "hello">;
+
+export function Composer({ templates, families, lanternFamilies, contacts, translations, alsoTranslated, defaultEvent, brand }: { templates: Tpl[]; families: number; lanternFamilies: number; contacts: { resident: string; contact: string }[]; translations: Translation[]; alsoTranslated: string; defaultEvent: string; brand: Brand }) {
   const [aud, setAud] = useState<"all" | "lantern" | "one">("all");
   const [one, setOne] = useState(contacts[0].resident);
   const [tpl, setTpl] = useState("event");
@@ -18,6 +21,11 @@ export function Composer({ templates, families, lanternFamilies, contacts, trans
   const [text, setText] = useState(t.text.replace("{event}", event));
   const [sent, setSent] = useState<"idle" | "busy" | "done">("idle");
   const count = aud === "all" ? families : aud === "lantern" ? lanternFamilies : 1;
+  const [view, setView] = useState<"text" | "email">("text");
+  const [pl, setPl] = useState<string>("en");
+  const tr = translations.find((x) => x.code === pl);
+  const shown = tr ? (tr.tpl[tpl] ?? tr.tpl.event).replace("{event}", event) : text;
+  const to = contacts.find((c) => c.resident === one) ?? contacts[0];
 
   const applyTpl = (k: string, ev = event) => {
     setTpl(k);
@@ -59,11 +67,40 @@ export function Composer({ templates, families, lanternFamilies, contacts, trans
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} />
         <span className="sx-hint">{text.length} characters · {Math.ceil(text.length / 160)} text{text.length > 160 ? "s" : ""}</span>
       </label>
-      <div className="tr-prev" aria-label="Automatic translation preview">
-        {translations.map((tr, i) => (
-          <div key={tr.code} lang={tr.code}><b lang="en">{i === 0 && <Icon name="translate" />}{i === 0 && " "}{tr.lang} · {tr.n} families</b>{(tr.tpl[tpl] ?? tr.tpl.event).replace("{event}", event)}</div>
-        ))}
-        <div><b>Also translated</b><span className="sx-hint">{alsoTranslated}</span></div>
+      <div className="msg-prev" aria-label="Preview on a family member’s phone">
+        <Phone size="sm" time="10:15" label={view === "text" ? "The text on a family member’s phone" : "The email on a family member’s phone"}>
+          {view === "text" ? (
+            <SmsThread name={brand.name} sub={brand.phone} initials={brand.short} bubbles={[{ time: "Today 10:15 am", text: shown }]} />
+          ) : (
+            <MailMessage from={brand.name} address={`news@${brand.domain}`} to={to.contact} subject={event} time="10:15 am">
+              <div className="ph-em" lang={pl}>
+                <div className="ph-em-banner">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/img/brand/dots.png" alt="" />
+                  {brand.name}
+                </div>
+                {pl === "en" && <p className="ph-em-p">{brand.hello}</p>}
+                <p className="ph-em-p">{shown}</p>
+                {pl === "en" && <span className="ph-em-btn">See the calendar</span>}
+                <p className="ph-em-foot">{brand.name} · {brand.phone} · Update your preferences or unsubscribe</p>
+              </div>
+            </MailMessage>
+          )}
+        </Phone>
+        <div className="msg-prev-side">
+          <div className="sx-seg" role="group" aria-label="Preview">
+            <button type="button" aria-pressed={view === "text"} onClick={() => setView("text")}><Icon name="sms" /> Text</button>
+            <button type="button" aria-pressed={view === "email"} onClick={() => setView("email")}><Icon name="mail" /> Email</button>
+          </div>
+          <p className="sx-lbl" style={{ margin: "6px 0 0" }}><Icon name="translate" /> Each family reads it in their language</p>
+          <div className="sx-chips" role="group" aria-label="Preview language">
+            <button type="button" aria-pressed={pl === "en"} onClick={() => setPl("en")}>English</button>
+            {translations.map((x) => (
+              <button key={x.code} type="button" aria-pressed={pl === x.code} onClick={() => setPl(x.code)}>{x.lang} · {x.n}</button>
+            ))}
+          </div>
+          <p className="sx-hint" style={{ margin: 0 }}>Also translated: {alsoTranslated}</p>
+        </div>
       </div>
       <div className="pub-foot">
         <p>{aud === "one" ? `To ${one}’s family` : `To ${count} families`} · replies come to this inbox</p>

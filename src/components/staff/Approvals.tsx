@@ -17,7 +17,7 @@ export function Approvals({ items, approver }: { items: (Approval & { when: stri
       <header className="sx-card-head">
         <div>
           <h2>Waiting for {approver} <Badge tone={waiting ? "accent" : "good"}>{waiting ? `${waiting} waiting` : "All done"}</Badge></h2>
-          <p>Posts with resident photos, pricing and menus for special days are approved by the Executive Director before they publish.</p>
+          <p>Posts with resident photos, pricing and menus for special days are approved by the Executive Director before they publish. {approver.split(" ")[0]} also gets each request on her phone and can approve on the go.</p>
         </div>
       </header>
       <div className="sx-card-body" style={{ paddingTop: 4 }}>

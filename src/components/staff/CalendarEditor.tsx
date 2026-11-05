@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { eventKindLabel, type EventKind } from "@/data/shared";
 import { addDays, dayName, fmtRange, fmtTime, fromIso, iso, monthName } from "@/lib/clock";
 import { Icon } from "../Icon";
 import { useStaffCommunity } from "./StaffCommunity";
@@ -8,16 +9,25 @@ import { Badge, XIcon } from "./ui";
 
 export interface EdEvent {
   id: string; date: string; start: number; end?: number; title: string; room: string; cat: string; color: string; catLabel: string;
+  /** Who it's for, which decides what the public website shows and how people sign up. */
+  kind: EventKind;
   cap?: number; taken?: number; waitlist?: number; lantern?: boolean; leader?: string; desc?: string; rule?: string;
   going?: string[]; waiting?: string[]; clash?: string; isNew?: boolean;
 }
+
+/** What each kind of event does publicly, in one line. */
+export const kindHelp: Record<EventKind, string> = {
+  public: "Anyone can come. The website shows full details and a sign-up form; each sign-up becomes a lead in Tours & enquiries.",
+  family: "For families on your list. The website says it’s happening; families RSVP from the personal link in their weekly message and you approve.",
+  resident: "A resident activity or outing. The website shows name, day, time and description only; residents sign up with you, families ask for a seat through their personal link.",
+};
 
 const toMin = (s: string) => { const [h, m] = s.split(":").map(Number); return (h || 0) * 60 + (m || 0); };
 
 export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }: { events: EdEvent[]; weekStarts: string[]; todayIso: string; rooms: string[] }) {
   const [events, setEvents] = useState(initial);
   const [w, setW] = useState(0);
-  const [filter, setFilter] = useState<"all" | "lantern" | "trips" | "conflicts">("all");
+  const [filter, setFilter] = useState<"all" | "lantern" | "trips" | "open" | "conflicts">("all");
   const [open, setOpen] = useState<EdEvent | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [toast, setToast] = useState("");
@@ -29,7 +39,7 @@ export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }:
   }, [toast]);
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => iso(addDays(fromIso(weekStarts[w]), i))), [w, weekStarts]);
-  const show = (e: EdEvent) => (filter === "lantern" ? e.lantern : filter === "trips" ? !!e.cap : filter === "conflicts" ? !!e.clash : true);
+  const show = (e: EdEvent) => (filter === "lantern" ? e.lantern : filter === "trips" ? !!e.cap : filter === "open" ? e.kind !== "resident" : filter === "conflicts" ? !!e.clash : true);
   const clashes = events.filter((e) => e.clash && e.date >= todayIso);
   const weekOf = (date: string) => weekStarts.findIndex((ws) => date >= ws && date <= iso(addDays(fromIso(ws), 6)));
   const first = fromIso(days[0]), last = fromIso(days[6]);
@@ -50,7 +60,7 @@ export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }:
         </div>
         <div>
           <div className="sx-chips" role="group" aria-label="Show">
-            {([["all", "All events"], ["lantern", "Lantern"], ["trips", "Trips & sign-ups"], ["conflicts", "Room conflicts"]] as const).map(([k, l]) => (
+            {([["all", "All events"], ["lantern", "Lantern"], ["trips", "Trips & sign-ups"], ["open", "Family & public"], ["conflicts", "Room conflicts"]] as const).map(([k, l]) => (
               <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>
             ))}
           </div>
@@ -91,6 +101,7 @@ export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }:
                           {e.rule ? <span title={e.rule}><XIcon name="repeat" /><span className="vh"> {e.rule}</span></span> : e.clash ? <Icon name="alert" /> : null}
                         </span>
                         {e.title}
+                        {e.kind !== "resident" && <span className={`ced-kind ${e.kind}`}>{e.kind === "public" ? "Public" : "Family"}</span>}
                         {e.cap ? <span className={`cap ${full ? "full" : ""}`}>{e.taken}/{e.cap}{full && e.waitlist ? ` · ${e.waitlist} waiting` : ""}</span> : null}
                       </button>
                     </li>
@@ -103,7 +114,7 @@ export function CalendarEditor({ events: initial, weekStarts, todayIso, rooms }:
         })}
       </div>
       <p className="sx-note">
-        <XIcon name="repeat" /> Repeats weekly · Capped events show seats taken. Changes publish to the website and family app as soon as you save.
+        <XIcon name="repeat" /> Repeats weekly · Capped events show seats taken (staff only; the website never shows seats). Changes publish to the website calendar as soon as you save, and go into the weekly digest and the printed large-print calendar.
       </p>
 
       {open && <EventDrawer e={open} onClose={() => setOpen(null)} />}
@@ -164,7 +175,9 @@ function EventDrawer({ e, onClose }: { e: EdEvent; onClose: () => void }) {
       foot={
         <>
           <button type="button" className="sx-btn" onClick={onClose}><Icon name="edit" /> Edit</button>
-          {e.cap ? (
+          {e.kind !== "resident" ? (
+            <a className="sx-btn sx-btn-primary" href={e.kind === "public" ? "/staff/tours" : "/staff/sign-ups"}>{e.kind === "public" ? "See sign-ups in Tours & enquiries" : "See RSVPs"}</a>
+          ) : e.cap ? (
             <button type="button" className="sx-btn sx-btn-primary" onClick={() => setSent(true)} disabled={sent}>
               <Icon name="sms" /> {sent ? "Reminder sent" : "Text a reminder to families"}
             </button>
@@ -175,12 +188,14 @@ function EventDrawer({ e, onClose }: { e: EdEvent; onClose: () => void }) {
       }
     >
       <dl className="sx-dl">
-        <dt>Room</dt><dd>{e.room}</dd>
+        <dt>For</dt><dd>{eventKindLabel[e.kind]}</dd>
+        <dt>Room</dt><dd>{e.room}{e.kind === "resident" && <span className="sx-hint"> · staff only</span>}</dd>
         <dt>Category</dt><dd><span className="sx-dot" style={{ background: e.color }} />{e.catLabel}{e.lantern ? " · Lantern" : ""}</dd>
         {e.leader && (<><dt>Led by</dt><dd>{e.leader}</dd></>)}
         <dt>Repeats</dt><dd>{e.rule ?? "One-time event"}</dd>
-        {e.cap ? (<><dt>Seats</dt><dd>{e.taken} of {e.cap} taken{e.waitlist ? ` · ${e.waitlist} on the waitlist` : ` · ${e.cap - (e.taken ?? 0)} left`}</dd></>) : null}
+        {e.cap ? (<><dt>Seats</dt><dd>{e.taken} of {e.cap} taken{e.waitlist ? ` · ${e.waitlist} on the waitlist` : ` · ${e.cap - (e.taken ?? 0)} left`}<span className="sx-hint"> · staff only</span></dd></>) : null}
       </dl>
+      <p className="sx-note" style={{ margin: 0 }}><b>On the website:</b> {kindHelp[e.kind]}</p>
       {e.desc && <p style={{ margin: 0 }}>{e.desc}</p>}
       {e.clash && (
         <div className="sx-callout">
@@ -211,7 +226,7 @@ function EventDrawer({ e, onClose }: { e: EdEvent; onClose: () => void }) {
 }
 
 function AddDrawer({ date, rooms, events, onClose, onSave }: { date: string; rooms: string[]; events: EdEvent[]; onClose: () => void; onSave: (e: EdEvent) => void }) {
-  const [f, setF] = useState({ title: "Holiday Card Making", date, time: "14:00", end: "15:00", room: "Art Studio", cap: "", repeat: "once", lantern: false });
+  const [f, setF] = useState({ title: "Holiday Card Making", date, time: "14:00", end: "15:00", room: "Art Studio", cap: "", repeat: "once", lantern: false, kind: "resident" as EventKind });
   const start = toMin(f.time), end = toMin(f.end);
   const clash = events.find((e) => e.date === f.date && e.room === f.room && f.room !== "Lobby" && f.room !== "All floors" && start < (e.end ?? e.start + 60) && end > e.start);
   const d = fromIso(f.date || date);
@@ -219,7 +234,7 @@ function AddDrawer({ date, rooms, events, onClose, onSave }: { date: string; roo
   return (
     <Drawer
       title="Add event"
-      sub="Publishes to the website calendar, TV channel and printed calendar"
+      sub="Publishes to the website calendar, the weekly digest and the printed large-print calendar"
       onClose={onClose}
       foot={
         <>
@@ -230,7 +245,7 @@ function AddDrawer({ date, rooms, events, onClose, onSave }: { date: string; roo
             disabled={!f.title}
             onClick={() =>
               onSave({
-                id: `new-${Date.now()}`, date: f.date, start, end, title: f.title, room: f.room, cat: f.lantern ? "lantern" : "clubs",
+                id: `new-${Date.now()}`, kind: f.kind, date: f.date, start, end, title: f.title, room: f.room, cat: f.lantern ? "lantern" : "clubs",
                 color: f.lantern ? "var(--c-lantern)" : "var(--c-clubs)", catLabel: f.lantern ? "Lantern" : "Clubs & games", cap: Number(f.cap) || undefined,
                 taken: Number(f.cap) ? 0 : undefined, lantern: f.lantern, rule: f.repeat === "weekly" ? `Every ${dayName(d)}` : undefined, going: Number(f.cap) ? [] : undefined, isNew: true,
               })
@@ -243,15 +258,25 @@ function AddDrawer({ date, rooms, events, onClose, onSave }: { date: string; roo
     >
       <div className="sx-form">
         <label>Title<input value={f.title} onChange={set("title")} /></label>
+        <fieldset className="ced-kinds">
+          <legend className="sx-lbl">Who is it for?</legend>
+          {(["resident", "family", "public"] as const).map((k) => (
+            <label key={k} className={f.kind === k ? "on" : ""}>
+              <input type="radio" name="ev-kind" checked={f.kind === k} onChange={() => setF({ ...f, kind: k })} />
+              <span><b>{eventKindLabel[k]}</b><small>{kindHelp[k]}</small></span>
+            </label>
+          ))}
+        </fieldset>
         <div className="sx-row3">
           <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
           <label>Starts<input type="time" value={f.time} onChange={set("time")} step={300} /></label>
           <label>Ends<input type="time" value={f.end} onChange={set("end")} step={300} /></label>
         </div>
         <div className="sx-row">
-          <label>Room<select value={f.room} onChange={set("room")}>{rooms.map((r) => <option key={r}>{r}</option>)}</select></label>
-          <label>Max people<input type="number" min={0} value={f.cap} onChange={set("cap")} placeholder="No limit" /></label>
+          <label>Room or departure point<select value={f.room} onChange={set("room")}>{rooms.map((r) => <option key={r}>{r}</option>)}</select></label>
+          <label>Seat limit<input type="number" min={0} value={f.cap} onChange={set("cap")} placeholder="No limit" /></label>
         </div>
+        <p className="sx-hint" style={{ margin: 0 }}>{f.kind === "resident" ? "Room, departure point and seat limit are for staff only: not shown publicly for resident activities." : "The seat limit is for staff only; the place is shown on the website so people know where to come."}</p>
         <label>Repeats<select value={f.repeat} onChange={set("repeat")}><option value="once">Does not repeat</option><option value="weekly">Every {dayName(d)}</option></select></label>
         <label className="sx-check"><input type="checkbox" checked={f.lantern} onChange={(ev) => setF({ ...f, lantern: ev.target.checked })} /> Show in the Lantern calendar</label>
         {clash ? (

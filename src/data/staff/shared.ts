@@ -214,7 +214,8 @@ export interface StaffData {
     digestExtra: { title: string; when: string; photo: string };
   };
   photoPresets: PhotoPreset[];
-  menus: { sub: string; screens: string[] };
+  /** What the Menus screen says publishing does (website dining page, digest, large-print menu cards). */
+  menus: { sub: string };
   approvals: Approval[];
   approvedRecently: { title: string; by: PersonKey; mins: number; ok: boolean; note?: string }[];
   approvalRules: { what: string; who: string }[];

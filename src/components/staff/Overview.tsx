@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { allSummaries, scorecardMonths, user } from "@/data/staff";
+import { promises } from "@/data/staff/alpha";
 import { greeting, longDate, today } from "@/lib/clock";
 import { OpenCommunity } from "./StaffCommunity";
 import { Badge, Card, Delta, Meter, fmt, pctChange } from "./ui";
@@ -75,6 +76,10 @@ export function Overview({ screen }: { screen: "dashboard" | "scorecard" }) {
               </div>
               {screen === "scorecard" && (
                 <>
+                  <div>
+                    <dt>Promises kept</dt>
+                    <dd>{promises(s.slug).filter((p) => p.status === "Kept").length} <small>of {promises(s.slug).length}</small></dd>
+                  </div>
                   <div>
                     <dt>Families reached</dt>
                     <dd>{s.familiesReached} <small>of {s.families}</small></dd>

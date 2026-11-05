@@ -5,6 +5,7 @@ import { StaffCommunityProvider, type StaffCommunityOption } from "@/components/
 import { communities } from "@/data/communities";
 import { staffSummary } from "@/data/staff";
 import { getStaffScope } from "@/data/staff/server";
+import { alerts, eventRequests } from "@/data/staff/alpha";
 import { communitySlugs } from "@/lib/sites";
 import "../staff.css";
 
@@ -25,7 +26,13 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   });
   // Sidebar badges: the selected community's, or every community's in the overview.
   const sums = (scope === "all" ? [...communitySlugs] : [scope]).map(staffSummary);
-  const badges = { approvals: sums.reduce((n, s) => n + s.approvals, 0), unread: sums.reduce((n, s) => n + s.unread, 0) };
+  const slugs = scope === "all" ? [...communitySlugs] : [scope];
+  const badges = {
+    approvals: sums.reduce((n, s) => n + s.approvals, 0),
+    unread: sums.reduce((n, s) => n + s.unread, 0),
+    alerts: slugs.reduce((n, sl) => n + alerts(sl).filter((a) => a.mins < 60 * 24).length, 0),
+    signups: slugs.reduce((n, sl) => n + eventRequests(sl).filter((r) => r.status === "waiting").length, 0),
+  };
   return (
     <StaffCommunityProvider scope={scope} options={options}>
       <Shell badges={badges}>{children}</Shell>

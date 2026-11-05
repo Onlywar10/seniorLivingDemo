@@ -11,9 +11,9 @@ const tagName: Record<Tag, string> = { GF: "Gluten free", VG: "Vegetarian", DF: 
 
 /**
  * `barKey`: the coffeehouse and wine bar, whose daily special is a pour and a bite.
- * `screens`: the digital signage screens that show the menus.
+ * Publishing updates the website dining page, the weekly family digest and the large-print menu cards.
  */
-export function MenuEditor({ menus, todayIso, lastPublished, barKey, publisher, domain, community, screens }: { menus: { venue: Venue; days: DayMenu[] }[]; todayIso: string; lastPublished: string; barKey?: string; publisher: string; domain: string; community: string; screens: string[] }) {
+export function MenuEditor({ menus, todayIso, lastPublished, barKey, publisher, domain, community, digest }: { menus: { venue: Venue; days: DayMenu[] }[]; todayIso: string; lastPublished: string; barKey?: string; publisher: string; domain: string; community: string; digest: string }) {
   const [v, setV] = useState(0);
   const [di, setDi] = useState(0);
   const [data, setData] = useState(menus);
@@ -126,37 +126,41 @@ export function MenuEditor({ menus, todayIso, lastPublished, barKey, publisher, 
                 disabled={pub === "busy"}
                 onClick={() => { setPub("busy"); window.setTimeout(() => { setPub("done"); setDirty(false); setStamp("just now"); }, 900); }}
               >
-                <Icon name="send" /> {pub === "busy" ? "Publishing…" : "Publish to website and digital signage"}
+                <Icon name="send" /> {pub === "busy" ? "Publishing…" : "Publish menus"}
               </button>
               {pub === "done" && (
                 <div className="sx-callout good" role="status">
                   <Icon name="check" />
-                  <p>Live on {domain}/dining and on {screens.length} signage screens. Families who follow {venue.name} see it in tomorrow’s digest.</p>
+                  <p>Live on {domain}/dining, in this week’s family digest, and the large-print menu cards are ready to print.</p>
                 </div>
               )}
               <ul className="sx-list">
                 <li className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>Website dining page</b><Badge tone="good">Live</Badge></li>
-                {screens.map((sc) => (
-                  <li key={sc} className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>{sc}</b><Badge tone="good">Live</Badge></li>
-                ))}
+                <li className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>Weekly family digest</b><Badge tone="info">{digest}</Badge></li>
+                <li className="sx-fresh"><span className="ok"><Icon name="check" /></span><b>Large-print menu cards</b><Badge tone="good">Ready to print</Badge></li>
               </ul>
             </div>
           </section>
 
           <section className="sx-card">
-            <header className="sx-card-head"><div><h2>Signage preview</h2><p>Lobby screen, 55 inch</p></div></header>
+            <header className="sx-card-head">
+              <div><h2>Printed menu card</h2><p>Large print · letter · 18 pt, for tables and the front desk</p></div>
+              <button type="button" className="sx-btn sx-btn-sm" onClick={() => window.print()}><Icon name="printer" /> Print</button>
+            </header>
             <div className="sx-card-body">
-              <div className="signage" aria-label="Digital signage preview">
-                <div className="signage-scr">
-                  <h3>{venue.name}<small>{m.date === todayIso ? "Today" : `${dayName(d)} ${d.getUTCDate()}`}</small></h3>
-                  <ul>
-                    <li><b>{m.holiday ? m.holiday : venue.key === barKey ? "Today’s pour" : "Chef’s special"}</b>{m.special.name}{m.special.tags?.length ? ` (${m.special.tags.join(", ")})` : ""}</li>
-                    <li><b>Soup</b>{m.soup.name}{m.soup.tags?.length ? ` (${m.soup.tags.join(", ")})` : ""}</li>
-                    <li><b>Hours</b>{venue.hours}</li>
-                  </ul>
-                  <footer><span>{community}</span><span>Bon appétit!</span></footer>
-                </div>
-              </div>
+              <article className="mcard" aria-label="Printed menu card preview">
+                <header>
+                  <small>{community}</small>
+                  <h3>{venue.name}</h3>
+                  <p>{dayName(d)}, {monthName(d)} {d.getUTCDate()}{m.holiday ? ` · ${m.holiday}` : ""}</p>
+                </header>
+                <dl>
+                  <div><dt>{m.holiday ? m.holiday : venue.key === barKey ? "Today’s pour and bite" : "Chef’s special"}</dt><dd>{m.special.name}{m.special.desc && <small>{m.special.desc}</small>}{m.special.tags?.length ? <em>{m.special.tags.map((t) => tagName[t]).join(" · ")}</em> : null}</dd></div>
+                  <div><dt>Soup of the day</dt><dd>{m.soup.name}{m.soup.tags?.length ? <em>{m.soup.tags.map((t) => tagName[t]).join(" · ")}</em> : null}</dd></div>
+                </dl>
+                <footer>{venue.hours}</footer>
+              </article>
+              <p className="sx-note" style={{ marginBottom: 0 }}>Dietary tags are spelled out in full, never abbreviated. The same menu is on {domain}/dining and in the weekly digest.</p>
             </div>
           </section>
         </div>
