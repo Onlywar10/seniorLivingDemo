@@ -132,7 +132,7 @@ export default async function Lantern() {
               <Icon name="calendar" /> {t("Full Lantern calendar")}
             </Link>
           </div>
-          <WeekEvents days={week} showSeats />
+          <WeekEvents days={week} />
         </div>
       </section>
 

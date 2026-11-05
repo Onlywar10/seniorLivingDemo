@@ -47,10 +47,10 @@ export default async function DiningPage() {
     ? { date: THANKSGIVING, label: dayShort(tg), long: longDate(tg), menus: allMenus(tg) }
     : undefined;
 
-  // This week's and next week's happy hours in the bar.
+  // This week's and next week's happy hours (the public calendar carries no rooms for resident events, so match by title).
   const happy = Array.from({ length: 14 }, (_, i) => addDays(sun, i))
     .flatMap((d) => eventsOn(d, todayIso))
-    .filter((e) => e.cat === "music" && e.room === copy.barRoom);
+    .filter((e) => e.cat === "music" && /happy hour/i.test(e.title));
 
   // Lunch booking: the next 14 days (today too, while there’s still time).
   // Labels stay in English here; LunchBooking translates them where they render.

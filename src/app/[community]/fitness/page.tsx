@@ -138,7 +138,7 @@ export default async function Fitness() {
                 <h2 id="br-hh-h" className="h3" style={{ fontSize: "clamp(1.5rem, 2.6vw, 2rem)" }}>
                   {t(hh.title)}
                 </h2>
-                <p>{t(`${dayName(hhDate)}, ${monthName(hhDate)} ${hhDate.getUTCDate()} · ${fmtTime(hh.start)} · ${hh.room}`)}</p>
+                <p>{t(`${dayName(hhDate)}, ${monthName(hhDate)} ${hhDate.getUTCDate()} · ${fmtTime(hh.start)}${hh.room ? ` · ${hh.room}` : ""}`)}</p>
                 <p>{t(monthly!.text)}</p>
               </div>
             </div>
@@ -152,13 +152,13 @@ export default async function Fitness() {
             <div className="sec-head">
               <p className="eyebrow">{t("This week")}</p>
               <h2 id="br-classes-h">{t("Fitness classes, next 7 days")}</h2>
-              <p>{t("Drop in to any class — no sign-up needed unless it shows a seat count.")}</p>
+              <p>{t("Most classes are drop-in, no sign-up needed. For the rest, residents sign up with the activities team.")}</p>
             </div>
             <Link className="btn btn-green" href="/calendar">
               <Icon name="calendar" /> {t("Full calendar")}
             </Link>
           </div>
-          <WeekEvents days={week} showSeats />
+          <WeekEvents days={week} />
         </div>
       </section>
 

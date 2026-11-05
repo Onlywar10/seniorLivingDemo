@@ -91,7 +91,7 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
   const [picked, setPicked] = useState<string[]>(["calendar", "photos"]);
   const [sms, setSms] = useState(false);
   const [err, setErr] = useState("");
-  const [done, setDone] = useState<null | { name: string; resident: string; phone: string; email: string }>(null);
+  const [done, setDone] = useState<null | { name: string }>(null);
   const doneRef = useRef<HTMLHeadingElement>(null);
   const wantsText = channel !== "email";
 
@@ -109,7 +109,8 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
     if (wantsText && !sms) return setErr("To receive texts, please check the box to agree to text messages — or choose email instead.");
     const f = new FormData(e.currentTarget);
     setErr("");
-    setDone({ name: String(f.get("name") ?? ""), resident: String(f.get("resident") ?? ""), phone: String(f.get("phone") ?? ""), email: String(f.get("email") ?? "") });
+    // Only the first name is shown back. The resident's name and apartment go to the team and are never displayed on the website.
+    setDone({ name: String(f.get("name") ?? "") });
     requestAnimationFrame(() => {
       doneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       doneRef.current?.focus({ preventScroll: true });
@@ -276,7 +277,8 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
           </div>
           <div className="field">
             <label htmlFor="sc-apt">{t("Apartment (optional)")}</label>
-            <input id="sc-apt" name="apartment" inputMode="numeric" />
+            <input id="sc-apt" name="apartment" inputMode="numeric" aria-describedby="sc-apt-note" />
+            <small id="sc-apt-note" className="sc-field-note">{t("Leave it blank if you prefer. It only helps our team match you to your loved one, and it is never shown on the website.")}</small>
           </div>
           {wantsText && (
             <div className="full">

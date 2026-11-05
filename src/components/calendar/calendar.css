@@ -61,7 +61,8 @@
 .cal-ev-meta { font-size: 0.8rem; color: var(--ink-3); line-height: 1.35; }
 .cal-ev-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .cal-flag { font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--green-tint); color: var(--green-ink); white-space: nowrap; }
-.cal-flag-full { background: var(--brick-tint); color: #8e2a2b; }
+.cal-flag-public { background: var(--butter-tint); color: #4d4519; }
+.cal-flag-family { background: var(--terra-tint); color: #6e1a1b; }
 .cal-flag-mine { background: var(--green); color: #fff; display: inline-flex; gap: 4px; align-items: center; }
 .cal-flag-mine .icon { width: 12px; height: 12px; }
 .cal-ev.is-special { background: color-mix(in srgb, var(--cat) 7%, var(--paper)); }
@@ -132,19 +133,13 @@
 .cal-dialog-facts dt { color: var(--cat); display: inline-flex; }
 .cal-dialog-facts dd { margin: 0; font-weight: 500; }
 .cal-dialog-desc { color: var(--ink-2); }
-.cal-dialog-bus { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--terra-tint); color: #6e1a1b; font-weight: 600; }
-.cal-dialog-bus .icon { width: 22px; height: 22px; margin-top: 1px; }
-.cal-dialog-open { display: flex; gap: 8px; align-items: center; color: var(--green-deep); font-weight: 600; }
-.cal-seats { margin: 18px 0; }
-.cal-seats-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; font-size: 1.05rem; }
-.cal-meter { height: 10px; border-radius: 999px; background: var(--sand); overflow: hidden; }
-.cal-meter span { display: block; height: 100%; background: var(--cat); border-radius: 999px; }
+.cal-dialog-note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--sand); color: var(--ink); margin: 14px 0 0; }
+.cal-dialog-note > .icon { width: 22px; height: 22px; margin-top: 1px; flex: none; color: var(--cat); }
+.cal-dialog-note b { font-weight: 700; }
+.cal-dialog-note p { margin: 4px 0 0; color: var(--ink-2); }
 .cal-rsvp { border-top: 1px solid var(--rule); padding-top: 18px; margin-top: 8px; }
 .cal-rsvp h3 { font-size: 1.2rem; margin-bottom: 12px; }
-.cal-who { border: 0; padding: 0; margin: 0; display: flex; gap: 20px; flex-wrap: wrap; }
-.cal-who legend { font-weight: 600; font-size: 0.94rem; margin-bottom: 8px; padding: 0; }
-.cal-who .check { align-items: center; min-height: 44px; color: var(--ink); font-size: 1rem; cursor: pointer; }
-.cal-who .check input { margin-top: 0; }
+.cal-rsvp-hint { margin: -4px 0 0; font-size: 0.88rem; color: var(--ink-3); }
 .cal-err { color: var(--brick); font-weight: 600; margin: 12px 0 0; }
 .cal-rsvp-btn { margin-top: 16px; width: 100%; }
 .cal-dialog-ok { margin-top: 12px; }

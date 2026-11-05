@@ -36,7 +36,7 @@ export function buildIcs(events: CalEvent[], name: string, place: IcsPlace): str
     "END:VTIMEZONE",
   ];
   for (const e of events) {
-    const desc = [e.desc, e.leader ? `With ${e.leader}` : "", e.room === "Lobby" ? "Departs from the Lobby." : ""].filter(Boolean).join(" ");
+    const desc = [e.desc, e.leader ? `With ${e.leader}` : ""].filter(Boolean).join(" ");
     lines.push(
       "BEGIN:VEVENT",
       `UID:${e.id}@${place.domain}`,
@@ -44,7 +44,7 @@ export function buildIcs(events: CalEvent[], name: string, place: IcsPlace): str
       `DTSTART;TZID=America/Los_Angeles:${stamp(e.date, e.start)}`,
       `DTEND;TZID=America/Los_Angeles:${stamp(e.date, e.end ?? e.start + 60)}`,
       `SUMMARY:${esc(e.title)}`,
-      `LOCATION:${esc(`${e.room}, ${place.name}, ${place.addressLine}`)}`,
+      `LOCATION:${esc([e.room, place.name, place.addressLine].filter(Boolean).join(", "))}`,
       ...(desc ? [`DESCRIPTION:${esc(desc)}`] : []),
       "END:VEVENT",
     );

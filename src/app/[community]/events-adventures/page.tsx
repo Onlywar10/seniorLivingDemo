@@ -3,14 +3,12 @@ import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
 import "@/components/brand/brand.css";
-import { seatsLeft } from "@/data/shared";
 import { eventsCopy } from "@/data/communities/copy/events";
 import { getCommunity } from "@/lib/community-server";
 import { dayName, fmtTime, fromIso, iso, monthName, shortDate, today } from "@/lib/clock";
 import { PageHero } from "@/components/PageHero";
 import { Icon } from "@/components/Icon";
 import { PersonCard } from "@/components/brand/Monogram";
-import { Seats } from "@/components/brand/WeekEvents";
 import { Gallery } from "@/components/brand/Gallery";
 import { TourBand } from "@/components/brand/TourBand";
 
@@ -130,7 +128,7 @@ export default async function EventsAdventures() {
               <h2 id="br-trips-h">
                 {t("Upcoming ")}<em>{t("trips & outings")}</em>
               </h2>
-              <p>{t(first ? `All trips leave from the Lobby. Seats are limited — sign up at the front desk or with ${first}.` : "All trips leave from the Lobby. Seats are limited — sign up at the front desk.")}</p>
+              <p>{t(first ? `Residents: sign up with ${first} and the activities team. Families: ask for a seat from your weekly message.` : "Residents: sign up with the activities team. Families: ask for a seat from your weekly message.")}</p>
             </div>
             <Link className="btn btn-green" href="/calendar">
               <Icon name="calendar" /> {t("Full calendar")}
@@ -139,7 +137,6 @@ export default async function EventsAdventures() {
           <ul className="br-trips">
             {trips.map((e) => {
               const date = fromIso(e.date);
-              const left = seatsLeft(e);
               return (
                 <li key={e.id} className="br-trip">
                   <div className="br-trip-date">
@@ -149,10 +146,10 @@ export default async function EventsAdventures() {
                   </div>
                   <div>
                     <p className="br-trip-title">{t(e.title)}</p>
+                    {e.desc && <p className="br-trip-desc">{t(e.desc)}</p>}
                     <p className="br-trip-meta">
-                      <span>{t(`${fmtTime(e.start)} · ${e.room}`)}</span>
+                      <span>{t(fmtTime(e.start))}</span>
                       {e.cost && <span>{t(e.cost)}</span>}
-                      {left !== undefined && <Seats e={e} />}
                     </p>
                   </div>
                 </li>

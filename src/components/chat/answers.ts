@@ -1,8 +1,9 @@
 // Answers for the website chat. Everything comes from the community's own data, computed in the browser
-// at the moment the question is asked, so "today", "tonight" and seats left are always current.
+// at the moment the question is asked, so "today" and "tonight" are always current.
+// Events come redacted (Community.eventsOn): no seat counts, waitlists or pickup points ever reach the chat.
 // Every answer is about the community passed in (useCommunity()); nothing here names a particular community.
 import type { Community } from "@/data/communities";
-import { isLantern, money, seatsLeft, type CalEvent, type DayMenu, type PlanKind, type Space, type Venue } from "@/data/shared";
+import { isLantern, kindOf, money, type CalEvent, type DayMenu, type PlanKind, type Space, type Venue } from "@/data/shared";
 import { today, nowMinutes, addDays, dow, fmtTime, longDate, dayShort, MONTHS, WEEKDAYS, iso } from "@/lib/clock";
 
 export type Lang = "en" | "es" | "zh";
@@ -152,7 +153,7 @@ const src = (k: SrcKey, l: Lang): Link => {
 /** A published FAQ answer, by the start of its question ("" if this community doesn't publish it). */
 const faq = (start: string) => C.faqs.find((f) => f.q.startsWith(start))?.a ?? "";
 
-/** Calendar events for a day, with seat counts as of today. */
+/** Calendar events for a day, as the public website shows them. */
 const dayEvents = (d: Date) => C.eventsOn(d, iso(today()));
 const publicEvents = (d: Date) => dayEvents(d).filter((e) => !isLantern(e));
 
@@ -225,23 +226,19 @@ const named = (text: string, p: Person | null) =>
 /** True where the community's tour FAQ offers a free lunch. */
 const lunchOnUs = () => /lunch .*on us/i.test(faq("How do I schedule a tour"));
 
-function seatNote(e: CalEvent, l: Lang): string | undefined {
-  if (!e.cap) return undefined;
-  const left = seatsLeft(e) ?? 0;
-  if (l === "es") return left > 0 ? `quedan ${left} de ${e.cap} plazas` : `completo · lista de espera (${e.waitlist ?? 0})`;
-  if (l === "zh") return left > 0 ? `还剩 ${left} 个名额（共 ${e.cap} 个）` : `已满 · 候补 ${e.waitlist ?? 0} 人`;
-  return left > 0 ? `${left} of ${e.cap} seats left` : `Full · waitlist (${e.waitlist ?? 0})`;
-}
+/** How to sign up for resident activities and outings: never on the website. */
+const SIGNUP_EN = "Residents: sign up with the activities team. Families: ask for a seat from your weekly message.";
+const SIGNUP_ES = "Residentes: inscríbanse con el equipo de actividades. Familias: pidan un lugar desde su mensaje semanal.";
+const SIGNUP_ZH = "住户请向活动团队报名；家属请通过每周消息中的链接为家人预留位置。";
 
 const evLine = (e: CalEvent, l: Lang, withDay = false): Line => {
   const room = l === "zh" && e.room ? tr(e.room) : e.room;
-  const seats = seatNote(e, l);
   const day = new Date(e.date + "T00:00:00Z");
   const dayLabel = !withDay ? "" : l === "es" ? `${WD_ES[dow(day)].slice(0, 3)} ${Number(e.date.slice(8))} · ` : l === "zh" ? `${zhShort(day)} · ` : `${dayShort(day)} · `;
   return {
     time: dayLabel + tm(e.start, l),
     text: l === "zh" ? tr(e.title) : e.title,
-    note: [room, seats].filter(Boolean).join(" · "),
+    note: room || undefined,
     strong: !!e.special,
   };
 };
@@ -391,26 +388,34 @@ function tripsAnswer(l: Lang): Answer {
     const d = addDays(t, i);
     for (const e of publicEvents(d)) if (e.cat === "trips" && (i > 0 || e.start > now) && !/^Shopping Trip$/.test(e.title)) out.push(e);
   }
-  // Where trips leave from, when they all leave from the same place.
-  const from = out.length && out.every((e) => e.room === out[0].room) ? out[0].room : null;
   const transportIncluded = C.pricing.included.some((x) => /transport/i.test(x));
-  const lead = who(/trips|events & adventures/i, /events (&|and) adventures director/i);
   if (l === "zh") {
     return {
       lang: l,
-      text: `${from ? `所有巴士出游都从${tr(from)}出发${transportIncluded ? "，交通已包含在内" : ""}。` : ""}以下是近期的安排，名额为此刻的实时数据：`,
+      text: `${transportIncluded ? "出游交通已包含在内。" : ""}以下是近期的出游安排：`,
       groups: [{ lines: out.slice(0, 8).map((e) => evLine(e, l, true)) }],
-      after: `住户可以在前台报名${lead ? `，也可以联系${zhWho(lead)}` : ""}。`,
+      after: SIGNUP_ZH,
       source: src("calendar", l),
       cta: { label: "查看活动与探险", href: "/events-adventures" },
       chips: ["这个周末有什么活动？", "是否提供交通接送？"],
     };
   }
+  if (l === "es") {
+    return {
+      lang: l,
+      text: `${transportIncluded ? "El transporte está incluido. " : ""}Estas son las próximas salidas:`,
+      groups: [{ lines: out.slice(0, 8).map((e) => evLine(e, l, true)) }],
+      after: SIGNUP_ES,
+      source: src("calendar", l),
+      cta: { label: "Ver Eventos y Aventuras", href: "/events-adventures" },
+      chips: ["¿Qué hay hoy?", "¿Puedo agendar una visita?"],
+    };
+  }
   return {
     lang: "en",
-    text: `${from ? `Every bus trip leaves from the ${from}${transportIncluded ? ", and transportation is included" : ""}. ` : ""}Here’s what’s coming up, with seats left as of right now:`,
+    text: `${transportIncluded ? "Transportation is included. " : ""}Here’s what’s coming up:`,
     groups: [{ lines: out.slice(0, 8).map((e) => evLine(e, "en", true)) }],
-    after: `Residents sign up at the front desk${lead ? `, or with ${enWho(lead)}` : ""}.`,
+    after: SIGNUP_EN,
     source: src("calendar", "en"),
     cta: { label: "See Events & Adventures", href: "/events-adventures" },
     chips: ["What’s on this weekend?", "Do you provide transportation?"],
@@ -595,8 +600,8 @@ function happyHourAnswer(l: Lang): Answer | null {
       if (!/happy hour/i.test(e.title) || (i === 0 && (e.end ?? e.start + 60) <= now)) continue;
       const r = menu(bar, d);
       lines.push(zh
-        ? { time: `${zhShort(d)} · ${zhTime(e.start)}`, text: tr(e.title), note: `${e.room ? tr(e.room) : ""} · ${tr(r.special.name)}`, strong: !!e.special }
-        : { time: `${dayShort(d)} · ${fmtTime(e.start)}`, text: e.title, note: `${e.room} · ${r.special.name.replace("Pour of the day: ", "Pour: ")}`, strong: !!e.special });
+        ? { time: `${zhShort(d)} · ${zhTime(e.start)}`, text: tr(e.title), note: [e.room && tr(e.room), tr(r.special.name)].filter(Boolean).join(" · "), strong: !!e.special }
+        : { time: `${dayShort(d)} · ${fmtTime(e.start)}`, text: e.title, note: [e.room, r.special.name.replace("Pour of the day: ", "Pour: ")].filter(Boolean).join(" · "), strong: !!e.special });
     }
   }
   const when = menu(bar, t).sections.find((s) => /^happy hour$/i.test(s.title))?.note;
@@ -1010,10 +1015,10 @@ function veteransAnswer(l: Lang): Answer | null {
   const d = findDay((x) => dayEvents(x).some((e) => e.special && /veteran/i.test(e.title)), 370);
   if (!d) return null;
   const evs = dayEvents(d);
-  const limited = evs.some((e) => e.special && e.cap);
+  const limited = evs.some((e) => e.special && kindOf(e) === "resident");
   const classesOn = evs.some((e) => !e.special && e.cat === "fitness");
-  const en = [limited ? "Seats are limited on some of the day’s events, so residents sign up early at the front desk." : "", classesOn ? "The weekly classes run as usual." : ""].filter(Boolean).join(" ");
-  const zh = [limited ? "部分活动名额有限，住户请尽早到前台报名。" : "", classesOn ? "每周的固定课程照常进行。" : ""].join("");
+  const en = [limited ? SIGNUP_EN : "", classesOn ? "The weekly classes run as usual." : ""].filter(Boolean).join(" ");
+  const zh = [limited ? SIGNUP_ZH : "", classesOn ? "每周的固定课程照常进行。" : ""].join("");
   return holidayAnswer(l, d, {
     en: { intro: `On Veterans Day, ${longDate(d)}, we honor the veterans who live and work here:`, extra: en || undefined, chips: ["Any trips coming up?", "What’s on this weekend?"] },
     zh: { intro: `${zhDate(d)}是退伍军人节，我们将向在这里生活和工作的退伍军人致敬：`, extra: zh || undefined, chips: ["近期有出游活动吗？", "这个周末有什么活动？"] },

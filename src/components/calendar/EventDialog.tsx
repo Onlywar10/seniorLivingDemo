@@ -1,24 +1,43 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { cats, type CalEvent } from "@/data/shared";
+import Link from "@/i18n/Link";
+import { cats, kindOf, type CalEvent } from "@/data/shared";
 import { useCommunity } from "@/lib/community";
 import { fmtRange, fmtTime, fromIso, longDate } from "@/lib/clock";
 import { Icon } from "@/components/Icon";
 import { downloadIcs, icsPlace } from "./ics";
 import { useT } from "@/i18n/client";
 
-export interface Rsvp { name: string; party: number; who: "resident" | "family"; apt?: string; waitlist?: number }
+/** A sign-up for a public event (an open house), kept on this device so the confirmation stays put. */
+export interface PublicSignup { name: string; phone: string; email: string; party: number }
 
-/** Event detail, seats and the online RSVP form, in a modal dialog. */
-export function EventDialog({ event, rsvp, todayIso, now, phone, phoneHref, onClose, onRsvp }: {
-  event: CalEvent | null; rsvp?: Rsvp; todayIso: string; now: number; phone: string; phoneHref: string;
-  onClose: () => void; onRsvp: (id: string, r: Rsvp) => void;
+/** Where public sign-ups are handed to the sales team's lead list. */
+const SIGNUPS_KEY = "wh-public-signups";
+
+function saveSignup(row: Record<string, unknown>) {
+  try {
+    const prev = JSON.parse(localStorage.getItem(SIGNUPS_KEY) ?? "[]");
+    const list = Array.isArray(prev) ? prev : [];
+    list.push(row);
+    localStorage.setItem(SIGNUPS_KEY, JSON.stringify(list));
+  } catch {
+    // Storage unavailable (private window): the on-screen confirmation still shows.
+  }
+}
+
+/**
+ * Event detail in a modal dialog. What it offers depends on the event's kind:
+ * public events (an open house) take a short sign-up; family events are RSVPed from the weekly family message;
+ * resident activities are signed up for in the community, never on the website.
+ */
+export function EventDialog({ event, signup, todayIso, now, phone, phoneHref, onClose, onSignup }: {
+  event: CalEvent | null; signup?: PublicSignup; todayIso: string; now: number; phone: string; phoneHref: string;
+  onClose: () => void; onSignup: (id: string, s: PublicSignup) => void;
 }) {
   const { t } = useT();
   const c = useCommunity();
   const ref = useRef<HTMLDialogElement>(null);
-  const [who, setWho] = useState<"resident" | "family">("resident");
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -32,22 +51,23 @@ export function EventDialog({ event, rsvp, todayIso, now, phone, phoneHref, onCl
   }, [event]);
 
   const e = event;
-  const left = e?.cap ? Math.max(0, e.cap - (e.taken ?? 0)) : undefined;
-  const full = left === 0;
+  const kind = e ? kindOf(e) : "resident";
   const past = e ? e.date < todayIso || (e.date === todayIso && (e.end ?? e.start + 60) <= now) : false;
-  const bus = e ? e.room === "Lobby" : false;
-  const maxParty = full ? 4 : Math.min(left ?? 4, 4);
 
   const submit = (ev: React.FormEvent<HTMLFormElement>) => {
     ev.preventDefault();
     if (!e) return;
     const f = new FormData(ev.currentTarget);
     const name = String(f.get("name") ?? "").trim();
-    const apt = String(f.get("apt") ?? "").trim();
-    const party = Number(f.get("party") ?? 1);
+    const phoneNo = String(f.get("phone") ?? "").trim();
+    const email = String(f.get("email") ?? "").trim();
+    const party = Math.min(6, Math.max(1, Number(f.get("party") ?? 1) || 1));
     if (!name) return setErr("Please enter your name.");
-    if (who === "resident" && !apt) return setErr("Please enter your apartment number.");
-    onRsvp(e.id, { name, party, who, apt: who === "resident" ? apt : undefined, waitlist: full ? (e.waitlist ?? 0) + 1 : undefined });
+    if (!phoneNo && !email) return setErr("Please give a phone number or an email address so we can reach you.");
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setErr("Please check the email address.");
+    setErr("");
+    saveSignup({ slug: c.slug, eventId: e.id, eventTitle: e.title, date: e.date, start: e.start, name, phone: phoneNo, email, party, at: Date.now() });
+    onSignup(e.id, { name, phone: phoneNo, email, party });
   };
 
   return (
@@ -55,76 +75,78 @@ export function EventDialog({ event, rsvp, todayIso, now, phone, phoneHref, onCl
       {e && (
         <div className="cal-dialog-inner" style={{ "--cat": cats[e.cat].color } as React.CSSProperties}>
           <button type="button" className="cal-dialog-x" aria-label={t("Close")} onClick={() => ref.current?.close()}><Icon name="x" /></button>
-          <p className="cal-dialog-cat"><span className="cal-dot" aria-hidden="true" /> {t(cats[e.cat].label)}{e.special && t(" · Special event")}</p>
+          <p className="cal-dialog-cat">
+            <span className="cal-dot" aria-hidden="true" /> {t(cats[e.cat].label)}
+            {kind === "public" ? t(" · Open to the public") : kind === "family" ? t(" · Family event") : e.special ? t(" · Special event") : null}
+          </p>
           <h2 id="cal-dialog-title">{t(e.title)}</h2>
           <dl className="cal-dialog-facts">
             <div><dt><Icon name="calendar" /><span className="vh">{t("Date")}</span></dt><dd>{t(longDate(fromIso(e.date)))}</dd></div>
             <div><dt><Icon name="clock" /><span className="vh">{t("Time")}</span></dt><dd>{t(fmtRange(e.start, e.end))}</dd></div>
-            <div><dt><Icon name="pin" /><span className="vh">{t("Where")}</span></dt><dd>{t(bus ? "Departs from the Lobby" : e.room)}</dd></div>
+            {e.room && <div><dt><Icon name="pin" /><span className="vh">{t("Where")}</span></dt><dd>{t(e.room)}</dd></div>}
             {e.leader && <div><dt><Icon name="users" /><span className="vh">{t("Led by")}</span></dt><dd>{t("With ")}<span data-no-translate>{e.leader}</span></dd></div>}
             {e.cost && <div><dt><Icon name="info" /><span className="vh">{t("Cost")}</span></dt><dd>{t("Additional cost: ")}{e.cost}</dd></div>}
           </dl>
           {e.desc && <p className="cal-dialog-desc">{t(e.desc)}</p>}
-          {bus && <p className="cal-dialog-bus"><Icon name="bus" />{t(" The bus leaves from the Lobby at ")}{t(fmtTime(e.start))}{t(". Please be there ten minutes early.")}</p>}
 
-          {e.cap ? (
-            <div className="cal-seats">
-              <div className="cal-seats-row">
-                <b>{t(full ? "Full — join the waitlist" : `${left} of ${e.cap} seats left`)}</b>
-                {full && (e.waitlist ?? 0) > 0 && <span className="muted small">{e.waitlist}{t(" on the waitlist")}</span>}
+          {!past && kind === "family" && (
+            <div className="cal-dialog-note">
+              <Icon name="heart" />
+              <div>
+                <b>{t("Families: RSVP from your weekly message")}</b>
+                <p>
+                  {t("Not getting the weekly message yet? Call the front desk at ")}<a href={phoneHref}>{phone}</a>{t(" or ")}
+                  <Link href="/stay-connected">{t("sign up for family updates")}</Link>.
+                </p>
               </div>
-              <div className="cal-meter" aria-hidden="true"><span style={{ width: `${Math.min(100, ((e.taken ?? 0) / e.cap) * 100)}%` }} /></div>
             </div>
-          ) : (
-            !past && <p className="cal-dialog-open"><Icon name="check" /> {t("No sign-up needed — just come along.")}</p>
           )}
 
-          {e.cap && !past && (
-            rsvp ? (
+          {!past && kind === "resident" && (
+            <p className="cal-dialog-note">
+              <Icon name="users" />
+              <span>{t("Residents: sign up with the activities team. Families: ask for a seat from your weekly message.")}</span>
+            </p>
+          )}
+
+          {!past && kind === "public" && (
+            signup ? (
               <div className="success cal-dialog-ok" role="status">
                 <Icon name="check" />
                 <div>
-                  {rsvp.waitlist ? (
-                    <>
-                      <b>{t("You’re number ")}{rsvp.waitlist}{t(" on the waitlist for ")}{t(e.title)}.</b>
-                      <p>{t("We’ll call you as soon as a seat opens up.")}</p>
-                    </>
-                  ) : (
-                    <>
-                      <b>{t("You’re on the list for ")}{t(e.title)}{rsvp.party > 1 ? t(`, party of ${rsvp.party}`) : ""}.</b>
-                      <p>{t(bus ? `Bus leaves from the Lobby at ${fmtTime(e.start)}.` : `See you in the ${e.room} at ${fmtTime(e.start)}.`)}{t(" Need to cancel? Call the front desk at ")}<a href={phoneHref}>{phone}</a>.</p>
-                    </>
-                  )}
+                  <b>{t("Thank you, you’re signed up for ")}{t(e.title)}{signup.party > 1 ? t(`, party of ${signup.party}`) : ""}.</b>
+                  <p>
+                    {t(`We’ll see you at ${fmtTime(e.start)}.`)}{" "}
+                    {t("A member of our team will be in touch to confirm. Need to change your plans? Call us at ")}<a href={phoneHref}>{phone}</a>.
+                  </p>
                 </div>
               </div>
             ) : (
               <form className="cal-rsvp" onSubmit={submit} noValidate>
-                <h3>{t(full ? "Join the waitlist" : "Reserve your seat")}</h3>
+                <h3>{t("Let us know you’re coming")}</h3>
                 <div className="form-grid">
                   <label className="field full">
                     <span>{t("Your name")}</span>
                     <input name="name" autoComplete="name" required />
                   </label>
-                  <fieldset className="cal-who full">
-                    <legend>{t("I am")}</legend>
-                    <label className="check"><input type="radio" name="who" value="resident" checked={who === "resident"} onChange={() => setWho("resident")} />{t(" A resident")}</label>
-                    <label className="check"><input type="radio" name="who" value="family" checked={who === "family"} onChange={() => setWho("family")} />{t(" A family member")}</label>
-                  </fieldset>
-                  {who === "resident" && (
-                    <label className="field">
-                      <span>{t("Apartment number")}</span>
-                      <input name="apt" inputMode="numeric" required />
-                    </label>
-                  )}
+                  <label className="field">
+                    <span>{t("Phone")}</span>
+                    <input name="phone" type="tel" autoComplete="tel" />
+                  </label>
+                  <label className="field">
+                    <span>{t("Email")}</span>
+                    <input name="email" type="email" autoComplete="email" />
+                  </label>
+                  <p className="cal-rsvp-hint full">{t("A phone number or an email address is enough.")}</p>
                   <label className="field">
                     <span>{t("Party size")}</span>
                     <select name="party" defaultValue="1">
-                      {Array.from({ length: maxParty }, (_, i) => <option key={i + 1} value={i + 1}>{t(`${i + 1} ${i === 0 ? "person" : "people"}`)}</option>)}
+                      {Array.from({ length: 6 }, (_, i) => <option key={i + 1} value={i + 1}>{t(`${i + 1} ${i === 0 ? "person" : "people"}`)}</option>)}
                     </select>
                   </label>
                 </div>
                 {err && <p className="cal-err" role="alert">{t(err)}</p>}
-                <button type="submit" className="btn btn-lg cal-rsvp-btn">{t(full ? "Join the waitlist" : "RSVP")}</button>
+                <button type="submit" className="btn btn-lg cal-rsvp-btn">{t("Count me in")}</button>
               </form>
             )
           )}

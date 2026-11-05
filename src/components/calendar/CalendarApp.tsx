@@ -3,11 +3,11 @@
 import Link from "@/i18n/Link";
 import { useT } from "@/i18n/client";
 import { useEffect, useMemo, useState } from "react";
-import { cats, filters, isLantern, type Cat, type CalEvent } from "@/data/shared";
+import { cats, filters, isLantern, kindOf, type Cat, type CalEvent } from "@/data/shared";
 import { useCommunity } from "@/lib/community";
 import { dayName, fmtRange, fromIso, nowMinutes, shortDate } from "@/lib/clock";
 import { Icon } from "@/components/Icon";
-import { EventDialog, type Rsvp } from "./EventDialog";
+import { EventDialog, type PublicSignup } from "./EventDialog";
 import { downloadIcs, icsPlace } from "./ics";
 
 export type CalView = "today" | "week" | "month";
@@ -20,9 +20,10 @@ interface Hrefs {
 }
 
 const isNow = (e: CalEvent, todayIso: string, now: number) => e.date === todayIso && e.start <= now && now < (e.end ?? e.start + 60);
-const priority = (e: CalEvent) => (e.special ? 3 : 0) + (e.cap ? 2 : 0) + (e.cat === "music" ? 1 : 0);
+const priority = (e: CalEvent) => (e.special ? 3 : 0) + (kindOf(e) !== "resident" ? 2 : 0) + (e.cat === "music" ? 1 : 0);
+const kindTag = { public: "Open to the public", family: "Family event" } as const;
 
-/** The interactive calendar: views, filters, event detail and RSVP. */
+/** The interactive calendar: views, filters, event detail and public event sign-up. */
 export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, month, todayInRange, hrefs, phone, phoneHref }: {
   view: CalView; lantern: boolean; todayIso: string; nowMin: number; label: string; days: CalDay[]; month: number;
   todayInRange: boolean; hrefs: Hrefs; phone: string; phoneHref: string;
@@ -32,7 +33,7 @@ export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, mont
   const [active, setActive] = useState<Cat[]>([]);
   const [now, setNow] = useState(nowMin);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [rsvps, setRsvps] = useState<Record<string, Rsvp>>({});
+  const [signups, setSignups] = useState<Record<string, PublicSignup>>({});
   const [showPast, setShowPast] = useState(false);
 
   useEffect(() => {
@@ -47,17 +48,10 @@ export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, mont
     return active.some((c) => (c === "lantern" ? isLantern(e) : e.cat === c));
   };
 
-  // Apply local RSVPs to seat counts.
-  const withSeats = (e: CalEvent): CalEvent => {
-    const r = rsvps[e.id];
-    if (!r || r.waitlist) return r ? { ...e, waitlist: (e.waitlist ?? 0) + 1 } : e;
-    return { ...e, taken: (e.taken ?? 0) + r.party };
-  };
-
   const shown = useMemo(
-    () => days.map((d) => ({ ...d, events: d.events.filter(match).map(withSeats) })),
+    () => days.map((d) => ({ ...d, events: d.events.filter(match) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [days, active, lantern, rsvps],
+    [days, active, lantern],
   );
   const visible = shown.flatMap((d) => (month >= 0 ? (fromIso(d.date).getUTCMonth() === month ? d.events : []) : d.events));
   const nowEvents = shown.find((d) => d.date === todayIso)?.events.filter((e) => isNow(e, todayIso, now)) ?? [];
@@ -75,8 +69,9 @@ export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, mont
   const card = (e: CalEvent, compact = false) => {
     const live = isNow(e, todayIso, now);
     const past = e.date < todayIso || (e.date === todayIso && (e.end ?? e.start + 60) <= now);
-    const left = e.cap ? Math.max(0, e.cap - (e.taken ?? 0)) : undefined;
-    const mine = rsvps[e.id];
+    const kind = kindOf(e);
+    const tag = kind === "resident" ? undefined : kindTag[kind];
+    const mine = signups[e.id];
     return (
       <button
         type="button"
@@ -87,17 +82,17 @@ export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, mont
       >
         <span className="cal-ev-time">{t(fmtRange(e.start, e.end))}</span>
         <span className="cal-ev-title">{t(e.title)}</span>
-        {!compact && (
+        {!compact && (e.room || e.leader) && (
           <span className="cal-ev-meta">
-            {t(e.room)}
-            {e.leader && <span data-no-translate> · {e.leader}</span>}
+            {e.room && t(e.room)}
+            {e.leader && <span data-no-translate>{e.room ? " · " : ""}{e.leader}</span>}
           </span>
         )}
-        {(live || left !== undefined || mine) && (
+        {(live || tag || mine) && (
           <span className="cal-ev-flags">
             {live && <span className="cal-now">{t("Happening now")}</span>}
-            {mine && <span className="cal-flag cal-flag-mine"><Icon name="check" /> {t(mine.waitlist ? "Waitlisted" : "You’re going")}</span>}
-            {!mine && left !== undefined && !past && (left === 0 ? <span className="cal-flag cal-flag-full">{t("Full · waitlist")}</span> : <span className="cal-flag">{left} {t(left === 1 ? "seat" : "seats")}{t(" left")}</span>)}
+            {tag && <span className={`cal-flag cal-flag-${kind}`}>{t(tag)}</span>}
+            {mine && !past && <span className="cal-flag cal-flag-mine"><Icon name="check" /> {t("Signed up")}</span>}
           </span>
         )}
       </button>
@@ -158,7 +153,7 @@ export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, mont
           <span className="cal-now">{t("Happening now")}</span>
           {nowEvents.map((e) => (
             <button key={e.id} type="button" className="cal-nowbar-ev" onClick={() => setOpenId(e.id)}>
-              <b>{t(e.title)}</b> · {t(e.room)}
+              <b>{t(e.title)}</b>{e.room && <> · {t(e.room)}</>}
             </button>
           ))}
         </div>
@@ -273,14 +268,14 @@ export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, mont
       </ul>
 
       <EventDialog
-        event={openEv ? withSeats(openEv) : null}
-        rsvp={openEv ? rsvps[openEv.id] : undefined}
+        event={openEv}
+        signup={openEv ? signups[openEv.id] : undefined}
         todayIso={todayIso}
         now={now}
         phone={phone}
         phoneHref={phoneHref}
         onClose={() => setOpenId(null)}
-        onRsvp={(id, r) => setRsvps((m) => ({ ...m, [id]: r }))}
+        onSignup={(id, r) => setSignups((m) => ({ ...m, [id]: r }))}
       />
     </div>
   );

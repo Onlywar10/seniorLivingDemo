@@ -113,7 +113,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
             <p className="lede rise rise-3">
               {tr(lantern
                 ? copy.lanternLede
-                : "More than 25 fitness classes a week, clubs and games, live music, faith services and a bus out the door almost every day. Sign up for trips right here, or at the front desk.")}
+                : "More than 25 fitness classes a week, clubs and games, live music, faith services and a bus out the door almost every day.")}
             </p>
           </div>
           <aside className="cal-next rise rise-3" aria-labelledby="cal-next-h">
@@ -126,7 +126,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
                 {(upNext.length ? upNext : tomorrow).map((e) => (
                   <li key={e.id} style={{ "--cat": cats[e.cat].color } as React.CSSProperties}>
                     <time>{tr(fmtTime(e.start))}</time>
-                    <span><b>{tr(e.title)}</b><br />{tr(e.room)}</span>
+                    <span><b>{tr(e.title)}</b>{e.room && <><br />{tr(e.room)}</>}</span>
                   </li>
                 ))}
               </ol>
@@ -137,7 +137,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
                     {tomorrow.slice(0, 3 - upNext.length).map((e) => (
                       <li key={e.id} style={{ "--cat": cats[e.cat].color } as React.CSSProperties}>
                         <time>{tr(fmtTime(e.start))}</time>
-                        <span><b>{tr(e.title)}</b><br />{tr(e.room)}</span>
+                        <span><b>{tr(e.title)}</b>{e.room && <><br />{tr(e.room)}</>}</span>
                       </li>
                     ))}
                   </ol>
@@ -184,15 +184,15 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
           <h2 id="cal-notes-h" className="vh">{tr("Good to know")}</h2>
           <div className="cal-notes-grid">
             <div>
-              <Icon name="bus" />
-              <h3>{tr("Every bus leaves from the Lobby")}</h3>
-              <p>{tr("Please be in the Lobby ten minutes before departure. Seats are limited, so sign up online or at the front desk — if a trip is full, join the waitlist and we’ll call you if a seat opens.")}</p>
+              <Icon name="check" />
+              <h3>{tr("How sign-up works")}</h3>
+              <p>{tr("Residents sign up for activities and outings with the activities team. Families ask for a seat or RSVP through the personal link in their weekly message. Events open to the public, like an open house, take sign-ups right here: just open the event.")}</p>
             </div>
             {meeting && (
               <div>
                 <Icon name="users" />
                 <h3>{tr("Help plan next week")}</h3>
-                <p>{tr(`${director ? `${director.name}’s` : "The"} Activity Meeting is every ${dayName(fromIso(meeting.date))} at ${fmtTime(meeting.start)} in ${meeting.room}: next week’s events and changes, then drinks and appetizers before happy hour.`)}</p>
+                <p>{tr(`${director ? `${director.name}’s` : "The"} Activity Meeting is every ${dayName(fromIso(meeting.date))} at ${fmtTime(meeting.start)}${meeting.room ? ` in ${meeting.room}` : ""}: next week’s events and changes, then drinks and appetizers before happy hour.`)}</p>
               </div>
             )}
             <div>

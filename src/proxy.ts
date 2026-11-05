@@ -16,9 +16,9 @@ function remember(res: NextResponse, lang: Lang) {
 /**
  * Routing for the public sites.
  * - Language: /es/… and /zh/… render the same pages in Spanish or Chinese (rewrite + a request header the pages read).
- *   /en/… and ?lang=xx are tidied into the canonical address and the choice is remembered. A plain address follows the
- *   remembered choice; with no choice yet it renders in English and, when the browser asks for Spanish or Chinese first,
- *   the page offers to switch.
+ *   /en/… and ?lang=xx are tidied into the canonical address. A plain (unprefixed) address always renders in English:
+ *   the language only changes when the visitor picks one. The cookie only records that a choice was made, so a
+ *   first-time visitor whose browser asks for Spanish or Chinese first is offered the switch until they choose.
  * - Community: /alder-bend/… and /kestrel-point/… are community sites; the rest is the Wrenhaven parent site.
  *   The community is passed to the page in a request header.
  */
@@ -59,10 +59,6 @@ export function proxy(req: NextRequest) {
   }
 
   const saved = req.cookies.get(LANG_COOKIE)?.value;
-  if (saved === "es" || saved === "zh") {
-    url.pathname = localePath(saved, pathname);
-    return NextResponse.redirect(url);
-  }
 
   headers.set(LANG_HEADER, "en");
   const suggest = saved ? null : negotiate(req.headers.get("accept-language"));
@@ -72,6 +68,7 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Everything except Next internals, the staff system and files (anything with a dot: images, icons, robots.txt).
-  matcher: ["/((?!_next/|staff(?:/|$)|api/|.*\\.).*)"],
+  // Everything except Next internals, the staff system, the /kinlight and /phones screens (not part of the public site)
+  // and files (anything with a dot: images, icons, robots.txt).
+  matcher: ["/((?!_next/|staff(?:/|$)|kinlight(?:/|$)|phones(?:/|$)|api/|.*\\.).*)"],
 };

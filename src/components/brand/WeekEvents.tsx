@@ -1,9 +1,9 @@
-import { cats, seatsLeft, type CalEvent } from "@/data/shared";
+import { cats, type CalEvent } from "@/data/shared";
 import { getT } from "@/i18n/server";
 import { fmtRange, fromIso, dayShort, iso, today } from "@/lib/clock";
 
 /** A compact, day-by-day list of events, used for Lantern, fitness and trips. */
-export async function WeekEvents({ days, showSeats = false, empty = "Nothing scheduled." }: { days: { date: string; events: CalEvent[] }[]; showSeats?: boolean; empty?: string }) {
+export async function WeekEvents({ days, empty = "Nothing scheduled." }: { days: { date: string; events: CalEvent[] }[]; empty?: string }) {
   const { t } = await getT();
   const td = iso(today());
   const withEvents = days.filter((d) => d.events.length);
@@ -22,12 +22,13 @@ export async function WeekEvents({ days, showSeats = false, empty = "Nothing sch
                 <time>{t(fmtRange(e.start, e.end))}</time>
                 <div>
                   <p className="br-week-title">{t(e.title)}</p>
-                  <p className="br-week-room">
-                    {t(e.room)}
-                    {e.leader ? <span data-no-translate> · {e.leader}</span> : null}
-                  </p>
+                  {(e.room || e.leader) && (
+                    <p className="br-week-room">
+                      {e.room && t(e.room)}
+                      {e.leader ? <span data-no-translate>{e.room ? " · " : ""}{e.leader}</span> : null}
+                    </p>
+                  )}
                 </div>
-                {showSeats && e.cap ? <Seats e={e} /> : null}
               </li>
             ))}
           </ul>
@@ -35,12 +36,4 @@ export async function WeekEvents({ days, showSeats = false, empty = "Nothing sch
       ))}
     </div>
   );
-}
-
-export async function Seats({ e }: { e: CalEvent }) {
-  const { t } = await getT();
-  const left = seatsLeft(e) ?? 0;
-  if (left === 0) return <span className="pill pill-brick br-seats">{t(`Full · ${e.waitlist ?? 1} on waitlist`)}</span>;
-  if (left <= 3) return <span className="pill pill-terra br-seats">{t(left === 1 ? "1 seat left" : `${left} seats left`)}</span>;
-  return <span className="pill br-seats">{t(`${left} seats left`)}</span>;
 }
