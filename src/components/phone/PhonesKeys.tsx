@@ -1,7 +1,7 @@
 "use client";
 
 // Presenter keys on /phones: → / ← (or Page Down / Page Up, which clickers send) step through the phone,
-// and Escape closes the overlay when the page is shown inside one (PhoneStage).
+// and Escape closes the overlay when the page is shown inside one (PhoneStage), unless a preview is open.
 import { useEffect } from "react";
 
 export function PhonesKeys() {
@@ -17,7 +17,7 @@ export function PhonesKeys() {
       } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
         e.preventDefault();
         nav("Previous")?.click();
-      } else if (e.key === "Escape" && window.parent !== window) {
+      } else if (e.key === "Escape" && window.parent !== window && !document.querySelector("dialog[open]")) {
         window.parent.postMessage("phones:close", window.location.origin);
       }
     };

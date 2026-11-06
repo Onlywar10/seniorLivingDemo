@@ -1,14 +1,14 @@
 "use client";
 
 // Brings up the phone walk-throughs over any page during a meeting, without anything visible on the page itself:
-// press Shift+P (not while typing), or add ?phones=family|prospect|staff to the address. The overlay shows
+// press Shift+P (not while typing), or add ?phones=family|prospect|resident|staff to the address. The overlay shows
 // /phones for the community in the address (or the staff workspace's selected community), full screen.
 // Escape or the close button leaves it. Mounted once in the root layout.
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import "./stage.css";
 
-const STORIES = ["family", "prospect", "staff"] as const;
+const STORIES = ["family", "prospect", "resident", "staff"] as const;
 type Story = (typeof STORIES)[number];
 const isStory = (v: unknown): v is Story => typeof v === "string" && (STORIES as readonly string[]).includes(v);
 const COMMUNITIES = ["alder-bend", "kestrel-point"];
@@ -82,12 +82,12 @@ export function PhoneStage() {
   }, [open]);
 
   if (!open) return null;
-  const src = `/phones?c=${communityFrom(pathname)}&story=${story}`;
+  const src = `/phones?c=${communityFrom(pathname)}#${story}`;
   return (
     <dialog
       ref={ref}
       className="phx-stage"
-      aria-label="On the phone"
+      aria-label="Messages by audience"
       onCancel={(e) => {
         e.preventDefault();
         close();
@@ -96,7 +96,7 @@ export function PhoneStage() {
       <button type="button" className="phx-stage-x" onClick={close} aria-label="Close">
         ×
       </button>
-      <iframe src={src} title="On the phone" />
+      <iframe src={src} title="Messages by audience" />
     </dialog>
   );
 }
