@@ -237,8 +237,13 @@ function Bubble({ a, onNav }: { a: Answer; onNav: () => void }) {
       )}
       {a.after && <p className="chat-after">{a.after}</p>}
       {a.lead && <LeadForm lang={a.lang} />}
-      {(a.cta || a.source) && (
+      {(a.cta || a.source || a.call) && (
         <div className="chat-links">
+          {a.call && (
+            <a className="chat-cta" href={a.call.tel}>
+              <Icon name="phone" /> {a.call.label}
+            </a>
+          )}
           {a.cta && (
             <NextLink className="chat-cta" href={href(a.cta.href)} onClick={onNav}>
               {a.cta.label} <Icon name="arrow" />

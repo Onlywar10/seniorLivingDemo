@@ -3,7 +3,7 @@
 // Events come redacted (Community.eventsOn): no seat counts, waitlists or pickup points ever reach the chat.
 // Every answer is about the community passed in (useCommunity()); nothing here names a particular community.
 import type { Community } from "@/data/communities";
-import { isLantern, kindOf, money, type CalEvent, type DayMenu, type PlanKind, type Space, type Venue } from "@/data/shared";
+import { isLantern, kindOf, money, telHref, type CalEvent, type DayMenu, type PlanKind, type Space, type Venue } from "@/data/shared";
 import { today, nowMinutes, addDays, dow, fmtTime, longDate, dayShort, MONTHS, WEEKDAYS, iso } from "@/lib/clock";
 
 export type Lang = "en" | "es" | "zh";
@@ -21,6 +21,8 @@ export interface Answer {
   chips?: string[];
   /** Offer the call-back form */
   lead?: boolean;
+  /** A tap-to-call button (used when the website doesn't have the answer). */
+  call?: { label: string; tel: string };
 }
 
 // ---------------------------------------------------------------- helpers
@@ -1278,10 +1280,13 @@ export function answer(raw: string, c: Community, siteLang: Lang = "en", t: (s: 
     }
     const p = contact();
     const st = starters(c)[l];
-    if (l === "zh") return { lang: l, text: `我们的网站上暂时没有这方面的信息，不过${p ? zhWho(p) : "我们的团队"}一定能为您解答。请留下您的姓名和电话，我们会给您回电；您也可以试试下面这些问题：`, lead: true, chips: st.slice(0, 4) };
+    // No answer on the website: ask them to give us a call (a person will know), with a tap-to-call button.
+    const phone = c.site.phone;
+    const call = (label: string) => ({ label, tel: telHref(phone) });
+    if (l === "zh") return { lang: l, text: `我们的网站上暂时没有这方面的信息，不过${p ? zhWho(p) : "我们的团队"}一定能为您解答。请致电 ${phone}；您也可以试试下面这些问题：`, call: call(`致电 ${phone}`), chips: st.slice(0, 4) };
     return l === "es"
-      ? { lang: l, text: `No encuentro eso en nuestro sitio web, pero ${p ? esWho(p) : "nuestro equipo"} le puede responder. Déjenos su nombre y teléfono.`, lead: true, chips: st.slice(0, 4) }
-      : { lang: l, text: `I don’t have that one on our website, but ${p ? enSubj(p) : "our team"} will know. Leave your name and number and we’ll call you — or try one of these:`, lead: true, chips: st.slice(0, 4) };
+      ? { lang: l, text: `No encuentro eso en nuestro sitio web, pero ${p ? esWho(p) : "nuestro equipo"} le puede responder. Llámenos al ${phone}.`, call: call(`Llamar al ${phone}`), chips: st.slice(0, 4) }
+      : { lang: l, text: `I don’t have that one on our website, but ${p ? enSubj(p) : "our team"} will know. Give us a call at ${phone}, or try one of these:`, call: call(`Call ${phone}`), chips: st.slice(0, 4) };
   } finally {
     tr = identity;
     C = prev;
