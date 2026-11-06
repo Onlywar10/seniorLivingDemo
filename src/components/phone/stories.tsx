@@ -1,64 +1,32 @@
-// The three phone walk-throughs shown in sales meetings: a family's phone, a prospect's phone and a staff member's phone.
-// Server Components only (they read the staff records in src/data/staff/alpha.ts); each story is a list of PhoneTour
-// steps, and <PhoneStory> renders one. Everything comes from the community's own data, so Alder Bend and Kestrel Point
+// The phone screens behind the message workflows on /phones (src/components/flows/bands.tsx): a family's phone,
+// a prospect's phone and a staff member's phone, each a list of PhoneTour steps the workflows pick previews from.
+// Server Components only (they read the staff records in src/data/staff/alpha.ts). Everything comes from the community's own data, so Alder Bend and Kestrel Point
 // each show their own people, families and events. Not in the alpha, so never shown here: social posting and signage.
 import type { ReactNode } from "react";
-import { Browser, LockScreen, MailInbox, MailMessage, PhoneTour, SmsThread, type TourStep } from "./Phone";
+import { Browser, LockScreen, MailInbox, MailMessage, SmsThread, type TourStep } from "./Phone";
 import { ToEnd } from "./ToEnd";
 import { communities, type CommunitySlug } from "@/data/communities";
 import { nextSpecials } from "@/data/communities/specials";
 import { kindOf, type CalEvent } from "@/data/shared";
 import { getStaffData } from "@/data/staff";
-import { attendance, eventRequests, prospectMessages, sampleFamily } from "@/data/staff/alpha";
+import { attendance, eventRequests, sampleFamily } from "@/data/staff/alpha";
 import { addDays, dayShort, fmtTime, fromIso, hash, iso, longDate, today } from "@/lib/clock";
 import "./stories.css";
 
-export const STORIES = ["family", "prospect", "staff"] as const;
-export type StoryKey = (typeof STORIES)[number];
-export const isStory = (v: unknown): v is StoryKey => typeof v === "string" && (STORIES as readonly string[]).includes(v);
-
-export const storyMeta: Record<StoryKey, { tab: string; title: string; who: (slug: CommunitySlug) => string; intro: string }> = {
-  family: {
-    tab: "Family",
-    title: "A family’s phone",
-    who: (slug) => {
-      const f = sampleFamily(slug);
-      return `${f.contact}, whose mother ${f.resident.split(" ")[0]} lives at ${communities[slug].site.name}.`;
-    },
-    intro: "The weekly text, the Sunday email and a personal link, with no app and no password. Families who read another language get all of it in their own language, translated automatically.",
-  },
-  prospect: {
-    tab: "Prospect",
-    title: "A prospect’s phone",
-    who: (slug) => `Laura Bennett, looking at Assisted Living for her father. She finds ${communities[slug].site.name} on Google late one evening.`,
-    intro: "An instant reply day or night, a tour booked online, and a confirmation and a reminder without anyone lifting a finger.",
-  },
-  staff: {
-    tab: "Staff",
-    title: "A staff member’s phone",
-    who: (slug) => {
-      const s = getStaffData(slug);
-      const p = s.people[s.roles.calendar];
-      return `${p.name}, ${p.role}. Everything she needs to do between activities, from her phone.`;
-    },
-    intro: "The weekly nudge, a photo post with the consent check, approval on the go, attendance and RSVPs.",
-  },
-};
-
 /* ------------------------------------------------------------ shared helpers */
 
-const first = (name: string) => name.split(" ")[0];
-const LOGO = "/img/brand/dots.png";
+export const first = (name: string) => name.split(" ")[0];
+export const LOGO = "/img/brand/dots.png";
 
-const enWhen = (e: { date: string; start: number }) => `${dayShort(fromIso(e.date))}, ${fmtTime(e.start)}`;
+export const enWhen = (e: { date: string; start: number }) => `${dayShort(fromIso(e.date))}, ${fmtTime(e.start)}`;
 
-function upcomingEvents(slug: CommunitySlug, days: number) {
+export function upcomingEvents(slug: CommunitySlug, days: number) {
   const t = today();
   return communities[slug].staffEventsBetween(t, days, iso(t)).flatMap((d) => d.events);
 }
 
 /** The real upcoming Family Barbecue (from the calendar), and a real upcoming outing with seats. */
-function keyEvents(slug: CommunitySlug) {
+export function keyEvents(slug: CommunitySlug) {
   const evs = upcomingEvents(slug, 22);
   const barbecue: Pick<CalEvent, "date" | "start" | "end" | "title" | "room"> = evs.find((e) => e.title === "Family Barbecue") ?? { date: nextSpecials().barbecue, start: 720, end: 870, title: "Family Barbecue", room: "Courtyard" };
   const trips = evs.filter((e) => kindOf(e) === "resident" && e.cat === "trips" && e.cap && !/shopping/i.test(e.title) && e.date > iso(addDays(today(), 2)));
@@ -67,7 +35,7 @@ function keyEvents(slug: CommunitySlug) {
 }
 
 /** The sample family, their personal link and the barbecue party (her and the two grandchildren). */
-function family(slug: CommunitySlug) {
+export function family(slug: CommunitySlug) {
   const s = getStaffData(slug);
   const f = sampleFamily(slug);
   const token = hash(f.contact + slug).toString(36).slice(0, 5);
@@ -76,7 +44,7 @@ function family(slug: CommunitySlug) {
   return { s, f, mom: first(f.resident), me: first(f.contact), link: `${s.brand.domain}/r/${token}`, party: 3, photo, momInPhoto };
 }
 
-function StaffHead({ title, sub }: { title: string; sub: string }) {
+export function StaffHead({ title, sub }: { title: string; sub: string }) {
   return (
     <div className="ph-staff-head">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -352,97 +320,65 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
 
 /* ------------------------------------------------------------ 2. a prospect's phone */
 
+/** The waitlisted floor plan the prospect asks about (one with no apartment free today), and the guide she downloads. */
+export function prospectPicks(slug: CommunitySlug) {
+  const c = communities[slug];
+  const plan = c.plans.find((p) => p.kind === "independent" && p.available === 0 && p.waitlist > 0) ?? c.plans.find((p) => p.available === 0) ?? c.plans[0];
+  const guide = c.guides.find((g) => /cost/i.test(g.title)) ?? c.guides[0];
+  return { plan, guide };
+}
+
 export function prospectStory(slug: CommunitySlug): TourStep[] {
   const c = communities[slug];
   const s = getStaffData(slug);
   const rep = s.people[s.roles.tours];
   const name = c.site.name;
-  const city = c.site.address.city;
-  const prospect = "Laura Bennett";
-  const msgs = prospectMessages(slug, { name: prospect, interest: "Assisted Living", tour: { days: 2, time: 600 } });
-  const [txt, mail, conf, remind] = msgs;
+  const { plan, guide } = prospectPicks(slug);
+  const planName = `${plan.name} (${plan.code})`;
   const t = today();
-  const tourDay = addDays(t, 2);
+  const call = `Call ${first(rep.name)} at ${s.brand.phone}`;
   const textHead = { name, sub: "Text message", initials: s.brand.short, color: "#2e4d33" };
+
+  const onList = `${name}: you’re on the list for the ${planName}. ${plan.waitlist === 1 ? "There is 1 person" : `There are ${plan.waitlist} people`} ahead of you. We’ll text you the moment one opens up. Reply STOP to opt out.`;
+  const opened = `Good news, Laura! A ${plan.name} (${plan.code}) has just opened up at ${name}. You’re next on the list, and we’ll hold it for you for 48 hours. ${call} to see it or reserve it.`;
+  const monthAgo = addDays(t, -34);
 
   return [
     {
-      label: "She searches on Google",
+      label: "A free guide",
       time: "9:41",
-      caption: `9:41 pm. Laura searches for assisted living near ${city}. ${name}’s Google Business Profile and website are accurate and current (promise D9).`,
+      caption: `9:41 pm. Laura is reading ${name}’s free senior living guides. She asks for “${guide.title}” and joins the mailing list to get it.`,
       screen: (
-        <Browser host="google.com">
-          <div className="phx-search">
-            <div className="phx-search-box">assisted living near {city}</div>
-            <div className="phx-result phx-result-top">
-              <small>{s.brand.domain}</small>
-              <b>{name} · Assisted Living Services in {city}</b>
-              <span className="phx-stars">
-                {s.gbp.rating.toFixed(1)} ★★★★★ <small>({s.gbp.reviews} reviews)</small>
-              </span>
-              <p>Help with medications, dressing and bathing, delivered in your own apartment. See this week’s menu and activity calendar, floor plans with starting prices, and book a tour online.</p>
-              <span className="phx-chips">
-                <i>Book a tour</i>
-                <i>Call</i>
-                <i>Directions</i>
-              </span>
-            </div>
-            <div className="phx-result">
-              <small>seniorliving-directory.example</small>
-              <b>Assisted living in {city}, CA: compare 14 options</b>
-            </div>
-          </div>
-        </Browser>
-      ),
-    },
-    {
-      label: "She asks a question",
-      time: "9:47",
-      caption: "She fills in the inquiry form on the website. Nobody is in the office at this hour.",
-      screen: (
-        <Browser host={`${s.brand.domain}/contact`}>
+        <Browser host={`${s.brand.domain}/guides`}>
           <div className="ph-pl">
             <div className="ph-pl-brand">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={LOGO} alt="" />
               {name}
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="ph-em-photo" src={guide.photo} alt="" />
             <div className="ph-pl-card phx-form">
-              <h4>Ask us anything</h4>
+              <span className="ph-pl-tag">Free guide</span>
+              <h4>{guide.title}</h4>
               <label>
-                Your name<span>{prospect}</span>
-              </label>
-              <label>
-                Mobile<span>(916) 555-0186</span>
+                Your name<span>Laura Bennett</span>
               </label>
               <label>
                 Email<span>laura.bennett@gmail.com</span>
               </label>
-              <label>
-                Interested in<span>Assisted Living · for my father</span>
-              </label>
-              <label>
-                Message
-                <span className="phx-area">My dad is 84 and needs help with his medications and getting dressed in the morning. Is that included? We’d like to visit soon.</span>
-              </label>
-              <span className="ph-pl-btn">Send</span>
+              <span className="ph-pl-btn">Send me the guide</span>
             </div>
           </div>
         </Browser>
       ),
     },
     {
-      label: "An instant reply, by text",
-      time: "9:48",
-      caption: `Within a minute, day or night: a text with ${first(rep.name)}’s name and a link to book a tour. ${rep.name} is told about Laura at the same time (promise D8: instant reply, team told within 5 minutes).`,
-      screen: <SmsThread {...textHead} bubbles={[{ time: "Today 9:48 PM", text: txt.text }]} />,
-    },
-    {
-      label: "…and by email",
-      time: "9:49",
-      caption: "The email answers the questions everyone has: this week’s menu, the activity calendar, floor plans with starting prices.",
+      label: "The guide arrives",
+      time: "9:42",
+      caption: `The guide lands in her inbox a minute later, with a welcome to ${name}’s mailing list.`,
       screen: (
-        <MailMessage from={name} address={`hello@${s.brand.domain}`} to="Laura" subject={mail.subject ?? ""} time="9:48 PM">
+        <MailMessage from={name} address={`hello@${s.brand.domain}`} to="Laura" subject={`Your guide: ${guide.title}`} time="9:42 PM">
           <div className="ph-em">
             <div className="ph-em-banner">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -450,81 +386,123 @@ export function prospectStory(slug: CommunitySlug): TourStep[] {
               {name}
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="ph-em-photo" src="/img/care-chat.jpg" alt="" />
-            {mail.text.split("\n\n").map((p, i) => (
-              <p className="ph-em-p phx-pre" key={i}>
-                {p}
-              </p>
-            ))}
-            <p className="ph-em-h">For you</p>
-            <div className="phx-em-links">
-              <span>This week’s menu</span>
-              <span>Activity calendar</span>
-              <span>Floor plans and starting prices</span>
-            </div>
-            <span className="ph-em-btn">Book a tour</span>
+            <img className="ph-em-photo" src={guide.photo} alt="" />
+            <p className="ph-em-p">Hi Laura, here’s your copy of “{guide.title}”. We hope it helps.</p>
+            <span className="ph-em-btn">Read the guide</span>
+            <p className="ph-em-p">Once a month we’ll send you what’s new at {name}: events, the menu, and which apartments are available. You can unsubscribe at any time.</p>
             <div className="ph-em-foot">
-              {c.site.addressLine} · {s.brand.phone}
+              {c.site.addressLine} · {s.brand.phone} · Unsubscribe
             </div>
           </div>
         </MailMessage>
       ),
     },
     {
-      label: "She books a tour",
-      time: "9:51",
-      caption: `She picks a time that suits her on the website. It goes straight into ${first(rep.name)}’s calendar; no back-and-forth.`,
+      label: "The monthly email",
+      time: "9:00",
+      caption: `Every month the mailing list gets ${name}’s news: upcoming open houses, a look at the menu and apartment availability. Laura sees a floor plan she loves.`,
       screen: (
-        <Browser host={`${s.brand.domain}/tour`}>
+        <MailMessage from={name} address={`hello@${s.brand.domain}`} to="Laura" subject={`This month at ${name}`} time={`${dayShort(monthAgo).split(", ")[1]}`}>
+          <div className="ph-em">
+            <div className="ph-em-banner">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={LOGO} alt="" />
+              {name}
+            </div>
+            <p className="ph-em-p">Hi Laura, here’s what’s happening this month.</p>
+            <p className="ph-em-h">Open House &amp; Lunch</p>
+            <div className="ph-em-item">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/img/courtyard-palms.jpg" alt="" />
+              <span>
+                <b>Come see us on a Saturday</b>
+                <small>Tours, lunch on us and a chance to meet residents</small>
+              </span>
+            </div>
+            <p className="ph-em-h">Apartments</p>
+            <div className="ph-em-item">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/img/apt-living.jpg" alt="" />
+              <span>
+                <b>{planName}</b>
+                <small>
+                  {plan.beds ? `${plan.beds} bedroom` : "Studio"}
+                  {plan.sqft ? ` · ${plan.sqft.toLocaleString("en-US")} sq ft` : ""} · Waitlist
+                </small>
+              </span>
+            </div>
+            <span className="ph-em-btn">Get availability alerts</span>
+            <div className="ph-em-foot">
+              {c.site.addressLine} · {s.brand.phone} · Unsubscribe
+            </div>
+          </div>
+        </MailMessage>
+      ),
+    },
+    {
+      label: "She joins the waitlist",
+      time: "9:04",
+      caption: `On the floor plans page, the ${plan.name} has no apartment free today. Laura asks to be texted when one opens up.`,
+      screen: (
+        <Browser host={`${s.brand.domain}/floor-plans`}>
           <div className="ph-pl">
             <div className="ph-pl-brand">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={LOGO} alt="" />
               {name}
             </div>
-            <div className="ph-pl-card">
-              <h4>Book a tour</h4>
-              <p>
-                With {rep.name}, {rep.role}. Lunch is on us.
-              </p>
-              <span className="ph-pl-meta">Day</span>
-              <div className="phx-slots">
-                {[1, 2, 3].map((n) => (
-                  <span key={n} className={n === 2 ? "on" : ""}>
-                    {dayShort(addDays(t, n)).split(",")[0]}
-                    <b>{addDays(t, n).getUTCDate()}</b>
-                  </span>
-                ))}
+            <div className="ph-pl-card phx-form">
+              <span className="ph-pl-tag">Waitlist</span>
+              <h4>{planName}</h4>
+              <span className="ph-pl-meta">
+                {plan.beds ? `${plan.beds} bedroom` : "Studio"}
+                {plan.sqft ? ` · ${plan.sqft.toLocaleString("en-US")} sq ft` : ""}
+                {plan.from ? ` · from ${"$" + plan.from.toLocaleString("en-US")}/month` : ""}
+              </span>
+              <span className="ph-pl-meta">Get availability alerts</span>
+              <div className="ph-pl-opts phx-opts-row">
+                <span className="ph-pl-opt on">Text ✓</span>
+                <span className="ph-pl-opt">Email</span>
               </div>
-              <span className="ph-pl-meta">Time</span>
-              <div className="ph-pl-opts">
-                <span className="ph-pl-opt on">10:00 am ✓</span>
-                <span className="ph-pl-opt">11:30 am</span>
-                <span className="ph-pl-opt">2:00 pm</span>
-              </div>
-              <span className="ph-pl-btn">Book {dayShort(tourDay)}, 10:00 am</span>
+              <label>
+                Mobile<span>(916) 555-0186</span>
+              </label>
+              <span className="ph-pl-btn">Notify me</span>
             </div>
           </div>
         </Browser>
       ),
     },
     {
-      label: "Tour confirmed by text",
-      time: "9:52",
-      caption: "The confirmation arrives straight away, with the address and how to change it.",
+      label: "You’re on the list",
+      time: "9:05",
+      caption: `A text confirms she’s on the list and where she stands. ${rep.name}, ${rep.role}, sees her on the waitlist too.`,
+      screen: <SmsThread {...textHead} bubbles={[{ time: `${dayShort(monthAgo)} 9:05 AM`, text: onList }]} />,
+    },
+    {
+      label: "An apartment opens up",
+      time: "10:12",
+      dark: true,
+      caption: `Weeks later, the moment a ${plan.name} opens up, Laura gets a text.`,
+      screen: <LockScreen date={longDate(t)} time="10:12" wallpaper="/img/courtyard-palms.jpg" notices={[{ app: "Messages", title: name, text: opened, time: "now" }]} />,
+    },
+    {
+      label: "She calls",
+      time: "10:13",
+      caption: `The text asks her to call ${rep.name} to see it or reserve it. ${first(rep.name)} picks up knowing which apartment she wants.`,
       screen: (
         <>
           <ToEnd />
-          <SmsThread {...textHead} bubbles={[{ time: "Today 9:48 PM", text: txt.text }, { time: "9:52 PM", text: conf.text }, { me: true, text: "Thank you! See you then." }]} />
+          <SmsThread
+            {...textHead}
+            bubbles={[
+              { time: `${dayShort(monthAgo)} 9:05 AM`, text: onList },
+              { time: "Today 10:12 AM", text: opened },
+              { me: true, text: "Calling now!" },
+            ]}
+          />
         </>
       ),
-    },
-    {
-      label: "A reminder the day before",
-      time: "4:00",
-      dark: true,
-      caption: `The afternoon before, a reminder: where to park and who to ask for. ${first(rep.name)} meets a prospect who already knows the menu, the calendar and the prices.`,
-      screen: <LockScreen date={longDate(addDays(t, 1))} time="4:00" wallpaper="/img/courtyard-palms.jpg" notices={[{ app: "Messages", title: name, text: remind.text, time: "now" }]} />,
     },
   ];
 }
@@ -813,11 +791,4 @@ export function staffStory(slug: CommunitySlug): TourStep[] {
       ),
     },
   ];
-}
-
-const builders: Record<StoryKey, (slug: CommunitySlug) => TourStep[]> = { family: familyStory, prospect: prospectStory, staff: staffStory };
-
-/** One phone walk-through, ready to tap through. */
-export function PhoneStory({ slug, story, size = "md", title }: { slug: CommunitySlug; story: StoryKey; size?: "sm" | "md" | "lg"; title?: string }) {
-  return <PhoneTour key={`${slug}-${story}`} steps={builders[story](slug)} size={size} title={title} />;
 }
