@@ -9,11 +9,18 @@ import { Children, useEffect, useRef, useState, useSyncExternalStore } from "rea
 import { Phone, PhoneTour } from "@/components/phone/Phone";
 import { Scene } from "./Scenes";
 import { SiteFrame } from "./SiteFrame";
-import type { Actor, Band, BandKey, Frame, Preview, Step } from "./types";
+import type { Band, BandKey, Frame, Preview, SceneKind, Step } from "./types";
 import "./flows.css";
 
 const KEYS: BandKey[] = ["family", "prospect", "resident", "staff"];
-const actorLabel: Record<Actor, string> = { family: "Family", prospect: "Prospect", resident: "Resident", staff: "Staff", auto: "Automatic" };
+/** The channel a step happens on, from its picture unless the step says otherwise. */
+const sceneVia: Record<SceneKind, string> = {
+  text: "Text", reply: "Text", bell: "Text", fork: "Text", stop: "Text", email: "Email", guide: "Email", form: "Form", rsvp: "Button",
+  web: "Website", chat: "Website chat", qr: "QR code", camera: "Phone camera", approve: "Staff workspace", list: "Staff workspace",
+  build: "Staff workspace", home: "Staff workspace", calendar: "Calendar", route: "Inbox", translate: "Translation", print: "Print",
+  slip: "Paper slip", talk: "In person", chart: "Scorecard", call: "Phone call", send: "Every channel", ways: "Several ways",
+};
+const viaOf = (st: Step) => st.via ?? sceneVia[st.scene];
 
 const subHash = (cb: () => void) => {
   window.addEventListener("hashchange", cb);
@@ -61,7 +68,15 @@ function FrameView({ f, ms, still, onDone }: { f: Frame; ms: number; still: bool
   if (f.kind === "site") {
     return (
       <div className="fl-shot-site">
-        <SiteFrame path={f.path} host={f.host} actions={f.actions} chat={f.chat} onDone={onDone} />
+        <SiteFrame path={f.path} host={f.host} actions={f.actions} chat={f.chat} staff={f.staff} as={f.as} onDone={onDone} />
+      </div>
+    );
+  }
+  if (f.kind === "mail") {
+    return (
+      <div className="fl-shot-mail">
+        <div className="fl-mail-box">{Children.toArray(f.node)}</div>
+        <AutoScroll ms={ms} still={still} />
       </div>
     );
   }
@@ -93,7 +108,7 @@ function Shot({ st, sub, ms, still, onDone }: { st: Step; sub: number; ms: numbe
   if (!f) {
     return (
       <span className="fl-shot-scene is-on">
-        <Scene kind={st.scene} text={st.text} text2={st.text2} />
+        <Scene kind={st.scene} text={st.text} text2={st.text2} ways={st.ways} />
       </span>
     );
   }
@@ -105,8 +120,9 @@ function PreviewBody({ p, at }: { p: Preview; at: number }) {
   const phones = p.frames.flatMap((f) => (f.kind === "phone" ? [f.step] : []));
   if (phones.length === p.frames.length) return <PhoneTour steps={phones} size="md" />;
   const f = p.frames[Math.max(0, Math.min(p.frames.length - 1, at))];
-  if (f.kind === "site") return <div className="fl-dialog-site"><SiteFrame path={f.path} host={f.host} actions={f.actions} chat={f.chat} /></div>;
+  if (f.kind === "site") return <div className="fl-dialog-site"><SiteFrame path={f.path} host={f.host} actions={f.actions} chat={f.chat} staff={f.staff} as={f.as} /></div>;
   if (f.kind === "paper") return <div className="fl-paper-wrap">{Children.toArray(f.node)}</div>;
+  if (f.kind === "mail") return <div className="fl-mail-scroll">{Children.toArray(f.node)}</div>;
   return <PhoneTour steps={[f.step]} size="md" />;
 }
 
@@ -134,6 +150,8 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
   const playing = !paused && !reduced;
   const [open, setOpen] = useState<Step | null>(null);
   const ref = useRef<HTMLDialogElement>(null);
+  const [mail, setMail] = useState(false);
+  const mailRef = useRef<HTMLDialogElement>(null);
 
   // Autoplay: each phase for its own time, then the next step; after the last step, a beat, then start again.
   // The live website moves on when its visitor has finished (with a generous fallback while a page first loads).
@@ -146,10 +164,10 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
     advanceRef.current = advance;
   });
   useEffect(() => {
-    if (!playing || open) return;
+    if (!playing || open || mail) return;
     const id = window.setTimeout(() => advanceRef.current(), (isSite ? dur + 15000 : dur) + (lastSub && lastStep ? 1400 : 0));
     return () => window.clearTimeout(id);
-  }, [playing, open, i, sub, key, dur, isSite, lastSub, lastStep]);
+  }, [playing, open, mail, i, sub, key, dur, isSite, lastSub, lastStep]);
   const siteDone = () => {
     if (playing && !open) window.setTimeout(() => advanceRef.current(), lastSub && lastStep ? 1400 : 0);
   };
@@ -160,6 +178,12 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
     if (open && !d.open) d.showModal();
     if (!open && d.open) d.close();
   }, [open]);
+  useEffect(() => {
+    const d = mailRef.current;
+    if (!d) return;
+    if (mail && !d.open) d.showModal();
+    if (!mail && d.open) d.close();
+  }, [mail]);
 
   const goTab = (k: BandKey) => {
     history.replaceState(null, "", `#${k}`);
@@ -169,6 +193,14 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
     setFlowBy((m) => ({ ...m, [tab]: n }));
     setPaused(false);
   };
+  // A hand-off: open the story where it carries on, in the other audience's tab.
+  const goTo = (to: BandKey, flowId: string) => {
+    const n = bands.find((b) => b.key === to)?.flows.findIndex((x) => x.id === flowId) ?? -1;
+    if (n >= 0) setFlowBy((m) => ({ ...m, [to]: n }));
+    setPaused(false);
+    goTab(to);
+  };
+  const tabName = (k: BandKey) => bands.find((b) => b.key === k)?.label ?? k;
   // Picking a step pauses on it, showing its real screen when it has one (the detail, not the picture).
   const goStep = (n: number, s?: number) => {
     const at = Math.max(0, Math.min(flow.steps.length - 1, n));
@@ -176,7 +208,22 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
     setPaused(true);
   };
   // The website needs more room than a phone, so the active step widens further while it shows one.
-  const cols = flow.steps.map((_, n) => (n === i ? `minmax(0, ${isSite ? 5 : 2.8}fr)` : "minmax(0, 1fr)")).join(" ");
+  // Steps that happen at the same time (`with`) share a column, stacked; so do the matching steps of two paths after a
+  // split (`lane`: the top path's first step over the bottom path's first step, and so on). The active column widens.
+  const groups: number[][] = [];
+  let splitAt = -1;
+  const laneLen = [0, 0];
+  flow.steps.forEach((st, n) => {
+    if (st.lane !== undefined) {
+      if (splitAt < 0) splitAt = groups.length;
+      const col = splitAt + laneLen[st.lane]++;
+      (groups[col] ??= []).push(n);
+    } else if (st.with && groups.length) groups[groups.length - 1].push(n);
+    else groups.push([n]);
+  });
+  for (const g of groups) g.sort((a, b) => (flow.steps[a].lane ?? 0) - (flow.steps[b].lane ?? 0) || a - b);
+  const gi = groups.findIndex((g) => g.includes(i));
+  const cols = groups.map((_, g) => (g === gi ? `minmax(0, ${isSite ? 6 : 4}fr)` : "minmax(0, 1fr)")).join(" ");
 
   return (
     <div className={`fl fl-band-${tab}`}>
@@ -221,58 +268,69 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
           </div>
 
           <ol className="fl-track" style={{ gridTemplateColumns: cols }}>
-            {flow.steps.map((st, n) => {
-              const state = n < i ? "is-done" : n === i ? "is-on" : "is-next";
-              const active = n === i;
+            {groups.map((g, k) => {
+              const head = g[0];
+              const here = k === gi;
+              const state = k < gi ? "is-done" : here ? "is-on" : "is-next";
+              const filling = here && i === head;
               return (
-                <li key={st.id} className={`fl-step ${state}`}>
-                  {n > 0 && (
-                    <span className={`fl-wire${n < i ? " is-full" : active ? " is-filling" : ""}`} aria-hidden="true">
-                      <span key={active ? `${key}-${i}` : "rest"} />
+                <li key={flow.steps[head].id} className={`fl-step ${state}${g.length > 1 ? " fl-step-stack" : ""}`}>
+                  {k > 0 && (
+                    <span className={`fl-wire${k < gi || (here && !filling) ? " is-full" : filling ? " is-filling" : ""}`} aria-hidden="true">
+                      <span key={filling ? `${key}-${i}` : "rest"} />
                     </span>
                   )}
-                  {active ? (
-                    <div className="fl-card fl-card-on">
-                      <div
-                        className={`fl-shot${st.preview && sub === 0 ? " is-tappable" : ""}`}
-                        onClick={(e) => {
-                          // Tapping the picture pauses and opens the detail (the phase bars do the same from the keyboard).
-                          if (!(e.target as HTMLElement).closest(".fl-expand")) goStep(i, sub === 0 && st.preview ? 1 : sub);
-                        }}
-                      >
-                        <Shot key={`${key}-${i}-${sub}`} st={st} sub={sub} ms={plan[sub]} still={!playing} onDone={siteDone} />
-                        {st.preview && (
-                          <button type="button" className="fl-expand" onClick={() => setOpen(st)} aria-label={`Open “${st.label}” full size`} title="Full size">
-                            ⤢
-                          </button>
-                        )}
-                      </div>
-                      {plan.length > 1 && (
-                        <span className="fl-phases">
-                          {plan.map((ms, k) => (
-                            <button key={k} type="button" className={k === sub ? "on" : k < sub ? "done" : undefined} onClick={() => goStep(i, k)} aria-label={k === 0 ? "The picture" : `Screen ${k}`}>
-                              <i style={k === sub && playing ? { animationDuration: `${ms}ms` } : undefined} key={k === sub ? `${key}-${i}-${sub}` : "x"} />
+                  {g.map((n) => {
+                    const st = flow.steps[n];
+                    return n === i ? (
+                      <div key={st.id} className="fl-card fl-card-on">
+                        <div
+                          className={`fl-shot${st.preview && sub === 0 ? " is-tappable" : ""}`}
+                          onClick={(e) => {
+                            // Tapping the picture pauses and opens the detail (the phase bars do the same from the keyboard).
+                            if (!(e.target as HTMLElement).closest(".fl-expand")) goStep(i, sub === 0 && st.preview ? 1 : sub);
+                          }}
+                        >
+                          <Shot key={`${key}-${i}-${sub}`} st={st} sub={sub} ms={plan[sub]} still={!playing} onDone={siteDone} />
+                          {st.preview && (
+                            <button type="button" className="fl-expand" onClick={() => setOpen(st)} aria-label={`Open “${st.label}” full size`} title="Full size">
+                              ⤢
                             </button>
-                          ))}
+                          )}
+                        </div>
+                        {plan.length > 1 && (
+                          <span className="fl-phases">
+                            {plan.map((ms, q) => (
+                              <button key={q} type="button" className={q === sub ? "on" : q < sub ? "done" : undefined} onClick={() => goStep(i, q)} aria-label={q === 0 ? "The picture" : `Screen ${q}`}>
+                                <i style={q === sub && playing ? { animationDuration: `${ms}ms` } : undefined} key={q === sub ? `${key}-${i}-${sub}` : "x"} />
+                              </button>
+                            ))}
+                          </span>
+                        )}
+                        <span className="fl-card-label">
+                          <span className={`fl-actor fl-actor-${st.actor}`}>{viaOf(st)}</span>
+                          <b>{st.label}</b>
+                          {st.when && <small>{st.when}</small>}
+                          {st.next && (
+                            <button type="button" className={`fl-next fl-next-${st.next.tab}`} onClick={() => goTo(st.next!.tab, st.next!.flow)}>
+                              {st.next.text} <span>→ {tabName(st.next.tab)}</span>
+                            </button>
+                          )}
                         </span>
-                      )}
-                      <span className="fl-card-label">
-                        <span className={`fl-actor fl-actor-${st.actor}`}>{actorLabel[st.actor]}</span>
-                        <b>{st.label}</b>
-                        {st.when && <small>{st.when}</small>}
-                      </span>
-                    </div>
-                  ) : (
-                    <button type="button" className="fl-card" onClick={() => goStep(n)}>
-                      <span className="fl-thumb">
-                        <Scene kind={st.scene} text={st.text} text2={st.text2} />
-                      </span>
-                      <span className="fl-card-label">
-                        <span className={`fl-actor fl-actor-${st.actor}`}>{actorLabel[st.actor]}</span>
-                        <b>{st.label}</b>
-                      </span>
-                    </button>
-                  )}
+                      </div>
+                    ) : (
+                      <button key={st.id} type="button" className={`fl-card${here ? " fl-card-aside" : ""}`} onClick={() => goStep(n)}>
+                        <span className="fl-thumb">
+                          <Scene kind={st.scene} text={st.text} text2={st.text2} ways={st.ways} />
+                        </span>
+                        <span className="fl-card-label">
+                          <span className={`fl-actor fl-actor-${st.actor}`}>{viaOf(st)}</span>
+                          <b>{st.label}</b>
+                          {st.next && <small className="fl-next-mini">→ {tabName(st.next.tab)}</small>}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </li>
               );
             })}
@@ -283,6 +341,13 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
               <span key={st.id} className={n === i ? "on" : undefined} />
             ))}
           </div>
+          {flow.email && (
+            <div className="fl-email-row">
+              <button type="button" className="fl-email-btn" onClick={() => setMail(true)}>
+                <span aria-hidden="true">✉</span> See the email: {flow.email.label}
+              </button>
+            </div>
+          )}
           <p className="vh" aria-live="polite">
             Step {i + 1} of {flow.steps.length}: {step.label}
           </p>
@@ -310,6 +375,31 @@ export function FlowBoard({ bands, community }: { bands: Band[]; community: stri
               </button>
             </div>
             <PreviewBody key={open.id} p={open.preview} at={sub - 1} />
+          </div>
+        )}
+      </dialog>
+
+      <dialog
+        ref={mailRef}
+        className="fl-dialog fl-dialog-mail"
+        aria-label={flow.email?.subject ?? "Email"}
+        onCancel={(e) => {
+          e.preventDefault();
+          setMail(false);
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setMail(false);
+        }}
+      >
+        {mail && flow.email && (
+          <div className="fl-dialog-in">
+            <div className="fl-dialog-head">
+              <b>{flow.email.label}</b>
+              <button type="button" onClick={() => setMail(false)} aria-label="Close">
+                ×
+              </button>
+            </div>
+            <div className="fl-mail-scroll">{Children.toArray(flow.email.node)}</div>
           </div>
         )}
       </dialog>

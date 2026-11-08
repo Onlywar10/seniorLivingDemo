@@ -1,17 +1,20 @@
 // Every message the Kinlight alpha sends, as short animated workflows: one tab per audience (family, prospect, resident,
 // staff), each a set of flows, each flow a few steps drawn as little scenes (Scenes.tsx). Steps that send something
-// carry a preview (the phone screens, or the printed sheet for residents). Grounded in the vault's
-// "Kinlight Alpha Interfaces" and "Kinlight Events and Activities (Alpha)": residents get no texts, emails or app in
-// alpha, families have no portal (personal-link pages only). Server only: it reads the community's staff records.
+// carry a preview (the phone screens, the printed sheet, or the live website). Each tab shows only what that person
+// sees; a story involving two people lives in the tab of the person it starts with, and its hand-offs (`next`) point
+// to where it carries on. Grounded in the vault's "Kinlight Alpha Interfaces" and "Kinlight Events and Activities
+// (Alpha)", plus one deliberate change: residents who opt in get texts and email too. Server only.
 import { isValidElement, type ReactElement, type ReactNode } from "react";
-import { LockScreen, MailMessage, SmsThread, Browser, type TourStep } from "@/components/phone/Phone";
-import { familyStory, prospectStory, staffStory, family, keyEvents, prospectPicks, upcomingEvents, first, enWhen, LOGO } from "@/components/phone/stories";
+import { LockScreen, SmsThread, Browser, type TourStep } from "@/components/phone/Phone";
+import { familyStory, prospectStory, staffStory, StaffHead, family, keyEvents, prospectPicks, publicPick, upcomingEvents, first, enWhen, LOGO } from "@/components/phone/stories";
 import { communities, type CommunitySlug } from "@/data/communities";
-import { nextSpecials } from "@/data/communities/specials";
 import { getStaffData } from "@/data/staff";
 import { prospectMessages } from "@/data/staff/alpha";
 import { addDays, dayShort, fmtTime, fromIso, iso, longDate, today } from "@/lib/clock";
 
+import { queue } from "@/data/staff/portal";
+import { familyEmails, prospectEmails, residentEmails, staffEmails, weekAheadFor } from "./emails";
+import { Mail, Paper, moreScreens } from "./screens";
 import type { Band, Frame, Preview, SceneKind, SiteAction } from "./types";
 
 /* ---------------------------------------------------------------- timing: busier pictures and screens stay up longer */
@@ -20,7 +23,7 @@ import type { Band, Frame, Preview, SceneKind, SiteAction } from "./types";
 const sceneMs: Record<SceneKind, number> = {
   calendar: 1800, chart: 1900, home: 2000, call: 2100, talk: 2000, guide: 2000, fork: 2100, stop: 2300, bell: 2300, list: 2100,
   text: 2400, approve: 2100, route: 2300, print: 2300, slip: 2600, camera: 2400, build: 2300, qr: 2700, form: 2600,
-  rsvp: 2700, reply: 2300, translate: 2700, email: 2600, send: 2700, web: 2600, chat: 2500,
+  rsvp: 2700, reply: 2300, ways: 2900, translate: 2700, email: 2600, send: 2700, web: 2600, chat: 2500,
 };
 
 /** Words a reader has to take in on a screen, found by walking the rendered elements. */
@@ -46,7 +49,7 @@ function siteMs(actions: SiteAction[]) {
   const each = (a: SiteAction) => (a.do === "wait" ? a.ms : a.do === "type" ? 500 + a.value.length * 55 : a.do === "scroll" ? 1100 : 1000);
   return actions.reduce((n, a) => n + each(a), 0) + 2200;
 }
-const frameMs = (f: Frame) => (f.kind === "site" ? siteMs(f.actions) : dwellFor(words(f.kind === "phone" ? f.step.screen : f.node)));
+const frameMs = (f: Frame) => (f.kind === "site" ? siteMs(f.actions) : f.kind === "mail" ? 7500 : dwellFor(words(f.kind === "phone" ? f.step.screen : f.node)));
 
 function timed(bands: Band[]): Band[] {
   for (const b of bands)
@@ -65,37 +68,6 @@ const join = (...ps: Preview[]): Preview => ({ frames: ps.flatMap((p) => p.frame
 
 const th = (s: { brand: { short: string } }, name: string) => ({ name, sub: "Text message", initials: s.brand.short, color: "#2e4d33" });
 
-function Paper({ title, sub, children, size = "md" }: { title: string; sub: string; children: ReactNode; size?: "md" | "lg" }) {
-  return (
-    <div className={`fl-paper fl-paper-${size}`}>
-      <div className="fl-paper-head">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={LOGO} alt="" />
-        <span>
-          <b>{title}</b>
-          <small>{sub}</small>
-        </span>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Mail({ name, domain, to, subject, time, children }: { name: string; domain: string; to: string; subject: string; time: string; children: ReactNode }) {
-  return (
-    <MailMessage from={name} address={`hello@${domain}`} to={to} subject={subject} time={time}>
-      <div className="ph-em">
-        <div className="ph-em-banner">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO} alt="" />
-          {name}
-        </div>
-        {children}
-      </div>
-    </MailMessage>
-  );
-}
-
 export function buildBands(slug: CommunitySlug): Band[] {
   const c = communities[slug];
   const s = getStaffData(slug);
@@ -108,23 +80,18 @@ export function buildBands(slug: CommunitySlug): Band[] {
   const chef = s.people[s.roles.menus];
   const fam = family(slug);
   const { me, mom, link } = fam;
-  const { barbecue, outing } = keyEvents(slug);
-  const { plan, guide } = prospectPicks(slug);
-  const openHouse = { date: nextSpecials().openHouse, start: 600 };
+  const { barbecue } = keyEvents(slug);
+  const { plan } = prospectPicks(slug);
+  // The next event open to everyone on the website calendar (the holiday craft fair), which prospects sign up for.
+  const fair = publicPick(slug);
+  const fairWhen = `${dayShort(fromIso(fair.date))}, ${fmtTime(fair.start)}`;
   // The live website, played inside a desktop browser frame (paths are this community's own pages).
   const site = (path: string, actions: SiteAction[], chat = false): Preview => ({ frames: [{ kind: "site", path: `/${slug}${path}`, host: domain, actions, chat }] });
   // The website post for the weekly photo (the pumpkin carving at Alder Bend), else the newest post.
   const posts = c.publishedStories(iso(t));
   const post = posts.find((x) => /pumpkin/i.test(x.slug)) ?? posts[0];
   const laura = { name: "Laura Bennett", email: "laura.bennett@gmail.com", phone: "(916) 555-0186" };
-  const webGuide = site("/guides", [
-    { do: "scroll", sel: ".inf-guide", text: guide.title },
-    { do: "click", sel: ".inf-guide .btn", text: guide.title },
-    { do: "type", sel: "#gd-name", value: laura.name },
-    { do: "type", sel: "#gd-email", value: laura.email },
-    { do: "point", sel: "form button[type=submit]" },
-  ]);
-  // The website's chat, answering from the community's own pages: tonight's dinner, then a price question in Spanish.
+  // The website's chat, answering from the community's own pages: what a day here is like, ending with a tour invitation.
   const ask = (q: string, wait: number): SiteAction[] => [
     { do: "type", sel: "#chat-q", value: q },
     { do: "click", sel: ".chat-send" },
@@ -133,12 +100,8 @@ export function buildBands(slug: CommunitySlug): Band[] {
   const webChat = site("", [
     { do: "wait", ms: 600 },
     { do: "click", sel: ".chat-fab" },
-    ...ask("What’s for dinner tonight?", 3600),
-  ], true);
-  const webChatEs = site("", [
-    { do: "wait", ms: 600 },
-    { do: "click", sel: ".chat-fab" },
-    ...ask("¿Cuánto cuesta vivir aquí?", 4200),
+    ...ask("What is daily life here really like?", 3800),
+    { do: "point", sel: ".chat-list a.chat-cta:not([href^='tel:'])" },
   ], true);
   // A question the website can't answer: the chat asks them to give the community a call.
   const webChatCall = site("", [
@@ -147,6 +110,16 @@ export function buildBands(slug: CommunitySlug): Band[] {
     ...ask("Can I bring my piano?", 3400),
     { do: "point", sel: ".chat-list a.chat-cta[href^='tel:']" },
   ], true);
+  const webSignup = site("/stay-connected", [
+    { do: "scroll", sel: ".sc-form" },
+    { do: "click", sel: ".sc-chan:has(input[value=both])" },
+    { do: "scroll", sel: "#sc-name" },
+    { do: "type", sel: "#sc-name", value: fam.f.contact },
+    { do: "type", sel: "#sc-phone", value: fam.f.phone },
+    { do: "type", sel: "#sc-email", value: fam.f.email },
+    { do: "click", sel: "#sc-sms" },
+    { do: "point", sel: ".sc-form button[type=submit]" },
+  ]);
   const webTour = site("/tour", [
     { do: "scroll", sel: ".tr-days" },
     { do: "click", sel: ".tr-day:not(.full)", n: 1 },
@@ -154,10 +127,11 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "scroll", sel: "#tr-name" },
     { do: "type", sel: "#tr-name", value: laura.name },
     { do: "type", sel: "#tr-phone", value: laura.phone },
+    { do: "click", sel: "#tr-sms" },
     { do: "point", sel: ".tr-submit" },
   ]);
-  const webOpenHouse = site(`/calendar?view=today&date=${openHouse.date}`, [
-    { do: "click", sel: ".cal-ev", text: "Open House" },
+  const webPublic = site(`/calendar?view=today&date=${fair.date}`, [
+    { do: "click", sel: ".cal-ev", text: fair.title },
     { do: "type", sel: ".cal-rsvp input[name=name]", value: laura.name },
     { do: "type", sel: ".cal-rsvp input[name=email]", value: laura.email },
     { do: "point", sel: ".cal-rsvp button[type=submit]" },
@@ -168,6 +142,149 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "type", sel: ".fp-alert input", value: laura.phone },
     { do: "point", sel: ".fp-alert button[type=submit]" },
   ]);
+  // The staff workspace, in the same desktop browser window, showing this community, signed in as the right person:
+  // the events lead (Nora), sales (Priya) or the manager (Renata).
+  type As = "events" | "sales" | "manager";
+  const team = (path: string, actions: SiteAction[], as: As = "events"): Preview => ({ frames: [{ kind: "site", path: `/staff${path}`, host: `${domain}/staff`, actions, staff: slug, as }] });
+  // The cards a text alert opens: the photo post to approve, a family RSVP the resident said yes to, a resident who
+  // hasn't answered, a new family member to check.
+  const q = queue(slug);
+  const cardOf = (kind: string, test: (x: (typeof q)[number]) => boolean = () => true) => q.find((x) => x.kind === kind && test(x))?.id ?? q[0].id;
+  const newsCard = cardOf("post", (x) => x.kind === "post" && /news post/i.test(x.postKind));
+  const tPost = team("/post?type=photo", [
+    { do: "wait", ms: 700 },
+    { do: "point", sel: ".pt-shots button", n: 0 },
+    { do: "scroll", sel: ".pt-form textarea" },
+    { do: "point", sel: ".pt-form textarea" },
+    { do: "scroll", sel: ".pt-tags" },
+    { do: "point", sel: ".pt-tags li", n: 0 },
+    { do: "scroll", sel: ".pt-submit button" },
+    { do: "point", sel: ".pt-submit button" },
+  ]);
+  const tMenus = team("/calendar/menus", [
+    { do: "wait", ms: 900 },
+    { do: "scroll", sel: "button.sx-btn-terra", text: "Publish menus" },
+    { do: "point", sel: "button.sx-btn-terra", text: "Publish menus" },
+  ]);
+  const tApprovePost = team(`/card/${newsCard}`, [
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".pt-q h3" },
+    { do: "point", sel: ".pt-act button.sx-btn-primary" },
+  ], "manager");
+  const tCalEdit = team("/calendar", [
+    { do: "wait", ms: 900 },
+    { do: "click", sel: ".ced-ev", n: 9 },
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".sx-drawer a", text: "Change or cancel" },
+  ]);
+  const tApprove = team(`/card/${cardOf("post")}`, [
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".pt-act button.sx-btn-primary" },
+  ], "manager");
+  const tUrgent = team("/post?type=change", [
+    { do: "wait", ms: 900 },
+    { do: "click", sel: ".pt-urgent input" },
+    { do: "type", sel: ".pt-form textarea", value: `Fire alarm test at 10:30 this morning. There’s no need to leave. Questions? Call the front desk at ${s.brand.phone}.` },
+    { do: "scroll", sel: ".pt-submit button" },
+    { do: "point", sel: ".pt-submit button" },
+  ], "manager");
+  const tSignups = team("/calendar", [
+    { do: "wait", ms: 900 },
+    { do: "click", sel: ".sx-seg button", text: "Month" },
+    { do: "wait", ms: 600 },
+    { do: "click", sel: ".ced-ev", text: "Family Barbecue" },
+    { do: "wait", ms: 1000 },
+    { do: "point", sel: ".pt-reqs li", n: 0 },
+    { do: "wait", ms: 1200 },
+  ]);
+  const tSignupApprove = team(`/card/${cardOf("rsvp")}`, [
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".pt-facts span", n: 0 },
+    { do: "point", sel: ".pt-act button.sx-btn-primary" },
+  ]);
+  const tSignupAsk = team(`/card/${cardOf("ask")}`, [
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".pt-facts span", n: 0 },
+    { do: "point", sel: ".pt-act button.sx-btn-primary" },
+  ]);
+  const tSignupBook = team("/calendar", [
+    { do: "wait", ms: 900 },
+    { do: "click", sel: "button[aria-label='Next week']" },
+    { do: "wait", ms: 500 },
+    { do: "click", sel: ".ced-ev .cap", n: 0 },
+    { do: "wait", ms: 1000 },
+    { do: "scroll", sel: ".pt-desk" },
+    { do: "point", sel: ".pt-desk button" },
+  ]);
+  const tAttend = team("/today", [
+    { do: "wait", ms: 900 },
+    { do: "click", sel: ".pt-sched-list button", n: 0 },
+    { do: "wait", ms: 700 },
+    { do: "click", sel: ".at-tap button", n: 0 },
+    { do: "click", sel: ".at-tap button", n: 2 },
+    { do: "click", sel: ".at-tap button", n: 3 },
+    { do: "point", sel: ".sx-drawer button.sx-btn-primary", text: "Save attendance" },
+  ]);
+  const tFamilies = team("/people", [
+    { do: "wait", ms: 700 },
+    { do: "type", sel: ".pt-search input", value: fam.f.resident.split(" ").slice(-1)[0] },
+    { do: "wait", ms: 600 },
+    { do: "scroll", sel: ".pt-fam" },
+    { do: "point", sel: ".pt-fam li", n: 0 },
+    { do: "wait", ms: 900 },
+  ]);
+  const tImport = team("/people", [
+    { do: "wait", ms: 700 },
+    { do: "scroll", sel: ".pt-res.open button.sx-btn", text: "Invite a family member" },
+    { do: "click", sel: ".pt-res.open button.sx-btn", text: "Invite a family member" },
+    { do: "wait", ms: 500 },
+    { do: "type", sel: ".pt-invite input", value: `Olivia ${fam.f.resident.split(" ").slice(-1)[0]}` },
+    { do: "point", sel: ".pt-invite button[type=submit]" },
+  ]);
+  const tVerify = team(`/card/${cardOf("verify")}`, [
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".pt-facts span", n: 1 },
+    { do: "point", sel: ".pt-act button.sx-btn-primary" },
+  ]);
+  const tTours = team("/prospects", [
+    { do: "wait", ms: 700 },
+    { do: "scroll", sel: ".sx-card", text: "Tours this week" },
+    { do: "point", sel: ".pt-outcome", n: 0 },
+    { do: "wait", ms: 900 },
+  ], "sales");
+  const tApartments = team("/prospects", [
+    { do: "wait", ms: 700 },
+    { do: "scroll", sel: ".pt-plans li", text: plan.code },
+    { do: "click", sel: ".pt-plans li button", text: plan.code },
+    { do: "wait", ms: 400 },
+    { do: "point", sel: ".pt-plan-f button[type=submit]" },
+  ], "sales");
+  const tWaitlist = team("/prospects", [
+    { do: "wait", ms: 700 },
+    { do: "scroll", sel: ".pt-wait" },
+    { do: "point", sel: ".pt-wait li", n: 0 },
+  ], "sales");
+  const tInbox = team(`/card/${cardOf("reply")}`, [
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".pt-quote" },
+    { do: "point", sel: ".pt-hint" },
+    { do: "wait", ms: 900 },
+  ]);
+  const tTranslate = team(`/card/${cardOf("reply", (x) => x.kind === "reply" && x.lang !== "English")}`, [
+    { do: "wait", ms: 900 },
+    { do: "point", sel: ".pt-orig" },
+    { do: "point", sel: ".pt-reply textarea" },
+  ]);
+  const tScore = team("/reports", [
+    { do: "wait", ms: 1200 },
+    { do: "scroll", sel: ".sx-card", n: 0 },
+    { do: "wait", ms: 1200 },
+  ], "manager");
+  const tSurveys = team("/reports/surveys", [
+    { do: "wait", ms: 1200 },
+    { do: "scroll", sel: ".sx-card", n: 1 },
+    { do: "wait", ms: 1200 },
+  ], "manager");
   const webPost = site(`/news/${post.slug}`, [
     { do: "wait", ms: 1200 },
     { do: "scroll", sel: "article p, main p", n: 2 },
@@ -189,59 +306,113 @@ export function buildBands(slug: CommunitySlug): Band[] {
 
   /* -------------------------------------------------------- previews written here (the rest reuse the phone stories) */
 
-  const famSignup: TourStep = {
-    label: "The family sign-up page",
-    caption: "Behind the QR poster and the “add a family member” link. Consent is built in; no password.",
+  /* Families: the one-purpose pages behind the buttons in their texts and emails (nothing personal on them). */
+  const brandTop = (
+    <div className="ph-pl-brand">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={LOGO} alt="" />
+      {name}
+    </div>
+  );
+  const famRsvpPage: TourStep = {
+    label: "RSVP to a family event",
+    caption: `The RSVP button in ${mom}’s week opens this page. ${me} says how many guests are coming, then taps RSVP. No login; events with a limit show the places left, events without one don’t.`,
     screen: (
-      <Browser host={`${domain}/family`}>
+      <Browser host={`${link}/rsvp`}>
         <div className="ph-pl">
-          <div className="ph-pl-brand">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO} alt="" />
-            {name}
-          </div>
-          <div className="ph-pl-card phx-form">
-            <h4>Get the weekly update</h4>
-            <label>Your name<span>{fam.f.contact}</span></label>
-            <label>Your family member<span>{fam.f.resident}</span></label>
-            <label>Mobile<span>{fam.f.phone}</span></label>
-            <span className="ph-pl-meta">Language</span>
-            <div className="ph-pl-opts phx-opts-row">
-              <span className="ph-pl-opt on">English ✓</span>
-              <span className="ph-pl-opt">Español</span>
-            </div>
-            <span className="ph-pl-meta">How to hear from us</span>
-            <div className="ph-pl-opts">
-              <span className="ph-pl-opt on">Text and email ✓</span>
-            </div>
-            <p className="phx-note">☑ I agree to receive texts from {name}. Message rates may apply. Reply STOP to stop.</p>
-            <span className="ph-pl-btn">Sign me up</span>
+          {brandTop}
+          <div className="ph-pl-card">
+            <span className="ph-pl-tag">Family event</span>
+            <h4>{barbecue.title}</h4>
+            <span className="ph-pl-meta">{enWhen(barbecue)} · {barbecue.room}</span>
+            <p>Burgers, corn on the cob and lemonade with the residents, lawn games for the grandkids and live music.</p>
+            <span className="ph-pl-meta">12 places left</span>
+            <span className="ph-pl-meta">How many people are coming, in total?</span>
+            <div className="ph-pl-step"><span>−</span><b>{fam.party} people (total)</b><span>+</span></div>
+            <span className="ph-pl-btn">RSVP</span>
+            <p className="phx-note">We’ll check with {mom} first, then text you.</p>
           </div>
         </div>
       </Browser>
     ),
   };
-  const famWelcome: TourStep = {
-    label: "Welcome text",
-    caption: "Straight away, in the language they chose.",
-    screen: <SmsThread {...th(s, name)} bubbles={[{ time: "Today 7:12 PM", text: `Welcome, ${me}! You’ll get ${name}’s weekly highlights here and the full update by email on Sundays. Your personal link for RSVPs and settings: ${link}\n\nReply STOP to opt out.` }]} />,
+  // What the resident is signed up for in the next 7 days (sample bookings from the real calendar), and photos with them in.
+  const weekAhead = weekAheadFor(slug);
+  const snaps = s.photoPresets.filter((p) => p.people.some((x) => x.name === fam.f.resident && x.consent)).slice(0, 2);
+  const shareAsk = `Hi ${mom}, ${me} would like to see what you’re signed up for each week, and photos of you that we share. Is that OK? Reply YES or NO. You can change your mind any time.`;
+  const momShare: TourStep = {
+    label: `${mom} agrees to share`,
+    caption: `${mom} decides. ${me} only sees ${mom}’s week if ${mom} says yes (or ${mom}’s legal representative does). Asked in person if ${mom} has no phone.`,
+    screen: <SmsThread {...th(s, name)} bubbles={[{ time: "Today 11:02 AM", text: shareAsk }, { me: true, text: "Yes, that’s fine" }, { time: "11:05 AM", text: `Thanks, ${mom}! Just tell the front desk if you change your mind.` }]} />,
+  };
+  const momWeek: TourStep = {
+    label: `${mom}’s week`,
+    caption: `Every Monday, only to family ${mom} has agreed to share with: what ${mom} is signed up for this week, photos of ${mom} from last week when staff posted some, and family events to join ${mom} at. No photos? That part is simply left out.`,
+    screen: (
+      <Mail name={name} domain={domain} to={me} subject={`${mom}’s week at ${name}`} time="8:00 AM">
+        <p className="ph-em-p">Hi {me}, here’s what {mom} is signed up for this week.</p>
+        <p className="ph-em-h">This week</p>
+        {weekAhead.map((e) => (
+          <p className="ph-em-p phx-menu" key={e.id}>
+            <b>{dayShort(fromIso(e.date)).split(",")[0]} {fmtTime(e.start)}:</b> {e.title}
+          </p>
+        ))}
+        {snaps.length > 0 && <p className="ph-em-h">From last week</p>}
+        {snaps.map((p) => (
+          <div className="ph-em-item" key={p.k}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={p.src} alt="" />
+            <span>
+              <b>{p.title}</b>
+              <small>{mom} was there</small>
+            </span>
+          </div>
+        ))}
+        <p className="ph-em-h">Join {mom}</p>
+        <div className="ph-em-item">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/courtyard-bbq.jpg" alt="" />
+          <span>
+            <b>{barbecue.title}</b>
+            <small>{enWhen(barbecue)} · {barbecue.room}</small>
+          </span>
+        </div>
+        <span className="ph-em-btn">RSVP</span>
+        <div className="ph-em-foot">{mom} chose to share this with you. {mom} or the {name} team can turn it off at any time.</div>
+      </Mail>
+    ),
+  };
+  const momToggle: TourStep = {
+    label: "On or off, any time",
+    caption: `${mom} can stop sharing by telling staff or replying to a text, and staff can switch it off for one family member from the resident’s family list. The community news keeps coming either way.`,
+    screen: (
+      <div className="ph-staff">
+        <StaffHead title="Family contacts" sub={`${name} · ${fam.f.resident}`} />
+        <div className="ph-staff-body">
+          <div className="ph-staff-card">
+            <span className="ph-chip">{fam.f.relation} · joined</span>
+            <h5>{fam.f.contact}</h5>
+            <p>Community news: <b>On</b></p>
+            <p>{mom}’s week (sign-ups and photos): <b>On</b> · {mom} agreed</p>
+            <span className="ph-staff-btn ghost">Turn off {mom}’s week</span>
+          </div>
+        </div>
+      </div>
+    ),
+  };
+  const famUrgent: TourStep = {
+    label: "Urgent news",
+    caption: "Emergencies skip approval and go out within minutes. They say what is changing, never anyone’s health details.",
+    time: "9:05",
+    dark: true,
+    screen: <LockScreen date={longDate(t)} time="9:05" wallpaper="/img/mother-daughter.jpg" notices={[{ app: "Messages", title: name, text: `Visiting is paused until Friday. Video calls can be booked with the front desk at ${s.brand.phone}. We’ll text you as soon as visits start again.`, time: "now" }]} />,
   };
   const famChange: TourStep = {
     label: "A change, by text",
-    caption: `Sent as soon as ${first(boss.name)} approves it. Emergencies skip the approval.`,
+    caption: `For community events and anything ${mom} is booked on. Sent the same day, as soon as ${first(boss.name)} approves it.`,
     time: "2:15",
     dark: true,
     screen: <LockScreen date={longDate(t)} time="2:15" wallpaper="/img/mother-daughter.jpg" notices={[{ app: "Messages", title: name, text: `Change for ${dayShort(fromIso(musical.date)).split(",")[0]}: ${musical.title} now starts at ${fmtTime(musical.start + 30)} (was ${fmtTime(musical.start)}). Families welcome as always.`, time: "now" }]} />,
-  };
-  const famStop: TourStep = {
-    label: "Opting out by text",
-    caption: "STOP turns off texts from this community only. The email keeps coming unless they unsubscribe there too.",
-    screen: <SmsThread {...th(s, name)} bubbles={[{ me: true, text: "STOP", time: "Today 8:40 PM" }, { text: `You won’t get any more texts from ${name}. You’ll still get the Sunday email; to change that, use your link: ${link}. Reply START to rejoin.` }]} />,
-  };
-  const famSeatNo: TourStep = {
-    label: "If the answer is no",
-    caption: "The family is told either way, kindly.",
-    screen: <SmsThread {...th(s, name)} bubbles={[{ time: "Today 11:14 AM", text: `Hi ${me}, we asked ${mom} about ${outing.title} (${enWhen(outing)}). She’d rather stay in that day, so we haven’t booked a seat. We’ll keep you posted on the next one!` }]} />,
   };
   const famSurvey: TourStep = {
     label: "The family survey",
@@ -258,38 +429,19 @@ export function buildBands(slug: CommunitySlug): Band[] {
       label: "You’re registered",
       caption: "Every public sign-up gets a confirmation, and lands with the sales team as a lead.",
       screen: (
-        <Mail name={name} domain={domain} to="Laura" subject={`You’re registered: Open House & Lunch, ${dayShort(fromIso(openHouse.date))}`} time="8:31 PM">
+        <Mail name={name} domain={domain} to="Laura" subject={`You’re registered: ${fair.title}, ${dayShort(fromIso(fair.date))}`} time="8:31 PM">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="ph-em-photo" src="/img/courtyard-palms.jpg" alt="" />
-          <p className="ph-em-p">Hi Laura, we’ve saved 2 places for you at the Open House & Lunch on {dayShort(fromIso(openHouse.date))}, 10:00 am to 1:00 pm.</p>
-          <p className="ph-em-p">Walk through the model apartments, meet {first(rep.name)} and the team, and stay for lunch on us.</p>
+          <p className="ph-em-p">Hi Laura, we’ve saved 2 places for you at the {fair.title}, {fairWhen}, in the {fair.room}.</p>
+          <p className="ph-em-p">Free and open to everyone: browse the stalls, have a cider, and meet the residents and the team.</p>
           <span className="ph-em-btn">Add to calendar</span>
           <div className="ph-em-foot">{c.site.addressLine} · {s.brand.phone}</div>
         </Mail>
       ),
     },
-    { label: "Reminder the day before", time: "4:00", dark: true, screen: <LockScreen date={longDate(addDays(fromIso(openHouse.date), -1))} time="4:00" wallpaper="/img/courtyard-palms.jpg" notices={[{ app: "Messages", title: name, text: `See you tomorrow at 10:00 am for the Open House & Lunch at ${name}! Park by the main entrance. Plans changed? Reply here.`, time: "now" }]} /> },
+    { label: "Reminder the day before", time: "4:00", dark: true, screen: <LockScreen date={longDate(addDays(fromIso(fair.date), -1))} time="4:00" wallpaper="/img/courtyard-palms.jpg" notices={[{ app: "Messages", title: name, text: `See you tomorrow at ${fmtTime(fair.start)} for the ${fair.title} at ${name}! Park by the main entrance. Plans changed? Reply here.`, time: "now" }]} /> },
   ];
 
-  const staffAlerts: TourStep = {
-    label: "Staff alerts",
-    caption: "Each alert goes to the person who owns it, by text, email or in the workspace, as they choose on the Alerts screen.",
-    time: "9:49",
-    dark: true,
-    screen: (
-      <LockScreen
-        date={longDate(t)}
-        time="9:49"
-        wallpaper="/img/lantern-garden.jpg"
-        notices={[
-          { app: "Kinlight", title: `New inquiry · ${name}`, text: "Laura Bennett, Independent Living for her mother. Instant reply sent. Call her by tomorrow morning.", time: "now" },
-          { app: "Kinlight", title: "Tour booked", text: `Laura Bennett · ${dayShort(addDays(t, 2))}, 10:00 am with ${first(rep.name)}`, time: "2m ago" },
-          { app: "Kinlight", title: "RSVP waiting", text: `${fam.f.contact}: ${fam.party} people for the Family Barbecue. Approve within 1 business day.`, time: "1h ago" },
-          { app: "Kinlight", title: "Seat request", text: `${fam.f.contact} asks for a seat for ${mom} on ${outing.title}. Check with ${mom} first.`, time: "1h ago" },
-        ]}
-      />
-    ),
-  };
   const staffStale: TourStep = {
     label: "Page going stale",
     caption: "Each page has an owner and a rhythm (menus weekly, calendar monthly). The owner hears about it before families notice.",
@@ -358,16 +510,10 @@ export function buildBands(slug: CommunitySlug): Band[] {
       <p className="fl-paper-foot">Large print · 24 pt · front desk and elevators</p>
     </Paper>
   );
-  const slipPaper = (
-    <Paper title="What would you like to see?" sub="Suggestion slip · drop it at the front desk, or scan the code">
-      <div className="fl-paper-lines"><span /><span /><span /></div>
-      <p className="fl-paper-foot">Name (optional) ______________ &nbsp; ▣ Scan to send it from a phone</p>
-    </Paper>
-  );
   const posterPaper = (
-    <Paper title="Get the weekly update" sub="QR poster · front desk and by each elevator" size="lg">
+    <Paper title={`Stay close to life at ${name}`} sub="QR poster · front desk and by each elevator" size="lg">
       <div className="fl-paper-qr" aria-hidden="true" />
-      <p className="fl-paper-big">Photos, events and menus from {name}, by text or email, in your language.</p>
+      <p className="fl-paper-big">Events, menus and the week’s best moments from {name}, by text or email, in your language.</p>
       <p className="fl-paper-foot">Scan with your phone camera. No app, no password.</p>
     </Paper>
   );
@@ -383,94 +529,64 @@ export function buildBands(slug: CommunitySlug): Band[] {
 
   /* -------------------------------------------------------- the bands */
 
-  const photoLine = fam.momInPhoto ? `${mom} at pumpkin carving 📷` : "This week’s best moment 📷";
+  const photoLine = `${fam.photo.title} 📷`;
+  const x = moreScreens(slug);
+  const em = familyEmails(slug);
+  const pe = prospectEmails(slug);
+  const re = residentEmails(slug);
+  const se = staffEmails(slug);
+  const R = first(x.resident);
   return timed([
     {
       key: "family",
       label: "Families",
-      tagline: "Text, email and a personal link. No app, no login, in their own language.",
+      tagline: "Text and email, plus one-purpose pages from a link. No app, no login, in their own language.",
       flows: [
         {
-          id: "f-join",
-          title: "Joining",
-          hook: "From a poster in the lobby to the weekly update.",
+          id: "f-news",
+          email: em.news,
+          title: "Community news",
+          hook: `The community’s week, for anyone who wants it: a highlight by text midweek and the whole week by email on Sunday. Families sign up on the website or with the QR poster. Staff post once.`,
           steps: [
-            { id: "f-join-page", scene: "form", label: "Signs up with consent", actor: "family", preview: phones(famSignup) },
-            { id: "f-join-welcome", scene: "text", label: "Welcome text", actor: "auto", when: "Instantly", text: `Welcome, ${me}! 👋`, preview: phones(famWelcome) },
+            { id: "f-news-signup", scene: "web", label: "Signs up on the website", actor: "family", via: "Website form", when: "Or scans the QR poster", preview: join(webSignup, paperOf(posterPaper)) },
+            { id: "f-news-text", scene: "text", label: "The week’s highlight", actor: "auto", when: "Midweek", text: photoLine, preview: pick(famSteps, 0, 1) },
+            { id: "f-news-email", scene: "email", label: "The whole week", actor: "auto", with: true, when: "Sunday, 5 pm", text: `This week at ${name}`, preview: pick(famSteps, 4, 5) },
           ],
         },
         {
-          id: "f-weekly",
-          title: "Weekly highlights",
-          hook: "One photo from the week, straight to their phone.",
+          id: "f-mine",
+          email: em.mine,
+          title: "See what your parent is up to",
+          hook: `Each week, what ${mom} is signed up for, with photos of ${mom} from last week when there are some. Only if ${mom} agrees, and ${mom} or staff can turn it off.`,
           steps: [
-            { id: "f-weekly-text", scene: "text", label: "Lands as a text", actor: "auto", when: "Weekday morning, once a manager approves", text: photoLine, preview: pick(famSteps, 0, 1) },
-          ],
-        },
-        {
-          id: "f-reply",
-          title: "Replies",
-          hook: "Families just reply. The right person answers.",
-          steps: [
-            { id: "f-reply-send", scene: "reply", label: "Family replies", actor: "family", text: "Can I bring the kids?" },
-            { id: "f-reply-route", scene: "route", label: "Routed to the right person", actor: "auto" },
-            { id: "f-reply-answer", scene: "text", label: "Answer by text", actor: "staff", when: "Minutes later", text: "Of course! 🎉", preview: pick(famSteps, 2, 3) },
-            { id: "f-reply-tr", scene: "translate", label: "Any language, translated", actor: "auto", text: "¿Puedo llevar a los niños?", text2: "Can I bring the kids?" },
+            { id: "f-mine-agree", scene: "reply", label: `${mom} agrees to share`, actor: "resident", when: "Or in person, if no phone", text: "Yes, that’s fine", preview: phones(momShare) },
+            { id: "f-mine-week", scene: "email", label: `${mom}’s week`, actor: "auto", when: "Every Monday", text: `${mom}’s week`, preview: phones(momWeek) },
+            { id: "f-mine-toggle", scene: "list", label: "On or off, any time", actor: "staff", via: "Text or staff workspace", when: `By ${mom} or by staff`, preview: phones(momToggle) },
           ],
         },
         {
           id: "f-change",
-          title: "Changes & urgent news",
-          hook: "Post the change once. Everyone hears.",
+          email: em.change,
+          title: "Hear about any alerts",
+          hook: `When an event moves or plans change, families hear the same day. Emergencies go out within minutes.`,
           steps: [
-            { id: "f-change-text", scene: "bell", label: "Texted right away", actor: "auto", when: "Once approved; emergencies skip the wait", text: `${musical.title}: new time`, preview: phones(famChange) },
+            { id: "f-change-text", scene: "bell", label: "A change", actor: "auto", when: "Same day, once a manager approves", text: `${musical.title}: new time`, preview: phones(famChange) },
+            { id: "f-change-urgent", scene: "bell", label: "Urgent news", actor: "auto", when: "Within minutes, no approval needed", text: "Visiting paused until Friday", preview: phones(famUrgent) },
           ],
         },
         {
-          id: "f-digest",
-          title: "The Sunday email",
-          hook: "The whole week, built for you, from your own address.",
+          id: "f-joinin",
+          email: em.join,
+          title: "Join your parent at an event",
+          hook: `${me} sees a family event in ${mom}’s week and RSVPs. ${mom} is asked first, by text, and ${me} hears the answer.`,
           steps: [
-            { id: "f-digest-send", scene: "email", label: "Lands in their inbox", actor: "auto", when: "Sunday 5 pm, reviewed by staff", text: `${mom}’s week`, preview: pick(famSteps, 4, 5) },
-          ],
-        },
-        {
-          id: "f-rsvp",
-          title: "Family event RSVP",
-          hook: `The ${barbecue.title}, from their own link.`,
-          steps: [
-            { id: "f-rsvp-link", scene: "rsvp", label: "RSVPs on their link", actor: "family", preview: pick(famSteps, 6) },
-            { id: "f-rsvp-approve", scene: "approve", label: "Staff approve", actor: "staff", when: "Within 1 day" },
-            { id: "f-rsvp-ok", scene: "text", label: "Confirmed", actor: "auto", text: "You’re all set! 🍔", preview: pick(famSteps, 7) },
-          ],
-        },
-        {
-          id: "f-seat",
-          title: "A seat on an outing",
-          hook: "Families ask. The resident decides.",
-          steps: [
-            { id: "f-seat-ask", scene: "form", label: `“A seat for ${mom}?”`, actor: "family", preview: pick(famSteps, 6) },
-            { id: "f-seat-check", scene: "talk", label: "Staff ask the resident", actor: "staff" },
-            { id: "f-seat-answer", scene: "fork", label: "Yes or no, they’re told", actor: "staff", preview: phones(famSteps[7], famSeatNo) },
-          ],
-        },
-        {
-          id: "f-prefs",
-          title: "Opting out",
-          hook: "Their choice, per channel, any time.",
-          steps: [
-            { id: "f-prefs-stop", scene: "stop", label: "Replies STOP", actor: "family", preview: phones(famStop) },
-            { id: "f-prefs-link", scene: "form", label: "Or changes it on their link", actor: "family", preview: pick(famSteps, 6) },
-          ],
-        },
-        {
-          id: "f-survey",
-          title: "Family survey",
-          hook: "Same questions at the start and at day 90.",
-          steps: [
-            { id: "f-survey-send", scene: "text", label: "A survey link", actor: "auto", text: "How are we doing?", preview: phones(famSurvey) },
-            { id: "f-survey-page", scene: "form", label: "Two minutes", actor: "family" },
-            { id: "f-survey-score", scene: "chart", label: "On the scorecard", actor: "auto" },
+            { id: "f-joinin-email", scene: "email", label: `Taps RSVP in ${mom}’s week`, actor: "family", when: "The family event in Monday’s email", text: `${mom}’s week`, preview: { frames: [{ kind: "mail", node: em.mine.node }] } },
+            { id: "f-joinin-rsvp", scene: "rsvp", label: "How many are coming?", actor: "family", via: "Form", when: "Then one tap to RSVP", preview: phones(famRsvpPage) },
+            { id: "f-joinin-ask", scene: "text", label: `${mom} is asked`, actor: "auto", via: "Text or email", when: "In person, if no phone", text: `${me} wants to join you`, preview: phones(x.resJoinAsk), next: { tab: "resident", flow: "r-join", text: `${mom}’s side` } },
+            { id: "f-joinin-yes", scene: "reply", label: `${mom} says yes`, actor: "resident", lane: 0, text: "YES! 😊", preview: phones(x.resJoin) },
+            { id: "f-joinin-confirmed", scene: "text", label: `${me} is confirmed`, actor: "auto", lane: 0, when: "With the details", text: "You’re confirmed 🎉", preview: phones(x.famJoinYes) },
+            { id: "f-joinin-no", scene: "reply", label: `${mom} says no`, actor: "resident", lane: 1, text: "Not this time", preview: phones(x.resJoinNo) },
+            { id: "f-joinin-kind", scene: "text", label: `${me} gets a kind no`, actor: "auto", lane: 1, when: "No reason given", text: "Maybe next time", preview: phones(x.famJoinNo) },
           ],
         },
       ],
@@ -478,58 +594,47 @@ export function buildBands(slug: CommunitySlug): Band[] {
     {
       key: "prospect",
       label: "Prospects",
-      tagline: "From a first look on the website to a call about an apartment.",
+      tagline: "From a first look on the website to a call about an apartment. Public information only.",
       flows: [
         {
-          id: "p-guide",
-          title: "Free guide",
-          hook: "A guide today, the community’s news every month.",
+          id: "p-chat",
+          title: "Ask the website a question",
+          hook: "The website’s chat answers from the community’s own pages, at any hour and in the visitor’s language: what a day here is like, what’s on today, and an invitation to come and see. It’s the website answering, not staff; when it doesn’t know, it offers the phone number.",
           steps: [
-            { id: "p-guide-ask", scene: "guide", label: "Asks for a guide", actor: "prospect", preview: webGuide },
-            { id: "p-guide-mail", scene: "email", label: "Guide arrives", actor: "auto", when: "Instantly", text: "Your free guide", preview: pick(proSteps, 1) },
-            { id: "p-guide-news", scene: "email", label: "Monthly news", actor: "auto", when: "Every month", text: `This month at ${name}`, preview: pick(proSteps, 2) },
-          ],
-        },
-        {
-          id: "p-inquiry",
-          title: "Asking the chat",
-          hook: "Answers from the website, any hour, in their language.",
-          steps: [
-            { id: "p-inq-en", scene: "chat", label: "Answered automatically", actor: "auto", when: "Instantly, any hour", text: "What’s for dinner tonight?", preview: webChat },
-            { id: "p-inq-es", scene: "translate", label: "In their language too", actor: "auto", text: "¿Cuánto cuesta?", text2: "How much is it?", preview: webChatEs },
-            { id: "p-inq-call", scene: "call", label: "No answer? “Give us a call”", actor: "auto", preview: webChatCall },
+            { id: "p-chat-en", scene: "chat", label: "Answered from the website, in any language", actor: "auto", when: "Any hour", text: "What is daily life here really like?", preview: webChat },
+            { id: "p-chat-call", scene: "call", label: "Doesn’t know? “Give us a call”", actor: "auto", via: "Website chat", preview: webChatCall },
           ],
         },
         {
           id: "p-tour",
-          title: "Booking a tour",
-          hook: "No back-and-forth.",
+          title: "Book a tour",
+          hook: "Pick a time on the website, no back-and-forth. The confirmation and a reminder the day before come by text.",
           steps: [
-            { id: "p-tour-book", scene: "calendar", label: "Picks a time online", actor: "prospect", preview: webTour },
-            { id: "p-tour-conf", scene: "text", label: "Confirmed", actor: "auto", when: "Instantly", text: "Tour booked ✓", preview: phones(proTour[0]) },
-            { id: "p-tour-rem", scene: "bell", label: "Reminder", actor: "auto", when: "Day before", text: "See you tomorrow!", preview: phones(proTour[1]) },
+            { id: "p-tour-book", scene: "calendar", label: "Picks a time", actor: "prospect", via: "Website form", preview: webTour },
+            { id: "p-tour-conf", scene: "text", label: "Tour confirmed", actor: "auto", when: "Straight away", text: "Tour booked ✓", preview: phones(proTour[0]), next: { tab: "staff", flow: "s-leads", text: `${first(rep.name)} sees it` } },
+            { id: "p-tour-rem", scene: "bell", label: "A reminder", actor: "auto", when: "The day before, 4 pm", text: "See you tomorrow!", preview: phones(proTour[1]) },
           ],
         },
         {
           id: "p-open",
-          title: "Open house",
-          hook: "The only events with a public sign-up. Each one is a lead.",
+          email: pe.open,
+          title: "Come to public events",
+          hook: "Some events are open to everyone, like a holiday craft fair. Anyone can sign up on the website, and every sign-up is also a lead for sales.",
           steps: [
-            { id: "p-open-form", scene: "web", label: "Signs up on the website", actor: "prospect", preview: webOpenHouse },
-            { id: "p-open-conf", scene: "email", label: "You’re registered", actor: "auto", text: "Open House & Lunch", preview: phones(proOpen[0]) },
-            { id: "p-open-rem", scene: "bell", label: "Reminder", actor: "auto", when: "Day before", text: "See you at 10!", preview: phones(proOpen[1]) },
-            { id: "p-open-lead", scene: "list", label: "Sales follow up", actor: "staff" },
+            { id: "p-open-form", scene: "web", label: "Signs up on the website", actor: "prospect", via: "Website form", preview: webPublic },
+            { id: "p-open-conf", scene: "email", label: "You’re registered", actor: "auto", when: "Straight away", text: fair.title, preview: phones(proOpen[0]), next: { tab: "staff", flow: "s-leads", text: "Sales get a lead" } },
+            { id: "p-open-rem", scene: "bell", label: "A reminder", actor: "auto", when: "The day before", text: `See you at ${fmtTime(fair.start).replace(":00", "")}!`, preview: phones(proOpen[1]) },
           ],
         },
         {
           id: "p-wait",
-          title: "Apartment waitlist",
-          hook: "Hear the moment the right apartment opens.",
+          email: pe.wait,
+          title: "Hear when an apartment opens",
+          hook: "No apartment of the right kind free today? Join the waitlist and hear the moment one opens.",
           steps: [
-            { id: "p-wait-join", scene: "list", label: "Joins the waitlist", actor: "prospect", preview: webWaitlist },
+            { id: "p-wait-join", scene: "list", label: "Joins the waitlist", actor: "prospect", via: "Website form", preview: webWaitlist },
             { id: "p-wait-on", scene: "text", label: "You’re on the list", actor: "auto", text: `${plan.code}: you’re on the list`, preview: pick(proSteps, 4) },
-            { id: "p-wait-free", scene: "home", label: "One opens up", actor: "staff" },
-            { id: "p-wait-alert", scene: "text", label: "Texted instantly", actor: "auto", text: `${plan.code} is free! Call ${first(rep.name)}`, preview: pick(proSteps, 5) },
+            { id: "p-wait-alert", scene: "text", label: `It’s open: call ${first(rep.name)}`, actor: "auto", when: "The moment staff mark it available", text: `${plan.code} is free!`, preview: pick(proSteps, 5) },
             { id: "p-wait-call", scene: "call", label: "Calls in", actor: "prospect", preview: pick(proSteps, 6) },
           ],
         },
@@ -538,61 +643,58 @@ export function buildBands(slug: CommunitySlug): Band[] {
     {
       key: "resident",
       label: "Residents",
-      tagline: "Paper and people: large print, and the activities team in person.",
-      note: "No texts, email or app for residents in alpha. Their app comes in beta.",
+      tagline: "Their own plans by text and email if they opt in, and everything in large print. No app, no login.",
+      note: "Residents opt in the same way families do, and reply STOP any time. Large print still goes to every door.",
       flows: [
         {
-          id: "r-print",
-          title: "Calendars & menus",
-          hook: "Post once. The large-print copies make themselves.",
+          id: "r-today",
+          email: re.today,
+          title: "Know what’s on today",
+          hook: "Every morning, today’s activities by text for residents who opt in. The same calendar, menus and flyers are printed in large print for every door.",
           steps: [
-            { id: "r-print-cal", scene: "print", label: "Large-print calendar", actor: "auto", when: "Monthly", preview: paperOf(calendarPaper) },
-            { id: "r-print-menu", scene: "print", label: "Large-print menus", actor: "auto", when: "Weekly", preview: paperOf(menuPaper) },
-          ],
-        },
-        {
-          id: "r-flyer",
-          title: "Event flyers",
-          hook: "Every event prints its own flyer.",
-          steps: [
-            { id: "r-flyer-print", scene: "print", label: "Flyer at the front desk", actor: "auto", preview: paperOf(flyerPaper) },
+            { id: "r-today-text", scene: "text", label: "Today’s activities", actor: "auto", when: "Every morning, 8 am", text: `Good morning, ${R}!`, preview: phones(x.resMorning) },
+            { id: "r-today-print", scene: "print", label: "In large print too", actor: "auto", with: true, when: "Calendar, menus and flyers", preview: join(paperOf(calendarPaper), paperOf(menuPaper), paperOf(flyerPaper)) },
           ],
         },
         {
           id: "r-signup",
-          title: "Activities & outings",
-          hook: "Signed up in person. Never on a public page.",
+          title: "Sign up for an activity",
+          hook: "Activities with limited places are offered by text. If every place is taken, they hear so straight away, and they’re the first to know when a spot opens up.",
           steps: [
-            { id: "r-signup-book", scene: "list", label: "Added at the front desk", actor: "staff" },
-            { id: "r-signup-att", scene: "list", label: "Attendance tapped", actor: "staff", preview: pick(staffSteps, 6) },
+            { id: "r-signup-offer", scene: "text", label: "Limited places: want one?", actor: "auto", text: "Seats are limited", preview: phones(x.resOfferNote) },
+            { id: "r-signup-yes", scene: "reply", label: "Replies YES", actor: "resident", text: "YES", preview: phones(x.resOfferAsk), next: { tab: "staff", flow: "s-signups", text: "Staff see it" } },
+            { id: "r-signup-full", scene: "text", label: "No more places: we’ll let you know", actor: "auto", when: "Straight away", text: "Sorry, it’s full", preview: phones(x.resFull) },
+            { id: "r-signup-opens", scene: "bell", label: "A spot opens up", actor: "auto", when: "The moment someone cancels", text: "A place opened up!", preview: phones(x.resPlaceOpens) },
           ],
         },
         {
-          id: "r-suggest",
-          title: "Suggestions",
-          hook: "Residents shape the calendar.",
+          id: "r-alerts",
+          email: re.alert,
+          title: "Hear about any alerts",
+          hook: "A reminder before anything they’re booked on, changes the same day once approved, and urgent news within minutes.",
           steps: [
-            { id: "r-suggest-slip", scene: "slip", label: "Fills a slip", actor: "resident", preview: paperOf(slipPaper) },
-            { id: "r-suggest-list", scene: "route", label: "Reaches the team", actor: "auto" },
-            { id: "r-suggest-cal", scene: "calendar", label: "On next month’s calendar", actor: "staff" },
+            { id: "r-alerts-hour", scene: "bell", label: "An hour before", actor: "auto", when: "Only if they’re booked", text: `In an hour: ${x.trip}`, preview: phones(x.resReminder) },
+            { id: "r-alerts-change", scene: "bell", label: "A change", actor: "auto", when: "Same day, once a manager approves", text: `${x.musical.title}: new time`, preview: phones(x.resChange) },
+            { id: "r-alerts-urgent", scene: "bell", label: "Urgent news", actor: "auto", when: "Within minutes, no approval needed", text: "Fire alarm test at 10:30", preview: phones(x.resUrgent) },
           ],
         },
         {
-          id: "r-survey",
-          title: "Resident survey",
-          hook: "On paper, or read aloud.",
+          id: "r-join",
+          email: re.join,
+          title: "Your family wants to join you",
+          hook: `${me} RSVPs to a family event. Nothing is confirmed until ${R} says yes; either way, ${me} is told kindly.`,
           steps: [
-            { id: "r-survey-paper", scene: "print", label: "Printed survey", actor: "staff", preview: paperOf(surveyPaper) },
-            { id: "r-survey-score", scene: "chart", label: "On the scorecard", actor: "auto" },
+            { id: "r-join-ask", scene: "text", label: `“${me} would like to come”`, actor: "auto", via: "Text or email", when: "No phone? Staff ask in person", text: `${me} wants to join you`, preview: phones(x.resJoinAsk) },
+            { id: "r-join-yes", scene: "reply", label: `${R} says yes`, actor: "resident", lane: 0, text: "YES! 😊", preview: phones(x.resJoin), next: { tab: "family", flow: "f-joinin", text: `What ${me} gets` } },
+            { id: "r-join-no", scene: "reply", label: `${R} says no`, actor: "resident", lane: 1, text: "Not this time", preview: phones(x.resJoinNo) },
           ],
         },
         {
-          id: "r-poster",
-          title: "Bringing families in",
-          hook: "A poster by the elevator signs families up.",
+          id: "r-share",
+          title: "Choose what your family sees",
+          hook: `Family only see ${R}’s week if ${R} says yes. One text asks; one word answers.`,
           steps: [
-            { id: "r-poster-print", scene: "print", label: "QR poster", actor: "auto", preview: paperOf(posterPaper) },
-            { id: "r-poster-scan", scene: "qr", label: "Families scan it", actor: "family", preview: phones(famSignup) },
+            { id: "r-share-ask", scene: "text", label: `${R} is asked first`, actor: "auto", when: "Reply YES or NO", text: `${me} would like to know`, preview: phones(x.resShareNote), next: { tab: "family", flow: "f-mine", text: `What ${me} sees` } },
           ],
         },
       ],
@@ -600,67 +702,89 @@ export function buildBands(slug: CommunitySlug): Band[] {
     {
       key: "staff",
       label: "Staff",
-      tagline: "Post once from a phone. It goes everywhere.",
+      tagline: "Everything staff do happens in the staff workspace. Every hand-off lands here.",
       flows: [
         {
           id: "s-post",
-          title: "The weekly post",
-          hook: "One nudge, one photo, every channel.",
+          email: se.post,
+          title: "Post once, reach everyone",
+          hook: "A Monday nudge, one photo and one sentence in the staff workspace, one approval, and it’s on the website, in the families’ email and in print. Calendars and menus work the same way: upload the PDF, or photograph the paper calendar or menu.",
           steps: [
-            { id: "s-post-nudge", scene: "bell", label: "Monday nudge", actor: "auto", when: "Monday, 9 am", text: "Share one moment 📷", preview: pick(staffSteps, 0) },
-            { id: "s-post-photo", scene: "camera", label: "Photo + one line", actor: "staff", preview: pick(staffSteps, 1, 2) },
-            { id: "s-post-approve", scene: "approve", label: "Approved on the go", actor: "staff", preview: pick(staffSteps, 3, 4) },
+            { id: "s-post-nudge", scene: "bell", label: "Monday’s nudge", actor: "auto", via: "Text or email", when: "Monday, 9 am", text: "Share one moment 📷", preview: pick(staffSteps, 0) },
+            { id: "s-post-photo", scene: "camera", label: "One photo, one sentence", actor: "staff", via: "Staff workspace", when: "Menus and calendars too", preview: join(tPost, tMenus) },
+            { id: "s-post-approve", scene: "approve", label: "A manager approves", actor: "staff", via: "Staff workspace", preview: tApprovePost },
             { id: "s-post-where", scene: "send", label: "Everywhere at once", actor: "auto", text: `${families} families`, preview: join(pick(staffSteps, 5), webPost) },
+            { id: "s-post-stale", scene: "email", label: "A page going stale", actor: "auto", when: "If a calendar or menu isn’t updated", text: "Menu: 9 days old", preview: phones(staffStale) },
           ],
         },
         {
-          id: "s-alerts",
-          title: "Alerts",
-          hook: "Each one goes to the person who owns it.",
+          id: "s-change",
+          email: se.approve,
+          title: "Send a change or an alert",
+          hook: "Change an event once. After a manager approves, families and booked residents are told the same day. Emergencies skip approval and go out within minutes.",
           steps: [
-            { id: "s-alert-inq", scene: "bell", label: "New inquiry", actor: "auto", text: "New inquiry: Laura", preview: phones(staffAlerts) },
-            { id: "s-alert-tour", scene: "bell", label: "Tour booked", actor: "auto", text: "Tour booked: Thu 10 am", preview: phones(staffAlerts) },
-            { id: "s-alert-rsvp", scene: "bell", label: "RSVP waiting", actor: "auto", text: "RSVP waiting: 3 people", preview: pick(staffSteps, 7) },
-            { id: "s-alert-stale", scene: "email", label: "Page going stale", actor: "auto", text: "Menu: 9 days old", preview: phones(staffStale) },
+            { id: "s-change-edit", scene: "calendar", label: "Move an event", actor: "staff", via: "Staff workspace", when: "Or write an alert", preview: tCalEdit },
+            { id: "s-change-approve", scene: "approve", label: "A manager approves", actor: "staff", via: "Staff workspace", lane: 0, when: "Within 1 business day", preview: tApprove },
+            { id: "s-change-told", scene: "send", label: "Told the same day", actor: "auto", lane: 0, when: "Families and booked residents", text: "Same day", preview: phones(famChange, x.resChange), next: { tab: "family", flow: "f-change", text: "What families get" } },
+            { id: "s-change-emergency", scene: "bell", label: "An emergency", actor: "staff", via: "Staff workspace", lane: 1, when: "No approval needed", text: "Urgent", preview: tUrgent },
+            { id: "s-change-now", scene: "send", label: "Everyone, within minutes", actor: "auto", lane: 1, text: "Within minutes", preview: phones(famUrgent, x.resUrgent), next: { tab: "resident", flow: "r-alerts", text: "What residents get" } },
+          ],
+        },
+        {
+          id: "s-signups",
+          title: "Handle sign-ups",
+          hook: "Family asked, resident answered, staff approved, family told. Residents who reply YES are booked here too, and attendance is a tap on the day.",
+          steps: [
+            { id: "s-signups-stages", scene: "list", label: "Every request, by stage", actor: "staff", via: "Staff workspace", preview: tSignups },
+            { id: "s-signups-yes", scene: "approve", label: "Resident said yes: approve", actor: "staff", via: "Staff workspace", lane: 0, when: "Family told straight away", preview: tSignupApprove, next: { tab: "family", flow: "f-joinin", text: `${me} gets the answer` } },
+            { id: "s-signups-ask", scene: "talk", label: "No answer: ask in person", actor: "staff", via: "In person", lane: 1, when: "Then tap their answer", preview: tSignupAsk },
+            { id: "s-signups-book", scene: "list", label: "Book residents who said YES", actor: "staff", via: "Staff workspace", when: "Or signed up at the desk", preview: tSignupBook, next: { tab: "resident", flow: "r-signup", text: `${R} gets the details` } },
+            { id: "s-signups-att", scene: "list", label: "Tap who came", actor: "staff", via: "Staff workspace", when: "Feeds the scorecard", preview: tAttend },
+          ],
+        },
+        {
+          id: "s-contacts",
+          email: se.invite,
+          title: "Manage family contacts",
+          hook: `Invite family at move-in, check people who sign up themselves, and see what each person gets. News about a resident only goes to family the resident agreed to.`,
+          steps: [
+            { id: "s-contacts-invite", scene: "send", label: "Add family at move-in", actor: "staff", via: "Staff workspace", when: "Invites go out by text and email", text: "Invite sent", preview: tImport },
+            { id: "s-contacts-verify", scene: "approve", label: "Check a self sign-up", actor: "staff", via: "Staff workspace", when: `${R} has agreed`, preview: tVerify, next: { tab: "resident", flow: "r-share", text: `${R} is asked` } },
+            { id: "s-contacts-list", scene: "list", label: "Everyone, and what they get", actor: "staff", via: "Staff workspace", preview: tFamilies },
+          ],
+        },
+        {
+          id: "s-leads",
+          email: se.lead,
+          title: "Follow up new leads",
+          hook: "Inquiries, tours and open-house sign-ups arrive with the instant reply already sent. Marking an apartment available tells the waitlist.",
+          steps: [
+            { id: "s-leads-alert", scene: "bell", label: "A new lead", actor: "auto", via: "Alert", when: "Instant reply already sent", text: "New inquiry: Laura", preview: phones(x.alertsSales) },
+            { id: "s-leads-call", scene: "call", label: "Call them back", actor: "staff", when: "Follow-ups due, in one list", preview: tTours },
+            { id: "s-leads-mark", scene: "home", label: "Mark an apartment available", actor: "staff", via: "Staff workspace", preview: tApartments },
+            { id: "s-leads-wait", scene: "send", label: "The waitlist is told", actor: "auto", text: `${plan.waitlist} on the list`, preview: tWaitlist, next: { tab: "prospect", flow: "p-wait", text: "What they get" } },
           ],
         },
         {
           id: "s-reply",
-          title: "Family replies",
-          hook: "One inbox, every language.",
+          title: "Replies from families and residents",
+          hook: "Replies land in one inbox, showing who sent them, translated both ways. Everyone gets an automatic thank-you with the front-desk number; there’s no promised response time.",
           steps: [
-            { id: "s-reply-in", scene: "route", label: "Reply comes to you", actor: "auto", text: "Can I bring the kids?", preview: pick(famSteps, 3) },
-            { id: "s-reply-answer", scene: "reply", label: "Just reply", actor: "staff", text: "Of course! 🎉" },
-            { id: "s-reply-tr", scene: "translate", label: "Other languages arrive translated", actor: "auto", text: "¿Puedo llevar a los niños?", text2: "Can I bring the kids?" },
-          ],
-        },
-        {
-          id: "s-events",
-          title: "Events & attendance",
-          hook: "Create once. The kind decides who sees it.",
-          steps: [
-            { id: "s-events-rsvp", scene: "approve", label: "Approve RSVPs", actor: "staff", preview: pick(staffSteps, 7) },
-            { id: "s-events-att", scene: "list", label: "Tap who came", actor: "staff", preview: pick(staffSteps, 6) },
-            { id: "s-events-score", scene: "chart", label: "Counts on the scorecard", actor: "auto" },
-          ],
-        },
-        {
-          id: "s-avail",
-          title: "Apartment availability",
-          hook: "One change tells the whole waitlist.",
-          steps: [
-            { id: "s-avail-mark", scene: "home", label: "Mark it available", actor: "staff" },
-            { id: "s-avail-send", scene: "send", label: "Waitlist told", actor: "auto", text: `${plan.waitlist} on the list` },
-            { id: "s-avail-call", scene: "call", label: "Take the calls", actor: "staff" },
+            { id: "s-reply-in", scene: "route", label: "One inbox", actor: "auto", when: "Families and residents", text: "Can I bring the kids?", preview: tInbox },
+            { id: "s-reply-ack", scene: "text", label: "An automatic thank-you", actor: "auto", with: true, when: "With the front-desk number", text: "Thanks! The team will see this", preview: phones(x.replyAck) },
+            { id: "s-reply-tr", scene: "translate", label: "Other languages, translated", actor: "auto", text: "¿Puedo llevar a los niños?", text2: "Can I bring the kids?", preview: tTranslate },
+            { id: "s-reply-thanks", scene: "bell", label: "Thank-yous reach the team", actor: "auto", via: "Alert", text: "Thank you! 💛", preview: phones(x.thanksNote) },
           ],
         },
         {
           id: "s-score",
-          title: "Scorecard",
-          hook: "Proof every month, in one page.",
+          email: se.score,
+          title: "See it working",
+          hook: "Measurement, not messages: the monthly scorecard, the family and resident surveys, and a monthly staff pulse.",
           steps: [
-            { id: "s-score-mail", scene: "email", label: "Emailed on the 1st", actor: "auto", text: `${month} scorecard`, preview: phones(staffScore) },
-            { id: "s-score-pulse", scene: "text", label: "Staff pulse", actor: "auto", text: "3 quick questions", preview: phones(staffPulse) },
+            { id: "s-score-mail", scene: "email", label: "The monthly scorecard", actor: "auto", when: "The 1st of each month", text: `${month} scorecard`, preview: join(tScore, phones(staffScore)) },
+            { id: "s-score-survey", scene: "chart", label: "Family and resident surveys", actor: "auto", via: "Text, email or paper", when: "Before go-live and at day 90", text: "How are we doing?", preview: join(tSurveys, phones(famSurvey, x.resSurvey), paperOf(surveyPaper)) },
+            { id: "s-score-pulse", scene: "text", label: "Staff pulse", actor: "auto", when: "Monthly", text: "3 quick questions", preview: phones(staffPulse) },
           ],
         },
       ],

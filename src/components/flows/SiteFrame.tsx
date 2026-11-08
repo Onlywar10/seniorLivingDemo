@@ -15,11 +15,11 @@ const HIDE_CHAT = ".chat-fab, .chat { display: none !important; }";
 const sleep = (ms: number, live: () => boolean) => new Promise<void>((r) => setTimeout(r, live() ? ms : 0));
 
 function find(doc: Document, a: { sel: string; text?: string; n?: number }) {
-  const all = [...doc.querySelectorAll<HTMLElement>(a.sel)].filter((el) => {
-    if (!a.text) return true;
-    const card = el.closest("article, li, section, .card, [role=dialog], dialog") ?? el;
-    return (el.textContent ?? "").includes(a.text) || (card.textContent ?? "").includes(a.text);
-  });
+  const els = [...doc.querySelectorAll<HTMLElement>(a.sel)];
+  const text = a.text;
+  // With a text: elements that say it themselves first, else elements inside a card that says it.
+  const own = text ? els.filter((el) => (el.textContent ?? "").includes(text)) : els;
+  const all = own.length || !text ? own : els.filter((el) => ((el.closest("article, li, section, .card, [role=dialog], dialog") ?? el).textContent ?? "").includes(text));
   return all[a.n ?? 0] ?? all[0] ?? null;
 }
 
@@ -38,12 +38,14 @@ async function typeInto(el: HTMLInputElement | HTMLTextAreaElement, value: strin
   }
 }
 
-export function SiteFrame({ path, host, actions, chat = false, onDone }: { path: string; host: string; actions: SiteAction[]; chat?: boolean; onDone?: () => void }) {
+export function SiteFrame({ path, host, actions, chat = false, staff, as, onDone }: { path: string; host: string; actions: SiteAction[]; chat?: boolean; staff?: string; as?: string; onDone?: () => void }) {
   const view = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const [scale, setScale] = useState(0.5);
   const [h, setH] = useState(800);
   const [ready, setReady] = useState(false);
+  // A staff workspace page: this community, signed in as this person, for the clip only (the visitor's own choice stays).
+  const src = staff ? `${path}${path.includes("?") ? "&" : "?"}c=${staff}${as ? `&as=${as}` : ""}` : path;
   const [cursor, setCursor] = useState<{ x: number; y: number; press: number } | null>(null);
   const done = useRef(onDone);
   const height = useRef(h);
@@ -132,12 +134,12 @@ export function SiteFrame({ path, host, actions, chat = false, onDone }: { path:
     <div className="fl-site">
       <div className="fl-site-bar" aria-hidden="true">
         <span className="fl-site-dots"><i /><i /><i /></span>
-        <span className="fl-site-url">🔒 {host}{path.replace(/^\/[^/]+/, "").replace(/\?.*$/, "") || "/"}</span>
+        <span className="fl-site-url">🔒 {host}{(staff ? path.replace(/^\/staff/, "") : path.replace(/^\/[^/]+/, "")).replace(/\?.*$/, "") || "/"}</span>
       </div>
       <div className="fl-site-view" ref={view}>
         <iframe
           ref={frame}
-          src={path}
+          src={src}
           title={`${host} website`}
           tabIndex={-1}
           style={{ width: DESKTOP, height: h, transform: `scale(${scale})` }}

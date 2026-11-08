@@ -20,6 +20,12 @@ export const LOGO = "/img/brand/dots.png";
 
 export const enWhen = (e: { date: string; start: number }) => `${dayShort(fromIso(e.date))}, ${fmtTime(e.start)}`;
 
+/** The next event open to everyone (anyone can sign up on the website), for the community news. Falls back to the open house. */
+export function publicPick(slug: CommunitySlug): { date: string; start: number; title: string; room: string } {
+  const e = upcomingEvents(slug, 30).find((x) => kindOf(x) === "public" && !/open house/i.test(x.title));
+  return e ? { date: e.date, start: e.start, title: e.title, room: e.room } : { date: nextSpecials().openHouse, start: 600, title: "Open House & Lunch", room: "Lobby" };
+}
+
 export function upcomingEvents(slug: CommunitySlug, days: number) {
   const t = today();
   return communities[slug].staffEventsBetween(t, days, iso(t)).flatMap((d) => d.events);
@@ -61,7 +67,7 @@ export function StaffHead({ title, sub }: { title: string; sub: string }) {
 
 export function familyStory(slug: CommunitySlug): TourStep[] {
   const c = communities[slug];
-  const { s, f, mom, me, link, party, photo, momInPhoto } = family(slug);
+  const { s, f, mom, me, link, party, photo } = family(slug);
   const { barbecue, outing } = keyEvents(slug);
   const t = today();
   const nora = s.people[s.roles.calendar];
@@ -69,9 +75,9 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
   const venue = c.venues[c.venueOrder[0]];
   const menu = [0, 1, 2].map((i) => ({ d: addDays(t, i + 1), m: c.menuFor(c.venueOrder[0], addDays(t, i + 1)) }));
   const others = s.photoPresets.filter((p) => p !== photo).slice(0, 2);
-  const photoLine = momInPhoto ? `${mom} at ${photo.title.toLowerCase()}` : photo.title.toLowerCase();
 
-  const weekly = `Hi ${me}, here’s the best of this week at ${name}: ${photoLine}. 📷\n\nComing up: Family Barbecue, ${enWhen(barbecue)}, in the ${barbecue.room}. RSVP and see more photos on your personal link:`;
+  const pub = publicPick(slug);
+  const weekly = `Hi ${me}, here’s the best of this week at ${name}: ${photo.title.toLowerCase()}. 📷\n\nComing up, open to everyone: ${pub.title}, ${enWhen(pub)}. Bring a friend! Details on our website:`;
   const reply = `Mom looks so happy! Can I bring my kids to the barbecue? They’re 6 and 9.`;
   const answer = `Of course, ${me}! Grandchildren are very welcome, and there are lawn games just for them. Tap your personal link to tell us how many are coming.`;
   const thread = (extra: { me?: boolean; text: ReactNode; time?: string }[], typing = false) => (
@@ -84,7 +90,7 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
       color="#2e4d33"
       typing={typing}
       bubbles={[
-        { time: "Today 10:02 AM", text: weekly, img: photo.src, link: { title: `${mom}’s week at ${name}`, host: link, img: undefined } },
+        { time: "Today 10:02 AM", text: weekly, img: photo.src, link: { title: pub.title, host: `${s.brand.domain}/calendar`, img: undefined } },
         ...extra,
       ]}
     />
@@ -96,7 +102,7 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
       label: "A text arrives",
       time: "10:02",
       dark: true,
-      caption: `${me}’s lock screen on a weekday morning. The weekly highlights text comes from ${name}’s own number. Families who read another language get it in their own language, translated automatically.`,
+      caption: `${me}’s lock screen midweek. The highlight comes from ${name}’s own number, in each family’s own language.`,
       screen: (
         <LockScreen
           date={longDate(t)}
@@ -109,13 +115,13 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
     {
       label: "The weekly highlights",
       time: "10:03",
-      caption: `One photo of ${mom} from this week (photo consent is on file), the next family event and ${me}’s personal link. Written once by ${nora.name}.`,
+      caption: `The week’s community highlight, posted once by ${nora.name}, and the next family event. Every family gets the same text, in their own language.`,
       screen: thread([]),
     },
     {
       label: `${me} replies`,
       time: "10:09",
-      caption: `${me} just replies to the text. The answer comes back a few minutes later, from the same number.`,
+      caption: `When someone on the team answers, it comes back as a text from the same number.`,
       screen: thread([
         { me: true, text: reply, time: "10:06 AM" },
         { text: answer },
@@ -161,7 +167,7 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
         <MailInbox
           account="Inbox"
           rows={[
-            { from: name, subject: `${mom}’s week at ${name}`, preview: `This week’s photos, the Family Barbecue and this week’s menu.`, time: "5:00 PM", unread: true, highlight: true },
+            { from: name, subject: `This week at ${name}`, preview: `This week’s photos, what’s coming up and this week’s menu.`, time: "5:00 PM", unread: true, highlight: true },
             { from: "Cedar Elementary", subject: "Reminder: picture day", preview: "School photos are on Thursday. Please send…", time: "3:12 PM", unread: true },
             { from: "Valley Pharmacy", subject: "Your prescription is ready", preview: "You can pick it up from 9:00 am tomorrow.", time: "11:40 AM" },
             { from: "Book club", subject: "November’s book", preview: "See you Tuesday at Lupe’s. Bring…", time: "Yesterday" },
@@ -172,9 +178,9 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
     {
       label: "The digest, opened",
       time: "5:06",
-      caption: `This week’s photos, the upcoming family events with an RSVP button, and this week’s menu in ${venue.name}. The same email goes out to every family, each in their own language.`,
+      caption: `The whole community’s week: photos, events open to everyone with a sign-up button, and the menu in ${venue.name}. Public news only, so it’s safe to forward. The same email goes to everyone on the list, each in their own language.`,
       screen: (
-        <MailMessage from={name} address={`hello@${s.brand.domain}`} to={me} subject={`${mom}’s week at ${name}`} time="5:00 PM">
+        <MailMessage from={name} address={`hello@${s.brand.domain}`} to={me} subject={`This week at ${name}`} time="5:00 PM">
           <div className="ph-em">
             <div className="ph-em-banner">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -185,7 +191,7 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
             <p className="ph-em-h">This week’s photos</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="ph-em-photo" src={photo.src} alt="" />
-            <p className="ph-em-p">{momInPhoto ? `${mom} at ${photo.title.toLowerCase()}.` : `${photo.title}.`}</p>
+            <p className="ph-em-p">{photo.title}.</p>
             {others.map((p) => (
               <div className="ph-em-item" key={p.k}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -196,27 +202,18 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
                 </span>
               </div>
             ))}
-            <p className="ph-em-h">Coming up</p>
+            <p className="ph-em-h">Open to everyone</p>
             <div className="ph-em-item">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/img/courtyard-bbq.jpg" alt="" />
+              <img src="/img/lobby.jpg" alt="" />
               <span>
-                <b>Family Barbecue</b>
+                <b>{pub.title}</b>
                 <small>
-                  {enWhen(barbecue)} · {barbecue.room}
+                  {enWhen(pub)} · {pub.room}
                 </small>
               </span>
             </div>
-            <span className="ph-em-btn">RSVP</span>
-            <div className="ph-em-item">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/img/vineyard.jpg" alt="" />
-              <span>
-                <b>{outing.title}</b>
-                <small>{enWhen(outing)}</small>
-              </span>
-            </div>
-            <span className="ph-em-btn phx-em-btn-alt">Ask for a seat for {mom}</span>
+            <span className="ph-em-btn">Sign up</span>
             <p className="ph-em-h">This week’s menu · {venue.name}</p>
             {menu.map(({ d, m }) => (
               <p className="ph-em-p phx-menu" key={iso(d)}>
@@ -225,7 +222,7 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
               </p>
             ))}
             <div className="ph-em-foot">
-              You get this email because you’re family of {mom}. Change language or channel · Unsubscribe
+              You get this email because you signed up for {name}’s news. Change language or channel · Unsubscribe
             </div>
           </div>
         </MailMessage>
@@ -293,7 +290,7 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
     {
       label: "Confirmed by text",
       time: "11:15",
-      caption: `${first(nora.name)} approves the RSVP from her phone, checks with ${mom} at lunch, and ${me} gets one text confirming both.`,
+      caption: `${mom} said yes to both by text, ${first(nora.name)} approved them on the go, and ${me} gets one text with the details. If ${mom} says no, ${me} is told that too, kindly.`,
       screen: (
         <>
         <ToEnd />
@@ -342,6 +339,10 @@ export function prospectStory(slug: CommunitySlug): TourStep[] {
   const onList = `${name}: you’re on the list for the ${planName}. ${plan.waitlist === 1 ? "There is 1 person" : `There are ${plan.waitlist} people`} ahead of you. We’ll text you the moment one opens up. Reply STOP to opt out.`;
   const opened = `Good news, Laura! A ${plan.name} (${plan.code}) has just opened up at ${name}. You’re next on the list, and we’ll hold it for you for 48 hours. ${call} to see it or reserve it.`;
   const monthAgo = addDays(t, -34);
+  // Public news only: events anyone can come to and the menu. Nothing from the families’ update.
+  const publicEvents = upcomingEvents(slug, 30).filter((e) => kindOf(e) === "public" && !/open house/i.test(e.title)).slice(0, 2);
+  const venue = c.venues[c.venueOrder[0]];
+  const dish = c.menuFor(c.venueOrder[0], addDays(t, 1)).special.name;
 
   return [
     {
@@ -398,11 +399,11 @@ export function prospectStory(slug: CommunitySlug): TourStep[] {
       ),
     },
     {
-      label: "The monthly email",
+      label: "Community news",
       time: "9:00",
-      caption: `Every month the mailing list gets ${name}’s news: upcoming open houses, a look at the menu and apartment availability. Laura sees a floor plan she loves.`,
+      caption: `Every Sunday, by email only, the list gets ${name}’s public news: events anyone can come to, a dish from the menu, life at the community and apartment availability. Never a resident’s name or a family photo.`,
       screen: (
-        <MailMessage from={name} address={`hello@${s.brand.domain}`} to="Laura" subject={`This month at ${name}`} time={`${dayShort(monthAgo).split(", ")[1]}`}>
+        <MailMessage from={name} address={`hello@${s.brand.domain}`} to="Laura" subject={`This week at ${name}`} time={`${dayShort(monthAgo).split(", ")[1]}`}>
           <div className="ph-em">
             <div className="ph-em-banner">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -410,15 +411,31 @@ export function prospectStory(slug: CommunitySlug): TourStep[] {
               {name}
             </div>
             <p className="ph-em-p">Hi Laura, here’s what’s happening this month.</p>
-            <p className="ph-em-h">Open House &amp; Lunch</p>
+            <p className="ph-em-h">Open to the public</p>
             <div className="ph-em-item">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/img/courtyard-palms.jpg" alt="" />
               <span>
-                <b>Come see us on a Saturday</b>
-                <small>Tours, lunch on us and a chance to meet residents</small>
+                <b>Open House &amp; Lunch</b>
+                <small>Tours of the model apartments, and lunch on us · sign up on our website</small>
               </span>
             </div>
+            {publicEvents.map((e) => (
+              <div className="ph-em-item" key={e.id}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/img/lobby.jpg" alt="" />
+                <span>
+                  <b>{e.title}</b>
+                  <small>{enWhen(e)} · everyone welcome</small>
+                </span>
+              </div>
+            ))}
+            <p className="ph-em-h">From the kitchen</p>
+            <p className="ph-em-p">This week in {venue.name}: {dish}.</p>
+            <p className="ph-em-h">Life at {name}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="ph-em-photo" src="/img/courtyard-dining.jpg" alt="" />
+            <p className="ph-em-p">Lunch has moved out to the courtyard while the afternoons stay warm.</p>
             <p className="ph-em-h">Apartments</p>
             <div className="ph-em-item">
               {/* eslint-disable-next-line @next/next/no-img-element */}

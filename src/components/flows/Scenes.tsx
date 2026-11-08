@@ -1,7 +1,7 @@
 // Little animated pictures for workflow steps: a text landing on a phone, a flyer sliding out of a printer, an approval
 // stamp. Pure markup; the motion lives in scenes.css and plays when a parent has .is-on (FlowBoard remounts the scene
 // each time it becomes active, so the animation replays). Without .is-on a scene rests on its final frame.
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { SceneKind } from "./types";
 import "./scenes.css";
 
@@ -29,7 +29,7 @@ function Phone({ children, className = "" }: { children?: ReactNode; className?:
   );
 }
 
-export function Scene({ kind, text, text2 }: { kind: SceneKind; text?: string; text2?: string }) {
+export function Scene({ kind, text, text2, ways = [] }: { kind: SceneKind; text?: string; text2?: string; ways?: string[] }) {
   switch (kind) {
     case "text":
       return (
@@ -280,6 +280,18 @@ export function Scene({ kind, text, text2 }: { kind: SceneKind; text?: string; t
             <span className="sc-dots"><i /><i /><i /></span>
             <span className="sc-bubble sc-in sc-answer"><i /><i /><i /></span>
           </div>
+        </div>
+      );
+    case "ways":
+      return (
+        <div className="sc sc-ways">
+          <div className="sc-ways-in">
+            {ways.map((w, i) => (
+              <span key={w} style={{ "--i": i } as CSSProperties}>{w}</span>
+            ))}
+          </div>
+          <span className="sc-ways-join" />
+          <span className="sc-ways-to">{text2}</span>
         </div>
       );
     case "build":
