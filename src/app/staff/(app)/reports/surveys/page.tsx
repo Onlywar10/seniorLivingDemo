@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { NotYours } from "@/components/staff/portal/NotYours";
-import { sectionsFor } from "@/data/staff/shared";
-import { getStaffRole as getRole } from "@/data/staff/server";
+import "@/app/staff/reports.css";
+import { mayOpen } from "@/components/staff/portal/ReportsNav";
+import { NotThisReport } from "@/components/staff/portal/ReportsParts";
+import { sectionAccess } from "@/data/staff/access";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
@@ -37,8 +39,9 @@ function BeforeNow({ q }: { q: SurveyQ }) {
 }
 
 export default async function SurveysPage() {
-  const as = await getRole();
-  if (!sectionsFor[as].includes("reports")) return <NotYours section="Reports" who={as === "sales" ? "sales" : as === "events" ? "the events team" : "your"} />;
+  const { access } = await sectionAccess("reports");
+  if (!access) return <NotYours section="Reports" />;
+  if (!mayOpen(access, "surveys")) return <NotThisReport title="Surveys" access={access} />;
   const sc = await getStaffCommunity();
   if (!sc) return <PickCommunity screen="Surveys" />;
   const { s } = sc;
@@ -52,7 +55,7 @@ export default async function SurveysPage() {
       <PageHead title="Surveys" sub={`What families, staff and residents at ${s.brand.name} say, before go-live and now. Results go on the monthly scorecard as evidence.`}>
         <Link href="/staff/reports" className="sx-btn"><Icon name="chart" /> Monthly scorecard</Link>
       </PageHead>
-      <ReportTabs />
+      <ReportTabs access={access} />
       <div className="sx-kpis">
         <Kpi label="Family survey response" value={`${famRate}%`} note={`${family.answered} of ${family.sent} families`} />
         <Kpi label="Would recommend (0–10)" value={nps ? nps.now.toFixed(1) : "–"} delta={nps ? Number((nps.now - nps.before).toFixed(1)) : undefined} deltaSuffix="" note="since before go-live" />

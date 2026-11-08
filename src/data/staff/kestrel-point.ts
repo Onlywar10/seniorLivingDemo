@@ -516,7 +516,7 @@ export const staff: StaffData = {
   slug: "kestrel-point",
   brand: { name: "Kestrel Point", short: "KP", city: "Rivermead", phone: "(916) 555-0160", domain: "kestrelpoint.example", facebook: "facebook.com/KestrelPoint", hello: "Hello from Rivermead!" },
   people: kpPeople,
-  roles: { approver: "joanna", tours: "mateo", lantern: "anjali", menus: "julien", calendar: "grant", gbpReplies: "joanna" },
+  roles: { approver: "joanna", tours: "mateo", lantern: "anjali", menus: "julien", calendar: "grant", gbpReplies: "joanna", desk: "luis" },
   community,
   languages,
   visitScale: 0.9,

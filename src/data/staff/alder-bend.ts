@@ -507,7 +507,7 @@ export const staff: StaffData = {
   slug: "alder-bend",
   brand: { name: "Alder Bend", short: "AB", city: "Fairhollow", phone: "(916) 555-0140", domain: "alderbend.example", facebook: "facebook.com/AlderBend", hello: "Hello from Fairhollow!" },
   people: abPeople,
-  roles: { approver: "renata", tours: "priya", lantern: "maribel", menus: "rafael", calendar: "nora", gbpReplies: "renata" },
+  roles: { approver: "renata", tours: "priya", lantern: "maribel", menus: "rafael", calendar: "nora", gbpReplies: "renata", desk: "bea" },
   community,
   languages,
   visitScale: 1,

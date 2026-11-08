@@ -22,6 +22,7 @@ export const abPeople: Record<PersonKey, StaffPerson> = {
   maribel: { name: "Maribel Ortiz", initials: "MO", role: "Lantern Memory Care Director", color: "#be4142" },
   colleen: { name: "Colleen Ashby", initials: "CA", role: "Resident Services Director", color: "#6b5aa6" },
   opal: { name: "Opal Merriweather", initials: "OM", role: "Lead Ambassador", color: "#7a6a3a" },
+  bea: { name: "Bea Okafor", initials: "BO", role: "Front Desk Concierge", color: "#8a5a7a" },
 };
 
 /** Kestrel Point's published team (src/data/communities/kestrel-point/site.ts `team`). */
@@ -38,6 +39,7 @@ export const kpPeople: Record<PersonKey, StaffPerson> = {
   imani: { name: "Imani Price", initials: "IP", role: "Business Office Director", color: "#425968" },
   ray: { name: "Ray Castillo", initials: "RC", role: "Maintenance Director", color: "#5b6b4a" },
   june: { name: "June Tolliver", initials: "JT", role: "Lead Ambassador", color: "#7a6a3a" },
+  luis: { name: "Luis Ferrer", initials: "LF", role: "Front Desk Concierge", color: "#8a5a7a" },
 };
 
 /** Every staff person, across communities (keys are unique). */

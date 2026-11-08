@@ -1,61 +1,72 @@
 import type { Metadata } from "next";
-import { Composer, type PostType, type UpcomingEvent } from "@/components/staff/portal/Composer";
-import { PickCommunity } from "@/components/staff/StaffCommunity";
+import "@/app/staff/post.css";
+import { NotYours } from "@/components/staff/portal/NotYours";
+import { PostDesk, type PostKind } from "@/components/staff/portal/PostDesk";
+import { OpenCommunity } from "@/components/staff/StaffCommunity";
 import { PageHead } from "@/components/staff/ui";
-import { kindOf } from "@/data/shared";
-import { nextDigest } from "@/data/staff";
-import { sampleFamily } from "@/data/staff/alpha";
-import { residents, viewer } from "@/data/staff/portal";
-import { getStaffCommunity, getStaffRole } from "@/data/staff/server";
-import { addDays, hash, iso, nowMinutes, today } from "@/lib/clock";
+import { communitySlugs } from "@/data/communities";
+import { getStaffData } from "@/data/staff";
+import { sectionAccess } from "@/data/staff/access";
+import { announceSetup, ideaPrefill, importSetup, newEventSetup, photoSetup, planHelp, resourceSetup } from "@/data/staff/post";
+import { getStaffCommunity } from "@/data/staff/server";
 
 export const metadata: Metadata = { title: "Post" };
 
-const TYPES: PostType[] = ["photo", "event", "change", "menu", "flyer"];
+const POST_KINDS: PostKind[] = ["event", "import", "announcement", "photos", "resource"];
 
-export default async function PostPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+/** Old links (photo, change, menu, flyer) still land on the right form. */
+const legacy: Record<string, { kind: PostKind; note?: "menu" | "change" | "flyer" }> = {
+  photo: { kind: "photos" },
+  change: { kind: "announcement", note: "change" },
+  alert: { kind: "announcement", note: "change" },
+  menu: { kind: "event", note: "menu" },
+  flyer: { kind: "resource", note: "flyer" },
+};
+
+const SUB = "Add something once. Kinlight does the rest: the website, texts and emails, invites, flyers, the newsletter and print.";
+
+export default async function PostPage({ searchParams }: { searchParams: Promise<{ type?: string; event?: string; idea?: string }> }) {
+  const { as, access } = await sectionAccess("post");
+  if (!access) return <NotYours section="Post" />;
+  const { type = "", event, idea } = await searchParams;
+  const asked = POST_KINDS.includes(type as PostKind) ? { kind: type as PostKind } : legacy[type];
+  const only: PostKind[] | undefined = access === "announcements" ? ["announcement"] : undefined;
+  const initial: PostKind = only ? "announcement" : asked?.kind ?? "event";
   const sc = await getStaffCommunity();
-  if (!sc) return <PickCommunity screen="Post" />;
-  const { s, c } = sc;
-  const as = await getStaffRole();
-  const me = viewer(s.slug, as);
-  const { type } = await searchParams;
-  const initial = TYPES.includes(type as PostType) ? (type as PostType) : "photo";
-  const t = today();
-  const now = nowMinutes();
-  // Events a change could be about: the rest of today and the next week, soonest first.
-  const events: UpcomingEvent[] = c
-    .staffEventsBetween(t, 8, iso(t))
-    .flatMap((d) => d.events)
-    .filter((e) => (e.date > iso(t) || e.start > now) && e.cat !== "faith")
-    .slice(0, 40)
-    .map((e) => ({ id: e.id, title: e.title, date: e.date, start: e.start, room: e.room, kind: kindOf(e), cap: e.cap, taken: e.taken ?? 6 + (hash(e.id) % 14), families: Math.round((e.taken ?? 6 + (hash(e.id) % 14)) * 1.3) }));
-  const noConsent = [...new Set([...s.photoPresets.flatMap((p) => p.people.filter((x) => !x.consent).map((x) => x.name)), ...residents(s.slug).filter((r) => !r.photoConsent).map((r) => r.name)])];
-  const fam = sampleFamily(s.slug);
-  const approver = s.people[s.roles.approver].name;
+
+  // All communities: an announcement can go to every community at once; everything else belongs to one community.
+  if (!sc) {
+    const all = communitySlugs.map((slug) => announceSetup(slug));
+    return (
+      <>
+        <PageHead title="Post" sub="Announcements from here can go to every community at once." />
+        <div className="sx-callout info po-allnote">
+          <p>New events, photos, imports and resources belong to one community. Open one to add them:</p>
+          <span className="po-allbtns">
+            {communitySlugs.map((slug) => { const s = getStaffData(slug); return <span key={slug} className="po-allbtn"><b>{s.brand.name}</b> <OpenCommunity slug={slug} name={s.brand.name} /></span>; })}
+          </span>
+        </div>
+        <PostDesk initial="announcement" only={["announcement"]} ann={all} note={asked?.note === "change" ? "change" : undefined} />
+      </>
+    );
+  }
+
+  const slug = sc.s.slug;
+  const full = !only;
   return (
     <>
-      <PageHead title="Post" sub="Say it once. It goes to the website, families and residents by text and email, the Sunday email and print, in the right form for each." />
-      <Composer
+      <PageHead title="Post" sub={only ? "Announcements for residents and families. Kinlight sends them in each person’s language." : SUB} />
+      <PostDesk
         initial={initial}
-        brand={s.brand}
-        copy={s.publish}
-        presets={s.photoPresets}
-        noConsent={noConsent}
-        residentNames={[...s.residentNames, ...s.lanternNames].filter((n, i, a) => a.indexOf(n) === i).sort()}
-        families={s.community.families}
-        lanternFamilies={s.community.lanternFamilies}
-        residents={Math.round(s.community.residents * 0.66)}
-        lanternResidents={Math.round(s.community.lanternResidents * 0.3)}
-        digest={nextDigest()}
-        rooms={[...Object.values(c.rooms), "All floors"]}
-        restaurants={c.venueOrder.map((k) => c.venues[k].name)}
-        events={events}
-        todayIso={iso(addDays(t, 0))}
-        approver={{ name: approver, first: approver.split(" ")[0] }}
-        isApprover={as === "manager"}
-        me={me.name}
-        sample={{ contact: fam.contact, resident: fam.resident }}
+        only={only}
+        note={asked?.note}
+        ann={[announceSetup(slug)]}
+        event={full ? newEventSetup(slug, as) : undefined}
+        idea={full && initial === "event" ? ideaPrefill(slug, idea) : undefined}
+        imp={full ? importSetup(slug) : undefined}
+        photos={full ? photoSetup(slug, as, event) : undefined}
+        res={full ? resourceSetup(slug) : undefined}
+        plan={full ? planHelp(slug) : undefined}
       />
     </>
   );

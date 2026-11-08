@@ -1,55 +1,66 @@
 import type { Metadata } from "next";
-import { NotYours } from "@/components/staff/portal/NotYours";
-import { sectionsFor } from "@/data/staff/shared";
-import { getStaffRole as getRole } from "@/data/staff/server";
-import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
 import Image from "next/image";
+import "@/app/staff/reports.css";
 import { Icon } from "@/components/Icon";
-import { Overview } from "@/components/staff/Overview";
+import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
+import { NotYours } from "@/components/staff/portal/NotYours";
+import { ReportsActions } from "@/components/staff/portal/ReportsActions";
+import { Leadership } from "@/components/staff/portal/ReportsLeadership";
+import { EvidenceTable, LeadsBySource, nextFirst, show } from "@/components/staff/portal/ReportsParts";
+import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, Delta, Meter, PageHead, fmt, pctChange } from "@/components/staff/ui";
 import { scorecardMonths } from "@/data/staff";
+import { sectionAccess } from "@/data/staff/access";
 import { adoption, evidence, promises, type PromiseStatus } from "@/data/staff/alpha";
+import { prospectNumbers } from "@/data/staff/reports";
 import { getStaffCommunity } from "@/data/staff/server";
 
 export const metadata: Metadata = { title: "Monthly scorecard" };
 
-const show = (v: number, f?: string) => (f === "pct" ? `${v}%` : f === "dec" ? v.toFixed(1) + (v > 10 ? "%" : "") : fmt(v));
 const promiseTone: Record<PromiseStatus, "good" | "warn" | "bad" | "neutral"> = { Kept: "good", "At risk": "warn", Missed: "bad", "Not due yet": "neutral" };
 
-/** Rows the "Evidence we track" section shows as outcomes; the rest of the monthly figures are reach and activity. */
+/** Monthly figures that are outcomes (shown in "Evidence we track"); the rest are reach and activity. */
 const evidenceKeys = new Set(["Enquiries", "Tours", "Deposits", "Move-ins", "Occupancy", "Google rating"]);
 
-/** A plain change against last month, with no good or bad colouring: these are outcomes we track, not promise. */
-function change(now: number, prev: number, fmtKind?: string) {
-  if (!prev) return "New this month";
-  const d = Number((now - prev).toFixed(1));
-  if (d === 0) return "No change";
-  const sign = d > 0 ? "+" : "−";
-  if (fmtKind === "pct" || fmtKind === "dec") return `${sign}${Math.abs(d).toFixed(fmtKind === "dec" ? 1 : 0)}${fmtKind === "pct" || now > 10 ? " pts" : ""}`;
-  return `${sign}${fmt(Math.abs(d))} (${sign}${Math.abs(pctChange(now, prev))}%)`;
-}
-
 export default async function ScorecardPage() {
-  const as = await getRole();
-  if (!sectionsFor[as].includes("reports")) return <NotYours section="Reports" who={as === "sales" ? "sales" : as === "events" ? "the events team" : "your"} />;
+  const { access } = await sectionAccess("reports");
+  if (!access) return <NotYours section="Reports" />;
   const sc = await getStaffCommunity();
-  if (!sc) return <Overview screen="scorecard" />;
+  const tabs = <ReportTabs access={access} />;
+  if (!sc) return access === "full" ? <Leadership tabs={tabs} title="Monthly scorecard · All communities" /> : <PickCommunity screen="Reports" />;
   const { s } = sc;
-  const { enquirySources, enquirySourcesPrev, highlights, scoreRows, topPosts } = s;
   const m = scorecardMonths();
+
+  // Sales: only the prospect numbers.
+  if (access === "prospect-numbers") {
+    const pn = prospectNumbers(s.slug);
+    return (
+      <>
+        <PageHead title={`Prospect numbers · ${m.label}`} sub={`${s.brand.name}: inquiries, how fast they heard from a person, tours and move-ins, compared with ${m.prev}. Numbers we track, not targets.`} />
+        <div className="sx-grid g-2">
+          <Card title="Prospect numbers" sub={`${m.month} compared with ${m.prev}`} pad={false}>
+            <EvidenceTable rows={pn.rows} month={m.month} prev={m.prev} />
+          </Card>
+          <Card title="Where inquiries came from" sub={`${m.month}, with ${m.prev} in brackets. Public event sign-ups count as inquiries.`}>
+            <LeadsBySource sources={pn.sources} prevValues={pn.sourcesPrev} month={m.month} prev={m.prev} />
+          </Card>
+        </div>
+      </>
+    );
+  }
+
+  const { highlights, scoreRows, topPosts } = s;
   const ps = promises(s.slug);
   const kept = ps.filter((p) => p.status === "Kept").length;
   const ad = adoption(s.slug);
   const ev = evidence(s.slug);
   const activity = scoreRows.filter((r) => !evidenceKeys.has(r.k));
-  const maxSrc = Math.max(...enquirySources.map((s) => s.value), ...enquirySourcesPrev);
   return (
     <>
-      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`${s.brand.name}: the promises Kinlight made, how the team is using it, and the outcomes we track, compared with ${m.prev}. Shared with ${s.people[s.roles.approver].name} and Wrenhaven Senior Living.`}>
-        <button type="button" className="sx-btn"><Icon name="download" /> Download PDF</button>
-        <button type="button" className="sx-btn sx-btn-primary"><Icon name="mail" /> Email to the team</button>
+      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`${s.brand.name}: the promises Kinlight made, how the team is using it, and the outcomes we track, compared with ${m.prev}.`}>
+        <ReportsActions month={m.month} to={`${s.people[s.roles.approver].name} and Wrenhaven`} next={nextFirst()} />
       </PageHead>
-      <ReportTabs />
+      {tabs}
 
       <div className="sx-grid g-21">
         <Card title={`Our ${ps.length} promises this month`} sub={`${kept} of ${ps.length} kept${ps.length - kept ? ` · ${ps.length - kept} at risk` : ""}`} pad={false}>
@@ -61,7 +72,7 @@ export default async function ScorecardPage() {
                   <tr key={p.code}>
                     <td><span className="sc-code">{p.code}</span> <b>{p.promise}</b></td>
                     <td><small style={{ marginTop: 0 }}>{p.target}</small></td>
-                    <td style={{ whiteSpace: "nowrap" }}><Badge tone={promiseTone[p.status]}>{p.status === "Kept" && <Icon name="check" />} {p.status}</Badge></td>
+                    <td className="rp-nowrap"><Badge tone={promiseTone[p.status]}>{p.status === "Kept" && <Icon name="check" />} {p.status}</Badge></td>
                     <td><small style={{ marginTop: 0 }}>{p.evidence}</small></td>
                   </tr>
                 ))}
@@ -111,21 +122,7 @@ export default async function ScorecardPage() {
           </div>
         </Card>
         <Card title="Evidence we track" sub={`Outcomes we follow and compare with ${m.prev}. Not promises, so no targets.`} pad={false}>
-          <div className="sx-table-wrap">
-            <table className="sx-table">
-              <thead><tr><th>Outcome</th><th className="num">{m.month}</th><th className="num">{m.prev}</th><th>Change</th></tr></thead>
-              <tbody>
-                {ev.map((r) => (
-                  <tr key={r.label}>
-                    <td><b>{r.label}</b></td>
-                    <td className="num"><b>{show(r.now, r.fmt)}</b></td>
-                    <td className="num">{r.prev ? show(r.prev, r.fmt) : "–"}</td>
-                    <td className="sx-hint" style={{ whiteSpace: "nowrap" }}>{change(r.now, r.prev, r.fmt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <EvidenceTable rows={ev} month={m.month} prev={m.prev} />
         </Card>
       </div>
 
@@ -150,24 +147,8 @@ export default async function ScorecardPage() {
             </table>
           </div>
         </Card>
-
-        <Card title="Leads by source" sub={`${m.month} compared with ${m.prev}. Public event sign-ups count as leads.`}>
-          <ul className="sx-legend">
-            <li><i style={{ background: "var(--green)" }} />{m.month}</li>
-            <li><i style={{ background: "#cdbfa5" }} />{m.prev}</li>
-          </ul>
-          <ul className="sx-hbars">
-            {enquirySources.map((s, i) => (
-              <li key={s.label}>
-                <span className="sx-hb-l">{s.label}</span>
-                <span className="sx-hb-v">{s.value} <small>({enquirySourcesPrev[i]})</small></span>
-                <span className="sx-hb-track" style={{ display: "grid", gap: 2, height: "auto", background: "none", borderRadius: 0 }}>
-                  <span className="sx-hb-bar" style={{ width: `${(s.value / maxSrc) * 100}%`, background: "var(--green)", height: 10 }} />
-                  <span className="sx-hb-bar" style={{ width: `${(enquirySourcesPrev[i] / maxSrc) * 100}%`, background: "#cdbfa5", height: 6 }} />
-                </span>
-              </li>
-            ))}
-          </ul>
+        <Card title="Where inquiries came from" sub={`${m.month}, with ${m.prev} in brackets. Public event sign-ups count as inquiries.`}>
+          <LeadsBySource sources={s.enquirySources} prevValues={s.enquirySourcesPrev} month={m.month} prev={m.prev} />
         </Card>
       </div>
     </>

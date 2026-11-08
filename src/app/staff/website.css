@@ -1,0 +1,92 @@
+/* =====================================================================
+   Staff → Website: pages with owners and rhythms, apartments and prices,
+   galleries, live blocks, freshness, languages and required pages.
+===================================================================== */
+
+.ws-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 14px; font-size: 14.5px; color: var(--sx-ink-2); }
+
+.ws-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: 18px; align-items: start; margin-top: 18px; }
+@media (max-width: 1100px) { .ws-grid { grid-template-columns: 1fr; } }
+.ws-main, .ws-side { display: grid; gap: 18px; min-width: 0; }
+
+.ws-group + .ws-group { margin-top: 14px; }
+.ws-group h3 { margin: 0 0 2px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sx-ink-3); font-weight: 700; font-family: var(--font-body); }
+
+/* a page */
+.ws-pages { margin: 0; padding: 0; list-style: none; display: grid; }
+.ws-page { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--sx-line-2); }
+.ws-page:last-child { border-bottom: 0; }
+.ws-page.stale { background: var(--sx-warn-tint); border-radius: 10px; padding: 12px; border-bottom-color: transparent; margin: 4px 0; }
+.ws-page-h { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; }
+.ws-page-t { display: grid; gap: 2px; min-width: 0; }
+.ws-page-t b { font-size: 15.5px; }
+.ws-page-t small { font-size: 13px; color: var(--sx-ink-3); }
+.ws-page-a { display: flex; gap: 6px; }
+.ws-page-x { margin: 0; font-size: 14px; color: var(--sx-ink-2); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ws-edit { display: grid; gap: 10px; }
+.ws-edit textarea { font-size: 15px; line-height: 1.5; resize: vertical; }
+.ws-edit .pt-hint .icon { color: var(--terra-deep); }
+.ws-done { display: flex; gap: 6px; align-items: flex-start; margin: 0; font-size: 13.5px; font-weight: 600; color: var(--sx-good); }
+.ws-done .icon { width: 15px; height: 15px; margin-top: 2px; flex: none; }
+@media (max-width: 600px) {
+  .ws-page-h { grid-template-columns: minmax(0, 1fr) auto; }
+  .ws-page-s { grid-column: 1 / -1; grid-row: 2; }
+  .ws-page-a { grid-column: 2; grid-row: 1; }
+}
+
+/* apartments and prices */
+.ws-approve { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; background: var(--sx-warn-tint); color: #5a3f08; }
+.ws-approve.mine { background: var(--sx-soft); color: var(--sx-ink-2); }
+.ws-approve p { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: 14.5px; }
+.ws-approve p .icon { width: 16px; height: 16px; margin-top: 3px; flex: none; }
+.ws-plans > li { grid-template-columns: minmax(0, 1fr) auto auto; }
+.ws-plan-a { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.ws-plan-wait { display: grid; gap: 2px; justify-items: end; }
+.ws-plan-why { flex-basis: 100%; }
+.ws-plan-d { grid-column: 1 / -1; font-size: 13.5px; color: var(--sx-ink-2); }
+.ws-plan-d summary { cursor: pointer; font-weight: 600; color: var(--green-deep); min-height: 32px; display: inline-flex; align-items: center; }
+.ws-plan-d ul { margin: 4px 0 6px; padding-left: 20px; display: block; }
+.pt-plans .ws-plan-d li { display: list-item; padding: 1px 0; border: 0; }
+@media (max-width: 600px) {
+  .ws-plans > li { grid-template-columns: minmax(0, 1fr) auto; }
+  .ws-plan-a, .ws-plan-wait { grid-column: 1 / -1; justify-content: flex-start; justify-items: start; }
+}
+
+/* galleries */
+.ws-gal { margin: 0; padding: 0; list-style: none; display: grid; }
+.ws-gal li { display: grid; grid-template-columns: 88px minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--sx-line-2); }
+.ws-gal li:last-child { border-bottom: 0; }
+.ws-gal li.hidden .ws-gal-img, .ws-gal li.hidden .ws-gal-t { opacity: 0.5; }
+.ws-gal-img { position: relative; grid-row: span 2; width: 88px; height: 66px; border-radius: 8px; overflow: hidden; background: var(--sand); }
+.ws-gal-img img { object-fit: cover; }
+.ws-gal-t { display: grid; gap: 2px; min-width: 0; }
+.ws-gal-t b { font-size: 15px; }
+.ws-gal-t small { font-size: 12.5px; color: var(--sx-ink-3); }
+.ws-gal-s { justify-self: end; }
+.ws-gal-a { grid-column: 2 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+@media (max-width: 520px) { .ws-gal li { grid-template-columns: 72px minmax(0, 1fr); } .ws-gal-img { width: 72px; height: 56px; } .ws-gal-s { justify-self: start; grid-column: 2; } }
+
+/* freshness and live blocks */
+.ws-fresh li, .ws-live li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
+.ws-fresh li { grid-template-columns: 26px minmax(0, 1fr) auto; }
+.ws-fresh li > span:nth-child(2), .ws-live li { min-width: 0; }
+.ws-fresh li > span:nth-child(2) { display: grid; gap: 2px; }
+.ws-fresh b, .ws-live b { font-size: 14.5px; }
+.ws-fresh small, .ws-live small { font-size: 12.5px; color: var(--sx-ink-3); }
+.ws-live li > small { grid-column: 1; grid-row: 2; }
+.ws-live li > .sx-badge, .ws-live li > .sx-btn { grid-column: 2; grid-row: 1 / span 2; }
+.ws-fresh-i { width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--sx-good-tint); color: var(--sx-good); }
+.ws-fresh li.stale .ws-fresh-i { background: var(--sx-warn-tint); color: #8a5a00; }
+.ws-fresh-i .icon { width: 14px; height: 14px; }
+
+/* languages */
+.ws-lang-h { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.ws-lang-h > span { display: grid; gap: 2px; }
+.ws-lang-h small { font-size: 12.5px; color: var(--sx-ink-3); }
+.ws-lang-x { display: flex; gap: 6px; align-items: flex-start; margin: 6px 0 0; padding: 8px 10px; font-size: 13.5px; color: var(--sx-ink-2); background: var(--sx-soft); border-radius: 8px; }
+.ws-lang-x .icon { width: 15px; height: 15px; margin-top: 2px; flex: none; color: var(--green); }
+
+/* Kinlight's job */
+.ws-kin { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 14px; font-size: 14px; color: var(--sx-ink-2); background: var(--sky-tint); border-radius: 12px; }
+.ws-kin .icon { width: 16px; height: 16px; margin-top: 2px; flex: none; color: var(--green-deep); }
+#apartments + .ws-kin { margin-top: 18px; }

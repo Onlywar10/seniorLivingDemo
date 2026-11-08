@@ -1,16 +1,17 @@
 "use client";
 
-// Taking attendance: a tap list of residents, or a photo of the paper sign-in sheet. Saved in this browser only.
+// Taking attendance: a tap list of residents, or a photo of the paper sign-in sheet. Residents who scanned the QR
+// check-in sign are already ticked, marked "QR". Saved in this browser only.
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../Icon";
 import { Badge } from "../ui";
 
 export interface TapActivity { id: string; title: string; when: string; place: string; pool: string[]; expected: number }
 
-export function TakeAttendance({ activities }: { activities: TapActivity[] }) {
+export function TakeAttendance({ activities, qr = [], onSaved }: { activities: TapActivity[]; /** Checked themselves in by QR. */ qr?: string[]; onSaved?: (n: number) => void }) {
   const [sel, setSel] = useState(activities[0]?.id ?? "");
   const [mode, setMode] = useState<"tap" | "photo">("tap");
-  const [present, setPresent] = useState<Record<string, Set<string>>>({});
+  const [present, setPresent] = useState<Record<string, Set<string>>>(() => (activities[0] && qr.length ? { [activities[0].id]: new Set(qr) } : {}));
   const [saved, setSaved] = useState<Record<string, number>>({});
   const [photo, setPhoto] = useState<{ url: string; name: string } | null>(null);
   const [reading, setReading] = useState(false);
@@ -71,7 +72,7 @@ export function TakeAttendance({ activities }: { activities: TapActivity[] }) {
       {done !== undefined ? (
         <div className="sx-callout good" role="status">
           <Icon name="check" />
-          <p><b>Saved: {done} came to {a.title}.</b> Counted on this month’s scorecard and in the library’s “what works”.</p>
+          <p><b>Saved: {done} came to {a.title}.</b> Counted in Reports and in “what worked” when planning next month.</p>
         </div>
       ) : mode === "tap" ? (
         <>
@@ -81,13 +82,14 @@ export function TakeAttendance({ activities }: { activities: TapActivity[] }) {
                 <button type="button" aria-pressed={here.has(n)} onClick={() => toggle(n)}>
                   <span className="at-box" aria-hidden="true">{here.has(n) && <Icon name="check" />}</span>
                   {n}
+                  {qr.includes(n) && <span className="at-qr">QR</span>}
                 </button>
               </li>
             ))}
           </ul>
           <div className="at-foot">
-            <span><b>{here.size}</b> present</span>
-            <button type="button" className="sx-btn sx-btn-primary" disabled={!here.size} onClick={() => setSaved((s) => ({ ...s, [a.id]: here.size }))}>
+            <span><b>{here.size}</b> present{qr.length > 0 && <> · {qr.filter((n) => here.has(n)).length} by QR, {[...here].filter((n) => !qr.includes(n)).length} tapped in</>}</span>
+            <button type="button" className="sx-btn sx-btn-primary" disabled={!here.size} onClick={() => { setSaved((s) => ({ ...s, [a.id]: here.size })); onSaved?.(here.size); }}>
               <Icon name="check" /> Save attendance
             </button>
           </div>
@@ -137,7 +139,7 @@ export function TakeAttendance({ activities }: { activities: TapActivity[] }) {
               </ul>
               <div className="at-foot">
                 <span><b>{found.size}</b> present <Badge tone="neutral">From the photo</Badge></span>
-                <button type="button" className="sx-btn sx-btn-primary" onClick={() => setSaved((s) => ({ ...s, [a.id]: found.size }))}>
+                <button type="button" className="sx-btn sx-btn-primary" onClick={() => { setSaved((s) => ({ ...s, [a.id]: found.size })); onSaved?.(found.size); }}>
                   <Icon name="check" /> Save attendance
                 </button>
               </div>

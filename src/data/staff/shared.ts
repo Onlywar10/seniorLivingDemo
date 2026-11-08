@@ -15,22 +15,56 @@ export const parseStaffScope = (v: string | null | undefined): StaffScope => (v 
 /* ------------------------------------------------------------ who is signed in */
 
 /**
- * Who is using the workspace, by what they do: the events lead (Nora at Alder Bend), sales (Priya) or the manager
- * (Renata, the executive director and administrator). The same three exist in every community, so the choice
- * survives a change of community. Kept in a cookie so server pages can build each person's own view.
+ * Who is using the workspace, by what they do. The same five exist in every community, so the choice survives a
+ * change of community. Kept in a cookie so server pages can build each person's own view.
+ * - events: the activities director (Nora at Alder Bend), preset Approver
+ * - sales: community relations (Priya), preset Sales
+ * - manager: the executive director (Renata), preset Administrator
+ * - kitchen: the culinary director (Rafael), preset Kitchen
+ * - desk: the front desk (Bea), preset Poster
  */
-export type StaffRole = "events" | "sales" | "manager";
+export type StaffRole = "events" | "sales" | "manager" | "kitchen" | "desk";
+export const STAFF_ROLES: StaffRole[] = ["events", "desk", "kitchen", "sales", "manager"];
 export const AS_COOKIE = "wh-staff-as";
-export const parseAs = (v: string | null | undefined): StaffRole => (v === "sales" || v === "manager" ? v : "events");
-/** The workspace sections each person sees. */
-export type Section = "today" | "post" | "calendar" | "people" | "prospects" | "reports" | "settings";
-export const sectionsFor: Record<StaffRole, Section[]> = {
-  events: ["today", "post", "calendar", "people"],
-  sales: ["today", "post", "calendar", "prospects"],
-  manager: ["today", "post", "calendar", "people", "prospects", "reports", "settings"],
+export const parseAs = (v: string | null | undefined): StaffRole => (STAFF_ROLES.includes(v as StaffRole) ? (v as StaffRole) : "events");
+
+/** The workspace sections, in menu order. */
+export type Section = "today" | "post" | "calendar" | "menus" | "newsletter" | "website" | "people" | "feedback" | "prospects" | "reports" | "settings";
+export const SECTIONS: Section[] = ["today", "post", "calendar", "menus", "newsletter", "website", "people", "feedback", "prospects", "reports", "settings"];
+
+/**
+ * What each preset role may do in each section (the spec's Roles table). A section that's missing isn't shown.
+ * "full" is everything; any other value is the part of the section that role sees, in plain words.
+ */
+export type Access = "full" | "view" | "announcements" | "own-pages" | "dining-page" | "apartments" | "suggestions" | "community" | "prospect-numbers";
+export const accessFor: Record<StaffRole, Partial<Record<Section, Access>>> = {
+  // Poster (fitness, front desk): Newsletter only through its Today card.
+  desk: { today: "full", post: "full", calendar: "full", website: "own-pages", feedback: "suggestions" },
+  events: { today: "full", post: "full", calendar: "full", menus: "view", newsletter: "full", website: "own-pages", people: "full", feedback: "full", reports: "community" },
+  kitchen: { today: "full", menus: "full", website: "dining-page" },
+  sales: { today: "full", post: "announcements", calendar: "view", website: "apartments", prospects: "full", reports: "prospect-numbers" },
+  manager: Object.fromEntries(SECTIONS.map((s) => [s, "full"])) as Record<Section, Access>,
 };
+export const accessLabel: Record<Access, string> = {
+  full: "",
+  view: "View only",
+  announcements: "Announcements only",
+  "own-pages": "Your own pages",
+  "dining-page": "The dining page",
+  apartments: "Apartments and prices",
+  suggestions: "Resident suggestions",
+  community: "Your community",
+  "prospect-numbers": "Prospect numbers",
+};
+/** The sections each person sees, in menu order. */
+export const sectionsFor: Record<StaffRole, Section[]> = Object.fromEntries(
+  STAFF_ROLES.map((r) => [r, SECTIONS.filter((s) => accessFor[r][s])]),
+) as Record<StaffRole, Section[]>;
+export const accessOf = (r: StaffRole, s: Section): Access | undefined => accessFor[r][s];
+
 /** The preset role each person holds (Settings → Team). */
-export const presetOf: Record<StaffRole, "Approver" | "Sales" | "Administrator"> = { events: "Approver", sales: "Sales", manager: "Administrator" };
+export type Preset = "Poster" | "Approver" | "Kitchen" | "Sales" | "Administrator";
+export const presetOf: Record<StaffRole, Preset> = { events: "Approver", sales: "Sales", manager: "Administrator", kitchen: "Kitchen", desk: "Poster" };
 
 /** A page on a community's public website: siteHref("kestrel-point", "/calendar") → "/kestrel-point/calendar". */
 export const siteHref = (scope: StaffScope, path = "/") => (scope === "all" ? path : path === "/" ? `/${scope}` : `/${scope}${path}`);
@@ -181,7 +215,7 @@ export interface StaffData {
   };
   people: Record<PersonKey, StaffPerson>;
   /** Who does what, so screens can say "Waiting for Renata" or "for Priya Nandakumar". */
-  roles: { approver: PersonKey; tours: PersonKey; lantern: PersonKey; menus: PersonKey; calendar: PersonKey; gbpReplies: PersonKey };
+  roles: { approver: PersonKey; tours: PersonKey; lantern: PersonKey; menus: PersonKey; calendar: PersonKey; gbpReplies: PersonKey; desk: PersonKey };
 
   community: { residents: number; lanternResidents: number; apartments: number; occupied: number; families: number; lanternFamilies: number; contacts: number; smsReachable: number; emailReachable: number };
   languages: { k: string; n: number }[];

@@ -78,7 +78,7 @@ function staffView(req: NextRequest) {
   if (!c && !as) return NextResponse.next();
   const jar = new Map(req.cookies.getAll().map((k) => [k.name, k.value]));
   if (c && /^[a-z-]+$/.test(c)) jar.set("wh-staff-community", c);
-  if (as === "events" || as === "sales" || as === "manager") jar.set("wh-staff-as", as);
+  if (as && /^(events|sales|manager|kitchen|desk)$/.test(as)) jar.set("wh-staff-as", as);
   const headers = new Headers(req.headers);
   headers.set("cookie", [...jar].map(([k, v]) => `${k}=${v}`).join("; "));
   return NextResponse.next({ request: { headers } });

@@ -4,9 +4,9 @@
 import { useState } from "react";
 import type { AlertChannel, AlertSetting } from "@/data/staff/alpha";
 import { Icon } from "../../Icon";
-import { Avatar } from "../ui";
+import { Avatar, Badge } from "../ui";
 
-const channels: AlertChannel[] = ["Text", "Email", "In the portal"];
+const channels: AlertChannel[] = ["Text", "Email", "In the staff area"];
 
 export function AlertSettings({ rules }: { rules: AlertSetting[] }) {
   const [on, setOn] = useState<Record<string, boolean>>(() =>
@@ -28,6 +28,7 @@ export function AlertSettings({ rules }: { rules: AlertSetting[] }) {
                     <td rowSpan={r.who.length}>
                       <b>{r.label}</b>
                       <small>{r.detail}</small>
+                      <span className="al-exp"><Icon name="clock" /> {r.expected}{r.urgent && <> <Badge tone="warn">Repeats if unopened</Badge></>}</span>
                     </td>
                   )}
                   <td>
@@ -50,7 +51,7 @@ export function AlertSettings({ rules }: { rules: AlertSetting[] }) {
         </table>
       </div>
       <div className="at-foot">
-        <span className="sx-hint">Each alert opens the same card as Today, so one tap decides it. Urgent ones repeat by text after 30 minutes if nobody opens them.</span>
+        <span className="sx-hint">Each alert opens the same card as Today, so one tap decides it. Urgent alerts repeat by text after 30 minutes if nobody opens them.</span>
         {saved ? (
           <span className="al-done good" role="status"><Icon name="check" /> Saved</span>
         ) : (

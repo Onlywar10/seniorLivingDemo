@@ -63,12 +63,14 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
   const out: EventRequest[] = [];
 
   // Family RSVPs from the personal link: a few waiting, the rest confirmed.
-  family.forEach((e) => {
-    fam.slice(0, 9).forEach((c, i) => {
+  family.forEach((e, n) => {
+    fam.filter((c) => !c.lantern).slice(0, 9).forEach((c, i) => {
+      // The first family event: six RSVPs the residents have said yes to (staff approve them together), and one
+      // resident who hasn't answered yet. Later family events: one or two waiting, the rest confirmed.
+      const waiting = n === 0 ? i !== 2 && i < 7 : i < 2;
       out.push({
         id: `rsvp-${e.id}-${i}`, kind: "family-rsvp", event: ref(e), from: c.contact, relation: c.relation, resident: c.resident,
-        // The first two: the resident has said yes and staff approve next. The third: the resident hasn't answered yet.
-        party: 1 + (hash(c.contact) % 4), mins: 25 + i * 190, status: i < 2 ? "waiting" : i === 2 ? "checking" : "confirmed",
+        party: 1 + (hash(c.contact) % 4), mins: 25 + i * 190 + n * 40, status: waiting ? "waiting" : i === 2 ? "checking" : "confirmed",
         via: i === 1 ? "Reply to weekly text, finished on the personal link" : "Personal link", lang: c.lang,
         note: i === 0 ? "Bringing the grandchildren, ages 6 and 9" : i === 2 ? "Needs a wheelchair-accessible table" : undefined,
       });
@@ -76,7 +78,9 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
   });
 
   // Seat requests: a family asks for a seat on an outing for their loved one; staff check with the resident first.
-  trips.slice(0, 5).forEach((e, i) => {
+  // The first one waiting is for an outing that's already full, so staff can only add the resident to its waitlist.
+  const full = (e: CalEvent) => (e.cap && (e.taken ?? 0) >= e.cap ? 1 : 0);
+  [...trips].sort((a, b) => full(b) - full(a)).slice(0, 5).forEach((e, i) => {
     const c = fam[(i * 3 + 1) % fam.length];
     out.push({
       id: `seat-${e.id}`, kind: "seat-request", event: ref(e), from: c.contact, relation: c.relation, resident: c.resident,
@@ -85,6 +89,11 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
       note: i === 1 ? `Checking with ${first(c.resident)} at lunch today` : i === 4 ? `${first(c.resident)} would rather stay for bingo that afternoon` : undefined,
     });
   });
+
+  // A Lantern family's RSVP: no text goes to the resident. Staff ask in person, or the legal representative decides.
+  const lc = s.contacts.find((c) => c.lantern && (c.sms || c.emailOpt));
+  if (lc && family[0])
+    out.push({ id: `rsvp-${family[0].id}-lantern`, kind: "family-rsvp", event: ref(family[0]), from: lc.contact, relation: lc.relation, resident: lc.resident, party: 2, mins: 140, status: "checking", via: "Personal link", lang: lc.lang });
 
   // Residents who signed up in person, booked straight into the list.
   trips.slice(0, 4).forEach((e, i) => {
@@ -219,18 +228,28 @@ export function surveys(slug: CommunitySlug) {
 
 /* ------------------------------------------------------------ print */
 
-export function printItems(slug: CommunitySlug) {
+export interface PrintItem { id: string; title: string; size: string; copies: number; note: string; ready: boolean; sign?: { title: string; when: string; place: string; id: string } }
+
+export function printItems(slug: CommunitySlug): PrintItem[] {
   const c = communities[slug];
   const t = today();
   const month = t.toLocaleString("en-US", { month: "long", timeZone: "UTC" });
   const sp = nextSpecials();
+  // The next activity with a QR check-in sign, for the preview.
+  const next = upcoming(slug, 3).find((e) => e.cat !== "movies" && e.cat !== "faith" && e.cat !== "lantern" && !e.lantern && kindOf(e) === "resident" && (e.date > iso(t) || e.start > nowMinutes()));
+  const signs = upcoming(slug, 7).filter((e) => e.cat !== "movies" && e.cat !== "faith" && e.cat !== "lantern" && !e.lantern).length;
   return [
     { id: "p1", title: `${month} activity calendar`, size: "Tabloid · 16 pt", copies: 120, note: "For every apartment door and the Lobby", ready: true },
     { id: "p2", title: "Lantern activity calendar", size: "Tabloid · 20 pt", copies: 30, note: "Pictures beside each activity", ready: true },
-    { id: "p3", title: "This week’s menus", size: "Letter · 18 pt", copies: 60, note: `All three restaurants at ${c.site.name}`, ready: true },
+    { id: "p3", title: "This week’s menus", size: "Letter · 18 pt", copies: 60, note: `All ${c.venueOrder.length} restaurants at ${c.site.name}`, ready: true },
     { id: "p4", title: `Family Barbecue flyer · ${dayShort(fromIso(sp.barbecue))}`, size: "Letter · 24 pt", copies: 40, note: "For the front desk and the elevators", ready: true },
-    { id: "p5", title: "QR poster: “Get the weekly update”", size: "Tabloid", copies: 6, note: "Families scan it to sign up; one at the front desk, one by each elevator", ready: true },
-    { id: "p6", title: "Suggestion slips", size: "Letter · 4 per page", copies: 100, note: "“What would you like to see?” with a QR code", ready: true },
+    { id: "p5", title: "Family QR poster: “Get the weekly update”", size: "Tabloid", copies: 6, note: "Families scan it to sign up; one at the front desk, one by each elevator", ready: true },
+    {
+      id: "p7", title: "QR check-in signs, this week", size: "Letter · 28 pt", copies: signs,
+      note: "One for each activity. A resident scans it with their phone and is checked in under the number we know, no login", ready: true,
+      sign: next ? { id: next.id, title: next.title, when: when(next), place: next.room } : undefined,
+    },
+    { id: "p6", title: "Suggestion slips", size: "Letter · 4 per page", copies: 100, note: "“What would you like to see?” with a QR code. Slips go in the box at the front desk", ready: true },
   ];
 }
 
@@ -238,30 +257,24 @@ export function printItems(slug: CommunitySlug) {
 
 export type Permission = "Post updates and photos" | "Edit calendar and menus" | "Approve family messages" | "Approve resident photos" | "Approve event RSVPs" | "Pricing and availability" | "Inquiries and tours" | "Family contacts" | "Settings and roles";
 
+/** Everyone on the team with their preset role (Settings → Team). Front desk and fitness are Posters. */
 export function teamRoles(slug: CommunitySlug) {
   const s = getStaffData(slug);
   const r = s.roles;
-  const all: Permission[] = ["Post updates and photos", "Edit calendar and menus", "Approve family messages", "Approve resident photos", "Approve event RSVPs", "Pricing and availability", "Inquiries and tours", "Family contacts", "Settings and roles"];
-  const byKey = (k: string): { role: string; perms: Permission[]; status: "Active" | "Invited"; lastPost?: number } => {
-    if (k === r.approver) return { role: "Administrator", perms: all, status: "Active", lastPost: 60 * 30 };
-    if (k === r.tours) return { role: "Sales", perms: ["Post updates and photos", "Inquiries and tours", "Pricing and availability"], status: "Active", lastPost: 60 * 50 };
-    if (k === r.calendar) return { role: "Champion", perms: ["Post updates and photos", "Edit calendar and menus", "Approve event RSVPs", "Family contacts"], status: "Active", lastPost: 40 };
-    if (k === r.lantern) return { role: "Manager", perms: ["Post updates and photos", "Edit calendar and menus", "Approve family messages", "Approve event RSVPs"], status: "Active", lastPost: 60 * 20 };
-    if (k === r.menus) return { role: "Contributor", perms: ["Post updates and photos", "Edit calendar and menus"], status: "Active", lastPost: 60 * 70 };
+  type Preset = import("./shared").Preset;
+  const byKey = (k: string, role: string): { preset: Preset; status: "Active" | "Invited"; adjusted?: string } => {
+    if (k === r.approver) return { preset: "Administrator", status: "Active" };
+    if (k === r.tours) return { preset: "Sales", status: "Active" };
+    if (k === r.calendar) return { preset: "Approver", status: "Active" };
+    if (k === r.lantern) return { preset: "Approver", status: "Active", adjusted: "Approves Lantern family requests" };
+    if (k === r.menus || /Culinary|Dining/.test(role)) return { preset: "Kitchen", status: "Active" };
+    if (k === r.desk || /Fitness/.test(role)) return { preset: "Poster", status: "Active" };
+    if (/Business Office/.test(role)) return { preset: "Poster", status: "Active", adjusted: "Also edits apartments and prices on the website" };
     const h = hash(k);
-    return { role: "Contributor", perms: ["Post updates and photos"], status: h % 5 === 0 ? "Invited" : "Active", lastPost: h % 5 === 0 ? undefined : 60 * (4 + (h % 90)) };
+    return { preset: "Poster", status: h % 4 === 0 ? "Invited" : "Active" };
   };
-  const people = Object.entries(s.people).map(([k, p]) => ({ key: k, ...p, title: p.role, ...byKey(k) }));
-  return {
-    people,
-    perms: all,
-    rules: [
-      ...s.approvalRules,
-      { what: "Family event RSVPs and seat requests", who: `${staffName(s, r.calendar)} · within 1 business day` },
-      { what: "Weekly email digest", who: `${staffName(s, r.approver)} · reviews the draft every Friday` },
-      { what: "Emergency and closure alerts", who: `${staffName(s, r.approver)} · skip approval and send at once` },
-    ],
-  };
+  const people = Object.entries(s.people).map(([k, p]) => ({ key: k, ...p, title: p.role, ...byKey(k, p.role) }));
+  return { people };
 }
 
 /* ------------------------------------------------------------ scorecard: promises, adoption, evidence */
@@ -306,26 +319,35 @@ export function adoption(slug: CommunitySlug): Adoption[] {
   ];
 }
 
-/** Outcomes we track and compare, never promise: shown as numbers only, with no targets or pass/fail. */
-export function evidence(slug: CommunitySlug) {
+export interface EvidenceRow { label: string; now: number; prev: number; fmt?: "pct" | "dec" | "num"; /** One of the prospect numbers sales can see. */ prospect?: boolean; note?: string }
+
+/**
+ * Outcomes we track and compare, never promise: shown as numbers only, with no targets or pass/fail (the spec's
+ * inquiries, reply times, tours, move-ins, reviews, family referrals and front-desk calls). Occupancy and deposits
+ * belong to the operator's sales system, so they aren't here.
+ */
+export function evidence(slug: CommunitySlug): EvidenceRow[] {
   const s = getStaffData(slug);
   const row = (k: string) => s.scoreRows.find((r) => r.k === k);
-  const pick2 = (k: string, label = k, fmt?: "pct" | "dec") => {
+  const pick2 = (k: string, label = k, extra: Partial<EvidenceRow> = {}): EvidenceRow | null => {
     const r = row(k);
-    return r ? { label, now: r.now, prev: r.prev, fmt: fmt ?? r.fmt } : null;
+    return r ? { label, now: r.now, prev: r.prev, fmt: r.fmt, ...extra } : null;
   };
+  const refIdx = s.enquirySources.findIndex((x) => /Referrals from residents and families/.test(x.label));
+  const h = hash(slug);
+  const calls = Math.round(s.community.residents * 2.1) + (h % 40);
   return [
-    pick2("Enquiries", "Inquiries"),
-    { label: "Share of inquiries after hours", now: 41, prev: 33, fmt: "pct" as const },
-    { label: "Time to first human reply (minutes)", now: 11, prev: 194, fmt: undefined },
-    pick2("Tours"),
-    pick2("Deposits"),
-    pick2("Move-ins"),
-    pick2("Occupancy", "Occupancy (%)", "dec"),
-    { label: "“Did the website show you daily life here?” (yes)", now: 82, prev: 0, fmt: "pct" as const },
-    { label: "Family RSVPs and event visits per 100 families", now: 37, prev: 14, fmt: undefined },
-    pick2("Google rating", "Google rating", "dec"),
-  ].filter(Boolean) as { label: string; now: number; prev: number; fmt?: "pct" | "dec" | "num" }[];
+    pick2("Enquiries", "Inquiries", { prospect: true, note: "Form, website chat, Google, AI search, referrals and public event sign-ups" }),
+    { label: "Share of inquiries after hours", now: 41, prev: 33, fmt: "pct", prospect: true, note: "Answered instantly all the same" },
+    { label: "Time to first human reply (minutes)", now: slug === "alder-bend" ? 11 : 14, prev: slug === "alder-bend" ? 194 : 171, prospect: true, note: "Median, after the instant reply" },
+    pick2("Tours", "Tours", { prospect: true }),
+    pick2("Move-ins", "Move-ins", { prospect: true }),
+    { label: "New Google reviews", now: s.gbp.newReviews, prev: Math.max(1, s.gbp.newReviews - 2), note: `${s.gbp.rating} stars from ${s.gbp.reviews} reviews` },
+    refIdx >= 0 ? { label: "Family and resident referrals", now: s.enquirySources[refIdx].value, prev: s.enquirySourcesPrev[refIdx], note: "Inquiries that came from someone who lives here or their family" } : null,
+    { label: "Front-desk calls", now: calls, prev: calls + 38 + (h % 20), note: "Fewer “what’s on today?” calls now the calendar and menus are always current" },
+    { label: "“Did the website show you daily life here?” (yes)", now: 82, prev: 0, fmt: "pct", note: "Asked of every new inquiry" },
+    { label: "Family RSVPs and event visits per 100 families", now: 37, prev: 14 },
+  ].filter(Boolean) as EvidenceRow[];
 }
 
 /* ------------------------------------------------------------ messages each prospect received */
@@ -362,28 +384,35 @@ export function sampleFamily(slug: CommunitySlug): Contact {
 
 /* ------------------------------------------------------------ alert settings */
 
-export type AlertChannel = "Text" | "Email" | "In the portal";
-export interface AlertSetting { kind: string; label: string; detail: string; who: { key: string; name: string; role: string; on: AlertChannel[] }[] }
+export type AlertChannel = "Text" | "Email" | "In the staff area";
+export interface AlertSetting { kind: string; label: string; detail: string; expected: string; urgent?: boolean; who: { key: string; name: string; role: string; on: AlertChannel[] }[] }
 
-/** Who gets which alert, and how (Settings). Each alert opens the same card that's on Today. */
+/** Who gets which alert, and how (Settings): the spec's alerts table. Each alert opens the same card that's on Today. */
 export function alertSettings(slug: CommunitySlug): AlertSetting[] {
   const s = getStaffData(slug);
   const r = s.roles;
   const p = (key: string, on: AlertChannel[]) => ({ key, name: staffName(s, key), role: s.people[key]?.role ?? "", on });
+  const byRole = (re: RegExp, fallback: string) => Object.keys(s.people).find((k) => re.test(s.people[k].role)) ?? fallback;
+  const billing = byRole(/Business Office/, r.approver);
+  const dining = byRole(/Dining/, r.menus);
+  const area: AlertChannel = "In the staff area";
   return [
-    { kind: "post", label: "A post to approve", detail: "Resident photos, changes, prices and special menus.", who: [p(r.approver, ["Text", "In the portal"])] },
-    { kind: "rsvp", label: "A family request, once the resident says yes", detail: "Family RSVPs and seat requests. Approve within 1 business day.", who: [p(r.calendar, ["Text", "In the portal"]), p(r.lantern, ["In the portal"])] },
-    { kind: "ask", label: "A resident hasn’t answered", detail: "Ask them in person, then tap their answer.", who: [p(r.calendar, ["Text", "In the portal"])] },
-    { kind: "inquiry", label: "A new inquiry or tour", detail: "The instant reply has already gone.", who: [p(r.tours, ["Text", "In the portal"]), p(r.approver, ["Email"])] },
-    { kind: "reply", label: "A reply the AI couldn’t handle", detail: "Unclear, care or health questions. The AI answers everything else.", who: [p(r.calendar, ["In the portal"]), p(r.approver, ["Email"])] },
-    { kind: "verify", label: "A new family member to check", detail: "Signed up themselves; the resident has agreed.", who: [p(r.calendar, ["In the portal"])] },
-    { kind: "stale", label: "A page going stale", detail: "A page hasn’t changed for longer than it should.", who: [p(r.calendar, ["Email"]), p(r.approver, ["Email"])] },
+    { kind: "post", label: "A post to approve", detail: "Resident photos, prices and special menus.", expected: "Same day", who: [p(r.approver, ["Text", area])] },
+    { kind: "rsvp", label: "A family request the resident said yes to", detail: "Family RSVPs and seat requests. Lantern requests go to the memory care director.", expected: "Within 1 business day", who: [p(r.calendar, ["Text", area]), p(r.lantern, ["Text", area])] },
+    { kind: "ask", label: "A resident hasn’t answered", detail: "Ask them in person, then tap their answer.", expected: "Ask in person the same day", who: [p(r.calendar, ["Text", area]), p(r.desk, [area])] },
+    { kind: "verify", label: "A new family member to verify", detail: "They signed up themselves; check with the resident.", expected: "Within 2 business days", who: [p(r.calendar, [area])] },
+    { kind: "reply", label: "A reply the AI couldn’t handle", detail: "Goes to the right person by topic. Urgent ones tell the family to call the front desk.", expected: "No promised time", urgent: true, who: [p(r.calendar, [area]), p(r.tours, [area]), p(r.desk, ["Text", area])] },
+    { kind: "concern", label: "A family concern", detail: "Care, billing, dining or housekeeping, each to its owner.", expected: "Until resolved", urgent: true, who: [p(r.lantern, ["Text", area]), p(billing, ["Email", area]), p(dining, ["Email", area]), p(r.approver, ["Email"])] },
+    { kind: "inquiry", label: "A new inquiry or tour booked", detail: "The instant reply has already gone.", expected: "Call within the day", who: [p(r.tours, ["Text", area]), p(r.approver, ["Email"])] },
+    { kind: "review", label: "Something ready to review", detail: "The newsletter, an imported calendar, the week’s menus.", expected: "Before it publishes", who: [p(r.calendar, ["Email", area]), p(r.menus, ["Email", area]), p(r.approver, [area])] },
+    { kind: "stale", label: "A page going stale", detail: "A page hasn’t changed for longer than it should.", expected: "Before the due date", who: [p(r.calendar, ["Email"]), p(r.menus, ["Email"])] },
+    { kind: "welcome", label: "A new resident to welcome", detail: "Their messages, interests, consent and a welcome post.", expected: "First week", who: [p(r.calendar, [area]), p(r.desk, [area])] },
   ];
 }
 
 /* ------------------------------------------------------------ leadership: one row per community */
 
-/** The key numbers leadership compares across communities. Occupancy, deposits and move-ins are tracked evidence, not targets. */
+/** The key numbers leadership compares across communities: promises, adoption and the requests waiting on staff. */
 export function leadershipRow(slug: CommunitySlug) {
   const s = getStaffData(slug);
   const row = (k: string) => s.scoreRows.find((x) => x.k === k);
@@ -403,13 +432,12 @@ export function leadershipRow(slug: CommunitySlug) {
     inquiriesPrev: row("Enquiries")?.prev ?? 0,
     tours: row("Tours")?.now ?? 0,
     toursPrev: row("Tours")?.prev ?? 0,
-    deposits: row("Deposits")?.now ?? 0,
     moveIns: row("Move-ins")?.now ?? 0,
-    occupancy: row("Occupancy")?.now ?? 0,
-    occupancyPrev: row("Occupancy")?.prev ?? 0,
     approvals: s.approvals.length,
     rsvpsWaiting: reqs.filter((r) => r.kind === "family-rsvp" && r.status === "waiting").length,
     seatsWaiting: reqs.filter((r) => r.kind === "seat-request" && (r.status === "waiting" || r.status === "checking")).length,
+    /** Residents staff still need to ask in person about a family request. */
+    askWaiting: reqs.filter((r) => r.status === "checking").length,
     kept: pr.filter((p) => p.status === "Kept").length,
     promises: pr,
     adoptionOk: ad.filter((a) => a.ok).length,

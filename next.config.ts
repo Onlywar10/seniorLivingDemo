@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// The staff workspace was reorganised by job (Today, Post, Calendar, People, Prospects, Reports, Settings).
+// The staff workspace was reorganised by job (Today, Post, Calendar, Menus, People, Prospects, Reports, Settings).
 // Old addresses still work: each one goes to where that job lives now.
 const staffMoves: [string, string][] = [
   ["dashboard", "today"],
@@ -9,7 +9,7 @@ const staffMoves: [string, string][] = [
   ["messages", "today"],
   ["publish", "post"],
   ["photo-post", "post?type=photo"],
-  ["menus", "calendar/menus"],
+  ["calendar/menus", "menus"],
   ["sign-ups", "calendar"],
   ["attendance", "today"],
   ["suggestions", "calendar"],

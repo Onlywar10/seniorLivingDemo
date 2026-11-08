@@ -335,3 +335,132 @@
 .pt-rules li { display: grid; grid-template-columns: 1fr minmax(160px, 220px); gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--sx-line-2); }
 .pt-rules select { font: inherit; font-size: 14px; padding: 6px 10px; min-height: 40px; border: 1px solid #c6cfc2; border-radius: 8px; width: 100%; }
 @media (max-width: 600px) { .pt-rules li { grid-template-columns: 1fr; } }
+
+/* The part of a section a role sees ("View only", "Announcements only"), beside its name in the menu. */
+.sx-nav a .pt-nav-part { margin-left: auto; font-size: 11px; font-weight: 500; color: #aeb8be; white-space: nowrap; }
+.sx-nav a .pt-nav-part + .sx-nav-badge { margin-left: 6px; }
+
+/* ---------------------------------------------------------------- Today: the full set of blocks */
+.pt-main { display: grid; gap: 22px; min-width: 0; }
+.pt-qfilter button small { font-size: 12px; opacity: 0.75; font-weight: 700; }
+.pt-tag.k-concern { background: var(--sx-bad-tint); color: #7a2224; }
+.pt-tag.k-review { background: var(--butter-tint); color: #5a4f12; }
+.pt-tag.k-reply { background: var(--sky-tint); color: #24485c; }
+.pt-concern { border-left: 4px solid var(--sx-bad, #b4423f); }
+
+/* Grouped RSVPs */
+.pt-group-list { margin: 0; padding: 0; list-style: none; display: grid; border: 1px solid var(--sx-line-2); border-radius: 10px; overflow: hidden; }
+.pt-group-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--sx-line-2); font-size: 14.5px; }
+.pt-group-list li:last-child { border-bottom: 0; }
+.pt-group-list li small { color: var(--sx-ink-2); font-size: 13px; }
+.pt-group-list li.done { opacity: 0.6; }
+.pt-group-each { margin-top: 6px; padding-left: 10px; border-left: 3px solid var(--sx-line); }
+
+/* Drafted replies: where each fact came from, and what the AI handled on its own */
+.pt-src { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; color: var(--sx-ink-2); background: var(--sx-soft); border-radius: 8px; padding: 7px 10px; }
+.pt-src .icon { width: 14px; height: 14px; margin-top: 2px; flex: none; color: var(--terra-deep); }
+.pt-ai { border-top: 1px dashed var(--sx-line); padding-top: 8px; display: grid; gap: 8px; font-size: 14px; }
+.pt-ai-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.pt-ai-list li { display: grid; gap: 2px; padding: 8px 10px; background: var(--sx-soft); border-radius: 8px; font-size: 13.5px; }
+.pt-ai-list small { color: var(--sx-ink-3); font-size: 12px; }
+.pt-ai-list b { font-weight: 700; margin-right: 4px; }
+.pt-ai-did { display: inline-flex; gap: 5px; align-items: center; color: #234a2b; font-weight: 600; }
+.pt-ai-did .icon { width: 14px; height: 14px; }
+
+/* Blocks */
+.pt-block { display: grid; gap: 10px; }
+.pt-block-h h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 22px; color: var(--green-ink); }
+.pt-block-h p { margin: 2px 0 0; color: var(--sx-ink-2); font-size: 14.5px; }
+.pt-review .pt-q-sub { display: flex; gap: 6px; align-items: flex-start; }
+.pt-review .pt-q-sub .icon { width: 15px; height: 15px; margin-top: 3px; flex: none; color: var(--terra-deep); }
+
+/* Today's activities */
+.pt-justended { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; margin: 0 18px 4px; padding: 10px 12px; background: var(--butter-tint); border-radius: 10px; font-size: 14.5px; }
+.pt-justended p { margin: 0; }
+.pt-justended > .icon { width: 20px; height: 20px; color: #5a4f12; }
+.pt-acts .pt-qr, .pt-acts .pt-inv { display: inline-flex; gap: 5px; align-items: center; color: var(--sx-ink-2); }
+.pt-acts .pt-qr { color: #234a2b; font-weight: 600; }
+.pt-acts .pt-qr .icon, .pt-acts .pt-inv .icon { width: 13px; height: 13px; flex: none; }
+.at-qr { margin-left: auto; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; color: #234a2b; background: var(--sx-good-tint); border-radius: 999px; padding: 1px 8px; }
+
+/* Something changed */
+.pt-chg-form { display: grid; gap: 12px; }
+.pt-chg-line { display: flex; gap: 6px; margin: 0; padding: 10px 12px; background: var(--sx-soft); border-radius: 10px; font-size: 14.5px; }
+.pt-chg-line .icon { width: 15px; height: 15px; margin-top: 3px; flex: none; color: var(--terra-deep); }
+.pt-reach { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+.pt-reach li { display: flex; gap: 6px; align-items: flex-start; }
+.pt-reach .icon { width: 14px; height: 14px; margin-top: 3px; flex: none; }
+.pt-changed .sx-card-body { display: grid; gap: 10px; }
+
+/* Celebrations, we haven't seen lately, welcome checklist */
+.pt-cel, .pt-seen, .pt-wel { margin: 0; padding: 4px 18px 16px; list-style: none; display: grid; gap: 12px; }
+.pt-cel li { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: start; padding-bottom: 12px; border-bottom: 1px solid var(--sx-line-2); }
+.pt-cel li:last-child { border-bottom: 0; padding-bottom: 0; }
+.pt-cel li.skipped { opacity: 0.55; }
+.pt-cel-i { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--butter-tint); color: #5a4f12; }
+.pt-cel-i .icon { width: 18px; height: 18px; }
+.pt-cel li > div { display: grid; gap: 6px; min-width: 0; }
+.pt-cel p { margin: 0; }
+.pt-cel-h small { color: var(--sx-ink-3); font-size: 12.5px; margin-left: 4px; }
+.pt-cel textarea { width: 100%; font: inherit; font-size: 14.5px; padding: 8px 10px; border: 1px solid var(--sx-line); border-radius: 8px; resize: vertical; }
+.pt-cel-c { display: flex; gap: 5px; align-items: flex-start; font-size: 13px; color: #234a2b; }
+.pt-cel-c.none { color: #5a3f08; }
+.pt-cel-c .icon { width: 14px; height: 14px; margin-top: 2px; flex: none; }
+.pt-seen li, .pt-wel li { display: grid; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--sx-line-2); }
+.pt-seen li:last-child, .pt-wel li:last-child { border-bottom: 0; padding-bottom: 0; }
+.pt-seen-t, .pt-wel-t { display: grid; gap: 2px; }
+.pt-seen-t small, .pt-wel-t small { color: var(--sx-ink-2); font-size: 13px; }
+.pt-seen-done { display: flex; gap: 6px; align-items: flex-start; margin: 0; font-size: 14px; color: #234a2b; }
+.pt-seen-done .icon { width: 15px; height: 15px; margin-top: 3px; flex: none; }
+.pt-visit { display: grid; gap: 8px; }
+.pt-beta { padding: 0 18px 16px; margin: 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pt-wel li { grid-template-columns: 1fr auto; align-items: center; }
+.pt-wel-bar { display: block; height: 6px; border-radius: 999px; background: var(--sx-soft); overflow: hidden; margin: 4px 0 2px; max-width: 240px; }
+.pt-wel-bar i { display: block; height: 100%; background: var(--green-deep); border-radius: inherit; }
+.pt-allc .pt-week { padding: 4px 18px 16px; }
+
+@media (max-width: 600px) {
+  .pt-justended { grid-template-columns: auto 1fr; margin: 0 12px 4px; }
+  .pt-justended .sx-btn { grid-column: 1 / -1; justify-self: start; }
+  .pt-wel li { grid-template-columns: 1fr; }
+  .pt-cel, .pt-seen, .pt-wel { padding: 4px 14px 14px; }
+}
+
+/* ---------------------------------------------------------------- People: engagement and the welcome checklist */
+.pt-int-filter { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.pt-int-filter select { min-height: 36px; }
+.pt-ints { display: flex; flex-wrap: wrap; gap: 5px; }
+.pt-ints span { font-size: 13px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: #fff; border: 1px solid var(--sx-line); }
+.pt-res-dl dd .sx-btn { justify-self: start; margin-top: 4px; }
+.pt-story { grid-column: 1 / -1; background: var(--butter-tint) !important; }
+.pt-story dt { display: flex; gap: 8px; align-items: center; }
+.pt-story dd > span { font-weight: 500; font-style: italic; }
+.pt-welcome { border: 1px solid var(--sx-line); border-radius: 12px; background: var(--sx-soft); padding: 12px 14px; display: grid; gap: 10px; margin-top: 10px; }
+.pt-welcome header { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.pt-welcome header b { font-size: 16px; }
+.pt-welcome header small { color: var(--sx-ink-2); }
+.pt-welcome ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.pt-welcome li { background: #fff; border: 1px solid var(--sx-line-2); border-radius: 10px; }
+.pt-welcome li.done { opacity: 0.7; }
+.pt-wstep { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: center; width: 100%; padding: 8px 10px; font: inherit; text-align: left; background: none; border: 0; cursor: pointer; color: var(--sx-ink); min-height: 44px; }
+.pt-wstep span:last-child { display: grid; }
+.pt-wstep small { color: var(--sx-ink-2); font-size: 13px; }
+.pt-wnum { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--sx-soft); border: 1px solid var(--sx-line); }
+.pt-welcome li.done .pt-wnum { background: var(--green-deep); color: #fff; border-color: var(--green-deep); }
+.pt-wnum .icon { width: 14px; height: 14px; }
+.pt-wbody { padding: 0 12px 12px 48px; display: grid; gap: 8px; font-size: 14.5px; }
+.pt-wbody p { margin: 0; }
+.pt-wbody .sx-btn { justify-self: start; }
+.pt-wfam { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.pt-wfam li { display: flex; gap: 6px; align-items: center; border: 0 !important; }
+.pt-wfam .icon { width: 14px; height: 14px; }
+.pt-wfam small { color: #234a2b; font-weight: 600; }
+@media (max-width: 600px) { .pt-wbody { padding-left: 12px; } }
+.pt-ai > .sx-link { background: none; border: 0; padding: 4px 0; font: inherit; font-size: 14px; text-align: left; cursor: pointer; justify-self: start; }
+.pt-people-bar .pt-int-filter { display: flex; flex-direction: row; align-items: center; gap: 8px; } .pt-people-bar .pt-int-filter select { width: auto; min-width: 180px; flex: 0 0 auto; }
+
+/* Phone width: a grid page's children may shrink; long sub-tab bars scroll instead of widening the page. */
+.sx-page { grid-template-columns: minmax(0, 1fr); }
+.sx-page > * { min-width: 0; }
+.pt-subtabs { overflow-x: auto; scrollbar-width: none; }
+.pt-subtabs a { white-space: nowrap; flex: none; }

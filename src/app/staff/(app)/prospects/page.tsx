@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { NotYours } from "@/components/staff/portal/NotYours";
 import { sectionsFor } from "@/data/staff/shared";
 import { getStaffRole as getRole } from "@/data/staff/server";
 import { Icon } from "@/components/Icon";
 import { ProspectInbox, type Prospect } from "@/components/staff/ProspectInbox";
 import { signupMessages, type ProspectCtx } from "@/components/staff/prospects";
-import { Availability, Tours, Waitlist, type TourRow } from "@/components/staff/portal/Sales";
+import { Tours, Waitlist, type TourRow } from "@/components/staff/portal/Sales";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Card, PageHead } from "@/components/staff/ui";
 import { ago, dayLabel, siteHref, staffPeople } from "@/data/staff";
 import { eventRequests, prospectMessages, when } from "@/data/staff/alpha";
-import { availability, waitlistInOrder } from "@/data/staff/portal";
+import { waitlistInOrder } from "@/data/staff/portal";
 import { getStaffCommunity } from "@/data/staff/server";
 import { fmtTime, nowMinutes } from "@/lib/clock";
 
@@ -34,7 +35,8 @@ export default async function ProspectsPage() {
     ...enquiries.map((e) => {
       const t = tourOf(e.name);
       return {
-        id: `enq-${e.name}`, name: e.name, source: e.source, interest: e.interest, status: e.status, when: `Asked ${ago(e.mins)}`, note: e.msg,
+        // "Nurturing" is a follow-up sequence, which belongs to the operator's sales system or Full House: show it as contacted.
+        id: `enq-${e.name}`, name: e.name, source: e.source, interest: e.interest, status: e.status === "Nurturing" ? ("Contacted" as const) : e.status, when: `Asked ${ago(e.mins)}`, note: e.msg,
         msgs: prospectMessages(s.slug, { name: e.name, interest: e.interest, mins: e.mins, tour: t ? { days: t.days, time: t.time } : undefined }),
       };
     }),
@@ -62,7 +64,7 @@ export default async function ProspectsPage() {
 
   return (
     <>
-      <PageHead title="Prospects" sub={`Inquiries, tours, apartments and the waitlist, for ${rep}. Every inquiry got an instant reply; you take it from there.`}>
+      <PageHead title="Prospects" sub={`Inquiries, tours and the waitlist, for ${rep}. Every inquiry got an instant reply; you take it from there.`}>
         <a className="sx-btn" href={siteHref(s.slug, "/tour")} target="_blank" rel="noopener"><Icon name="globe" /> Tour booking page</a>
       </PageHead>
 
@@ -76,11 +78,15 @@ export default async function ProspectsPage() {
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="Availability" sub="Mark a floor plan open with its starting price. It updates the website and texts everyone on that plan’s waitlist.">
-          <Availability plans={availability(s.slug)} />
-        </Card>
         <Card title="Waitlist" sub="In order, longest waiting first. Names and the plan they want only.">
           <Waitlist rows={waitlistInOrder(s.slug)} />
+          <p className="sx-note">Prices and availability are in <Link className="sx-link" href="/staff/website#apartments">Website → Apartments and prices</Link>. Marking a plan open there alerts its waitlist.</p>
+        </Card>
+        <Card title="Where inquiries go">
+          <ul className="sx-list">
+            <li><b>Hand-off:</b> every inquiry also goes to {s.brand.name}’s own sales system, if you have one, with what it was sent.</li>
+            <li><b>Coming in Full House:</b> conversion funnels, follow-up sequences, deposits and occupancy tracking. Until then they stay in your sales system.</li>
+          </ul>
         </Card>
       </div>
     </>

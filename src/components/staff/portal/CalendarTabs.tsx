@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Access } from "@/data/staff/shared";
+import { reportTabsFor } from "./ReportsNav";
 
 /** Tabs inside one section of the workspace. */
 export function SubTabs({ tabs, label }: { tabs: { href: string; label: string }[]; label: string }) {
@@ -17,26 +19,8 @@ export function SubTabs({ tabs, label }: { tabs: { href: string; label: string }
   );
 }
 
-/** Events and Menus, two tabs of Calendar. */
-export const CalendarTabs = () => (
-  <SubTabs
-    label="Calendar"
-    tabs={[
-      { href: "/staff/calendar", label: "Events" },
-      { href: "/staff/calendar/menus", label: "Menus" },
-    ]}
-  />
-);
-
-/** The monthly reports, for managers. */
-export const ReportTabs = () => (
-  <SubTabs
-    label="Reports"
-    tabs={[
-      { href: "/staff/reports", label: "Scorecard" },
-      { href: "/staff/reports/surveys", label: "Surveys" },
-      { href: "/staff/reports/search", label: "Website and AI search" },
-      { href: "/staff/reports/communities", label: "All communities" },
-    ]}
-  />
-);
+/** The monthly reports: only the tabs the signed-in role may open (see reportTabsFor). */
+export const ReportTabs = ({ access }: { access: Access | undefined }) => {
+  const tabs = reportTabsFor(access);
+  return tabs.length > 1 ? <SubTabs label="Reports" tabs={tabs.map(({ href, label }) => ({ href, label }))} /> : null;
+};

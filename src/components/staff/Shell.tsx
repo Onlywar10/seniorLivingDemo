@@ -1,11 +1,11 @@
 "use client";
 
-// The staff workspace frame: six sections organised by job, shown according to who is signed in, with one
+// The staff workspace frame: sections organised by job, shown according to who is signed in, with one
 // "waiting" number (on Today). On a phone the main sections sit in a tab bar at the bottom; the rest open from "More".
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState, useTransition, type ReactNode } from "react";
-import { AS_COOKIE, sectionsFor, type Section, type StaffRole } from "@/data/staff/shared";
+import { AS_COOKIE, accessLabel, accessOf, sectionsFor, type Section, type StaffRole } from "@/data/staff/shared";
 import { staffPeople } from "@/data/staff/people";
 import { Icon } from "../Icon";
 import { CommunitySwitcher, useStaffCommunity } from "./StaffCommunity";
@@ -17,8 +17,12 @@ interface Me { as: StaffRole; key: string; name: string; first: string; title: s
 const info: Record<Section, { href: string; label: string; icon?: IconName; x?: "shield" | "door"; hint: string }> = {
   today: { href: "/staff/today", label: "Today", icon: "sun", hint: "What needs you" },
   post: { href: "/staff/post", label: "Post", icon: "send", hint: "Say it once, everywhere" },
-  calendar: { href: "/staff/calendar", label: "Calendar", icon: "calendar", hint: "Events, sign-ups, menus" },
+  calendar: { href: "/staff/calendar", label: "Calendar", icon: "calendar", hint: "Events and sign-ups" },
+  menus: { href: "/staff/menus", label: "Menus", icon: "fork", hint: "Every restaurant, every day" },
+  newsletter: { href: "/staff/newsletter", label: "Newsletter", icon: "mail", hint: "Written for you each week" },
+  website: { href: "/staff/website", label: "Website", icon: "globe", hint: "Pages, apartments, galleries" },
   people: { href: "/staff/people", label: "People", icon: "users", hint: "Residents and families" },
+  feedback: { href: "/staff/feedback", label: "Feedback", icon: "heart", hint: "Ideas, concerns, thank-yous" },
   prospects: { href: "/staff/prospects", label: "Prospects", x: "door", hint: "Inquiries, tours, waitlist" },
   reports: { href: "/staff/reports", label: "Reports", icon: "chart", hint: "Read monthly" },
   settings: { href: "/staff/settings", label: "Settings", x: "shield", hint: "Team, alerts, print" },
@@ -50,8 +54,8 @@ export function Shell({ children, me, people, waiting }: { children: ReactNode; 
   const on = (s: Section) => path === info[s].href || path.startsWith(info[s].href + "/");
   const color = staffPeople[me.key]?.color ?? "var(--terra-deep)";
   const initials = staffPeople[me.key]?.initials ?? me.first[0];
-  // Phone tab bar: Today, Post, Calendar and the person's own fourth section; everything else under "More".
-  const tabs = sections.slice(0, 4);
+  // Phone tab bar: the person's four most-used sections; everything else under "More".
+  const tabs = (["today", "post", "calendar", "menus", "people", "prospects", "website"] as Section[]).filter((s) => sections.includes(s)).slice(0, 4);
 
   useEffect(() => {
     if (!open && !who) return;
@@ -89,6 +93,7 @@ export function Shell({ children, me, people, waiting }: { children: ReactNode; 
                 <Link href={info[s].href} onClick={() => setOpen(false)} aria-current={on(s) ? "page" : undefined}>
                   {ico(s)}
                   <span>{info[s].label}</span>
+                  {accessLabel[accessOf(me.as, s) ?? "full"] && <small className="pt-nav-part">{accessLabel[accessOf(me.as, s) ?? "full"]}</small>}
                   {s === "today" && waiting > 0 && (
                     <span className="sx-nav-badge">
                       {waiting}

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { NotYours } from "@/components/staff/portal/NotYours";
-import { sectionsFor } from "@/data/staff/shared";
-import { getStaffRole as getRole } from "@/data/staff/server";
+import "@/app/staff/reports.css";
+import { mayOpen } from "@/components/staff/portal/ReportsNav";
+import { NotThisReport } from "@/components/staff/portal/ReportsParts";
+import { sectionAccess } from "@/data/staff/access";
 import { Icon } from "@/components/Icon";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
@@ -18,8 +20,9 @@ const fixLabel = { fixed: "Fixed", "in progress": "We’re fixing it", monitorin
 
 /** One summary page: how families find the community on Google and when they ask AI tools. Kinlight does the fixing. */
 export default async function SearchPage() {
-  const as = await getRole();
-  if (!sectionsFor[as].includes("reports")) return <NotYours section="Reports" who={as === "sales" ? "sales" : as === "events" ? "the events team" : "your"} />;
+  const { access } = await sectionAccess("reports");
+  if (!access) return <NotYours section="Reports" />;
+  if (!mayOpen(access, "search")) return <NotThisReport title="Website and AI search" access={access} />;
   const sc = await getStaffCommunity();
   if (!sc) return <PickCommunity screen="Website and AI search" />;
   const { s } = sc;
@@ -29,7 +32,7 @@ export default async function SearchPage() {
   return (
     <>
       <PageHead title="Website and AI search" sub={`How families find ${s.brand.name} on Google, and what AI tools tell them, in ${m.month}. Fixing what AI tools say is Kinlight’s job: here’s what we found and what we fixed.`} />
-      <ReportTabs />
+      <ReportTabs access={access} />
 
       <div className="sx-kpis">
         <Kpi label="Average place on Google" value={s.seo.avgPos.toFixed(1)} note={`for the searches below, ${Math.abs(s.seo.avgPosDelta).toFixed(1)} places ${s.seo.avgPosDelta < 0 ? "higher" : "lower"} than last month`} />

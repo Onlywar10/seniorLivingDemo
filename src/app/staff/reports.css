@@ -1,0 +1,96 @@
+/* Reports (Scorecard, Engagement, Families, All communities) and Settings additions. Uses the staff tokens. */
+
+/* ---------- shared ---------- */
+.rp-nowrap { white-space: nowrap; }
+.rp-block { display: block; color: var(--sx-ink-3); font-size: 12.5px; margin-top: 2px; }
+.rp-p { margin: 10px 0 0; }
+.rp-when { flex-basis: 100%; font-size: 12.5px; color: var(--sx-ink-3); text-align: right; }
+@media (max-width: 700px) { .rp-when { text-align: left; } }
+.rp-ev td small { max-width: 40ch; }
+.rp-ad { min-width: 200px; }
+.rp-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.rp-quote { display: block; margin-top: 4px; font-size: 14px; color: var(--sx-ink-2); }
+
+/* ---------- inquiries by source ---------- */
+.rp-src { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.rp-src li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; font-size: 14px; }
+.rp-src-v { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rp-src-v small { font-weight: 400; color: var(--sx-ink-3); }
+.rp-src-bars { grid-column: 1 / -1; display: grid; gap: 2px; }
+.rp-src-bars i { display: block; height: 10px; border-radius: 3px; background: var(--green); min-width: 2px; }
+.rp-src-bars i.prev { height: 6px; background: #cdbfa5; }
+
+/* ---------- most and least attended ---------- */
+.rp-att { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.rp-att li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: end; }
+.rp-att-t b { display: block; font-weight: 600; }
+.rp-att-t small, .rp-att-v small { display: block; font-size: 12.5px; color: var(--sx-ink-3); }
+.rp-att-v { text-align: right; font-variant-numeric: tabular-nums; }
+.rp-att-v b { font-size: 18px; }
+.rp-att-bar { grid-column: 1 / -1; height: 8px; background: var(--sx-soft); border-radius: 4px; overflow: hidden; }
+.rp-att-bar i { display: block; height: 100%; background: var(--green); border-radius: 4px; }
+
+/* ---------- QR versus staff, AI versus staff ---------- */
+.rp-split { height: 14px; border-radius: 7px; background: #cdbfa5; overflow: hidden; margin: 4px 0 10px; }
+.rp-split i { display: block; height: 100%; background: var(--green-deep); }
+.rp-split-l i { height: 10px !important; width: 10px !important; border-radius: 3px !important; }
+.rp-ai td { vertical-align: top; }
+.rp-ai td:first-child { min-width: 220px; }
+
+/* ---------- personal invites ---------- */
+.rp-big { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rp-big span { display: grid; gap: 2px; padding: 12px; background: var(--sx-soft); border-radius: 10px; }
+.rp-big b { font-size: 24px; font-family: var(--font-display); font-weight: 400; color: var(--green-ink); }
+.rp-big small { font-size: 12.5px; color: var(--sx-ink-3); }
+@media (max-width: 420px) { .rp-big { grid-template-columns: 1fr; } }
+
+/* ---------- coming later ---------- */
+.rp-later { background: var(--sx-soft); border-style: dashed; }
+.rp-later-b { font-size: 14px; }
+
+/* ---------- settings: team ---------- */
+.st-part { color: var(--sx-ink-3); font-size: 12.5px; }
+.st-adj-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; padding-top: 8px; }
+.st-remove { color: var(--sx-bad) !important; }
+.st-remove:hover { border-color: var(--sx-bad); }
+.st-note { display: block; font-size: 12.5px; color: var(--sx-ink-3); font-weight: 400; }
+@media (max-width: 600px) { .pt-team-adj { padding-left: 0; } }
+
+/* ---------- settings: community details ---------- */
+.st-dl { margin: 0; display: grid; gap: 0; }
+.st-dl > div { display: grid; grid-template-columns: minmax(110px, 34%) minmax(0, 1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--sx-line-2); font-size: 14px; align-items: center; }
+.st-dl dt { color: var(--sx-ink-3); font-size: 13px; font-weight: 600; }
+.st-dl dd { margin: 0; }
+.st-facts input { font: inherit; font-size: 14px; padding: 6px 10px; min-height: 40px; border: 1px solid #c6cfc2; border-radius: 8px; width: 100%; }
+.st-h { font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--sx-ink-3); margin: 16px 0 6px; }
+.st-rest { margin: 0; padding: 0; list-style: none; }
+.st-rest li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(140px, auto); gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--sx-line-2); font-size: 14px; }
+.st-rest b { display: block; font-weight: 600; }
+.st-rest small { display: block; color: var(--sx-ink-3); font-size: 12.5px; }
+.st-rest-h { text-align: right; font-variant-numeric: tabular-nums; }
+.st-chips { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.st-chips li { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--sx-soft); border: 1px solid var(--sx-line-2); }
+.st-chips small { color: var(--sx-ink-3); }
+.st-facts .pt-act { margin-top: 14px; }
+@media (max-width: 480px) {
+  .st-dl > div, .st-rest li { grid-template-columns: 1fr; gap: 2px; }
+  .st-rest-h { text-align: left; }
+}
+
+/* ---------- settings: alerts ---------- */
+.al-exp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: 12.5px; color: var(--sx-ink-2); font-weight: 600; }
+.al-exp .icon { width: 13px; height: 13px; }
+
+/* ---------- settings: print samples ---------- */
+.pr-samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 260px)); gap: 18px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--sx-line-2); }
+.pr-samples figure { margin: 0; display: grid; gap: 8px; }
+.pr-sign { justify-content: center; gap: 6px; border-top: 6px solid var(--green-deep); }
+.pr-qrgrid { display: block; width: 58%; max-width: 140px; height: auto; margin: 4px auto; }
+.pr-scan { font-weight: 700; font-size: 15px; color: var(--green-ink); }
+.pr-slip { aspect-ratio: 17 / 11; align-items: stretch; text-align: left; gap: 6px; border-top: 6px solid var(--terra); }
+.pr-slip .pr-big { font-size: 17px; }
+.pr-lines { display: grid; gap: 12px; padding: 6px 0; }
+.pr-lines i { display: block; border-bottom: 1px solid #c8cfc4; }
+.pr-slip-qr { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.pr-slip-qr .pr-qrgrid { width: 44px; margin: 0; }
+.pr-slip-qr small { font-size: 9.5px; color: var(--sx-ink-3); }
