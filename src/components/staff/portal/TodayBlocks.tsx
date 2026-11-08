@@ -95,6 +95,7 @@ export function Activities({ events, attendance, photos }: { events: TodayActivi
         })}
         {events.length === 0 && <li className="pt-empty">Nothing on the calendar today.</li>}
       </ol>
+      <p className="sx-hint pt-beta"><Badge tone="neutral">Coming in Beta</Badge> Today’s activities and menus on the lobby TVs.</p>
       {open && (
         <Drawer title="Take attendance" sub={`${open.title} · ${open.time} · ${open.place}`} onClose={() => setOpen(null)}>
           <TakeAttendance

@@ -464,3 +464,4 @@
 .sx-page > * { min-width: 0; }
 .pt-subtabs { overflow-x: auto; scrollbar-width: none; }
 .pt-subtabs a { white-space: nowrap; flex: none; }
+.pt-beta-in { padding: 0; }

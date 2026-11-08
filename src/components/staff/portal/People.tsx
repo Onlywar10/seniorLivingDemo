@@ -136,6 +136,7 @@ export function People({ records, total, eng, welcomes, interests, me, community
                     )}
                   </dl>
 
+                  <p className="sx-hint pt-beta pt-beta-in"><Badge tone="neutral">Coming in Beta</Badge> Telling families what {first(r.name)} joined (“went to 4 activities this week”), once the family hub and consent are in place. Until then, families are never told about participation automatically.</p>
                   <h3>Family</h3>
                   <ul className="pt-fam">
                     {r.family.map((m) => (
@@ -157,6 +158,7 @@ export function People({ records, total, eng, welcomes, interests, me, community
                       </li>
                     ))}
                   </ul>
+                  <p className="sx-hint pt-beta pt-beta-in"><Badge tone="neutral">Coming in Beta</Badge> Family photos and messages that {first(r.name)} sees, in the app.</p>
                   <Invite onInvite={(m) => { patch(r.name, (x) => ({ ...x, family: [...x.family, m] })); say(`Invite sent to ${m.name} by ${m.channel.toLowerCase()}. One reminder in a few days, then it stops.`); }} resident={r} />
                 </div>
               )}

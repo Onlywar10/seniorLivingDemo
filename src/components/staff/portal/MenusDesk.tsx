@@ -463,6 +463,7 @@ export function MenusDesk({ week, canEdit, isApprover, me, diningHref, homeHref 
           </header>
           <div className="sx-card-body">
             <p style={{ margin: 0 }}>The menus come straight from the system the kitchen already plans in, so nothing needs uploading. Until then, one upload a week covers every restaurant.</p>
+            <p style={{ margin: "8px 0 0" }}><Badge tone="info">Coming in Beta</Badge> Today’s menus on the lobby TVs and in-room TV.</p>
           </div>
         </section>
       </div>
