@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { NotYours } from "@/components/staff/portal/NotYours";
+import { sectionsFor } from "@/data/staff/shared";
+import { getStaffRole as getRole } from "@/data/staff/server";
+import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
 import Image from "next/image";
 import { Icon } from "@/components/Icon";
 import { Overview } from "@/components/staff/Overview";
@@ -26,6 +30,8 @@ function change(now: number, prev: number, fmtKind?: string) {
 }
 
 export default async function ScorecardPage() {
+  const as = await getRole();
+  if (!sectionsFor[as].includes("reports")) return <NotYours section="Reports" who={as === "sales" ? "sales" : as === "events" ? "the events team" : "your"} />;
   const sc = await getStaffCommunity();
   if (!sc) return <Overview screen="scorecard" />;
   const { s } = sc;
@@ -43,6 +49,7 @@ export default async function ScorecardPage() {
         <button type="button" className="sx-btn"><Icon name="download" /> Download PDF</button>
         <button type="button" className="sx-btn sx-btn-primary"><Icon name="mail" /> Email to the team</button>
       </PageHead>
+      <ReportTabs />
 
       <div className="sx-grid g-21">
         <Card title={`Our ${ps.length} promises this month`} sub={`${kept} of ${ps.length} kept${ps.length - kept ? ` · ${ps.length - kept} at risk` : ""}`} pad={false}>

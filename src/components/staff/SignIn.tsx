@@ -11,7 +11,7 @@ export function SignIn() {
   const [email, setEmail] = useState(user.email);
   const [stage, setStage] = useState<"idle" | "busy" | "sent">("idle");
 
-  const go = () => window.setTimeout(() => router.push("/staff/dashboard"), 450);
+  const go = () => window.setTimeout(() => router.push("/staff/today"), 450);
 
   if (stage === "sent") {
     return (
@@ -23,7 +23,7 @@ export function SignIn() {
         <p>
           We sent a sign-in link to <b>{email || user.email}</b>. It works for 15 minutes on this device.
         </p>
-        <button className="sx-btn sx-btn-primary sx-btn-lg" type="button" onClick={() => router.push("/staff/dashboard")}>
+        <button className="sx-btn sx-btn-primary sx-btn-lg" type="button" onClick={() => router.push("/staff/today")}>
           Open the link
         </button>
         <button className="sx-btn sx-btn-lg" type="button" onClick={() => setStage("idle")}>

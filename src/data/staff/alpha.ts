@@ -67,7 +67,8 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
     fam.slice(0, 9).forEach((c, i) => {
       out.push({
         id: `rsvp-${e.id}-${i}`, kind: "family-rsvp", event: ref(e), from: c.contact, relation: c.relation, resident: c.resident,
-        party: 1 + (hash(c.contact) % 4), mins: 25 + i * 190, status: i < 3 ? "waiting" : "confirmed",
+        // The first two: the resident has said yes and staff approve next. The third: the resident hasn't answered yet.
+        party: 1 + (hash(c.contact) % 4), mins: 25 + i * 190, status: i < 2 ? "waiting" : i === 2 ? "checking" : "confirmed",
         via: i === 1 ? "Reply to weekly text, finished on the personal link" : "Personal link", lang: c.lang,
         note: i === 0 ? "Bringing the grandchildren, ages 6 and 9" : i === 2 ? "Needs a wheelchair-accessible table" : undefined,
       });
@@ -114,16 +115,6 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
   return out.sort((a, b) => a.mins - b.mins);
 }
 
-/** Who on the list for a staff event (residents booked plus approved family guests). Never shown publicly. */
-export function eventList(slug: CommunitySlug, e: EventRef) {
-  const s = getStaffData(slug);
-  const reqs = eventRequests(slug).filter((r) => r.event.id === e.id && r.status === "confirmed");
-  const pool = e.lantern ? [...s.lanternNames, ...s.residentNames] : s.residentNames;
-  const n = Math.max(0, (e.taken ?? 0) - reqs.length);
-  const residents = Array.from({ length: n }, (_, i) => pool[(hash(e.id) + i * 5) % pool.length]);
-  return { residents: [...new Set(residents)], requests: reqs };
-}
-
 /* ------------------------------------------------------------ attendance */
 
 export interface AttendanceRow { event: EventRef; came: number; expected: number; method: "Tap list" | "Photo of sign-in sheet" | "Not taken yet"; by: string; names: string[] }
@@ -159,31 +150,6 @@ export function attendance(slug: CommunitySlug) {
     todayLeft,
     week: { activities: taken.length, visits: taken.reduce((n, r) => n + r.came, 0), residentsReached: Math.round(s.community.residents * 0.71), missing: past.length - taken.length },
   };
-}
-
-/* ------------------------------------------------------------ staff alerts */
-
-export interface StaffAlert { id: string; kind: "inquiry" | "tour" | "rsvp" | "seat" | "stale" | "reply"; title: string; detail: string; mins: number; href: string; urgent?: boolean }
-
-export function alerts(slug: CommunitySlug): StaffAlert[] {
-  const s = getStaffData(slug);
-  const reqs = eventRequests(slug);
-  const rsvps = reqs.filter((r) => r.kind === "family-rsvp" && r.status === "waiting");
-  const seats = reqs.filter((r) => r.kind === "seat-request" && r.status === "waiting");
-  const newEnq = s.enquiries.filter((e) => e.status === "New");
-  const nextTour = s.tours.find((t) => t.days >= 0);
-  const out: StaffAlert[] = [
-    ...newEnq.map((e, i) => ({
-      id: `inq-${i}`, kind: "inquiry" as const, title: `New inquiry: ${e.name}`, detail: `${e.interest} · ${e.source}. Instant reply sent; waiting for ${staffName(s, s.roles.tours)} to call.`,
-      mins: e.mins, href: "/staff/tours", urgent: e.mins < 60,
-    })),
-    ...(nextTour ? [{ id: "tour", kind: "tour" as const, title: `Tour booked: ${nextTour.who}`, detail: `${nextTour.interest}, ${nextTour.days === 0 ? "today" : nextTour.days === 1 ? "tomorrow" : `in ${nextTour.days} days`} at ${fmtTime(nextTour.time)} with ${staffName(s, nextTour.with)}. Confirmation and reminder sent.`, mins: 140, href: "/staff/tours" }] : []),
-    ...(rsvps.length ? [{ id: "rsvp", kind: "rsvp" as const, title: `${rsvps.length} family RSVPs waiting`, detail: `For ${rsvps[0].event.title}, ${when(rsvps[0].event)}. Approve within 1 business day.`, mins: rsvps[0].mins, href: "/staff/sign-ups", urgent: true }] : []),
-    ...seats.map((r) => ({ id: `seat-${r.id}`, kind: "seat" as const, title: `Seat request: ${r.event.title}`, detail: `${r.from} (${r.relation?.toLowerCase()}) asks for a seat for ${r.resident}. Check with ${first(r.resident ?? "")} first.`, mins: r.mins, href: "/staff/sign-ups" })),
-    { id: "stale", kind: "stale" as const, title: "Page going stale: Fitness", detail: "Not updated for 6 days. Fitness pages should change every 7 days; the class schedule for next week is due.", mins: 60 * 9, href: s.freshness.length ? "/staff/dashboard" : "/staff/dashboard" },
-    { id: "reply", kind: "reply" as const, title: `${s.threads.filter((t) => t.unread).length} family replies to read`, detail: "Replies to this week’s texts, translated into English.", mins: s.threads[0]?.mins ?? 60, href: "/staff/messages" },
-  ];
-  return out.sort((a, b) => a.mins - b.mins);
 }
 
 /* ------------------------------------------------------------ resident suggestions */
@@ -251,21 +217,7 @@ export function surveys(slug: CommunitySlug) {
   };
 }
 
-/* ------------------------------------------------------------ content library and print */
-
-export interface LibraryItem { id: string; kind: "Activity idea" | "Post template" | "Flyer template" | "Calendar template" | "Menu template"; title: string; text: string; rating: number; used: number; tag: string; photo?: string; worked?: string }
-
-export const library: LibraryItem[] = [
-  { id: "l1", kind: "Activity idea", title: "“This Is Your Life” interviews", text: "Residents interview each other about a turning point in their lives; staff film a two-minute clip for the family digest.", rating: 4.8, used: 14, tag: "Engaged", photo: "/img/friends-laugh.jpg", worked: "Best attended new activity across Wrenhaven in October" },
-  { id: "l2", kind: "Activity idea", title: "Grandchildren’s craft afternoon", text: "A family event: a simple seasonal craft at each table, residents and grandchildren side by side. Invite from the calendar.", rating: 4.7, used: 9, tag: "Family event", photo: "/img/art-studio.jpg" },
-  { id: "l3", kind: "Activity idea", title: "Armchair travel", text: "A destination a month: slides, music and a tasting from the kitchen. Works well in memory care with shorter sessions.", rating: 4.5, used: 21, tag: "Lively", photo: "/img/wine-toast.jpg" },
-  { id: "l4", kind: "Activity idea", title: "Seated garden club", text: "Raised beds at chair height, a seed swap and a harvest lunch. Popular with residents who used to garden at home.", rating: 4.4, used: 11, tag: "Valued", photo: "/img/gardening.jpg" },
-  { id: "l5", kind: "Post template", title: "Photos are up", text: "Photos from {event} are up! See them on our website. Thank you to everyone who came.", rating: 4.6, used: 88, tag: "After an event" },
-  { id: "l6", kind: "Post template", title: "Family event invitation", text: "You’re invited: {event}, {when}. RSVP from your personal link and tell us how many are coming.", rating: 4.5, used: 31, tag: "Family event" },
-  { id: "l7", kind: "Flyer template", title: "Large-print event flyer", text: "Letter size, 24 pt, one photo, the day and time in bold. Filled in from the calendar.", rating: 4.7, used: 64, tag: "Print" },
-  { id: "l8", kind: "Calendar template", title: "Large-print monthly calendar", text: "Tabloid, 16 pt, color-coded by category with a legend residents can read from a walker.", rating: 4.8, used: 24, tag: "Print" },
-  { id: "l9", kind: "Menu template", title: "Weekly menu card", text: "Letter, 18 pt, three restaurants, dietary tags spelled out rather than abbreviated.", rating: 4.3, used: 40, tag: "Print" },
-];
+/* ------------------------------------------------------------ print */
 
 export function printItems(slug: CommunitySlug) {
   const c = communities[slug];
@@ -408,37 +360,24 @@ export function sampleFamily(slug: CommunitySlug): Contact {
   return s.contacts.find((c) => c.lang === "English" && c.sms && c.emailOpt && !c.lantern && /^(Son|Daughter)$/.test(c.relation)) ?? s.contacts[0];
 }
 
-/* ------------------------------------------------------------ sign-ups: capped events, contacts */
-
-/** Upcoming capped events (seats, waitlist, place or departure point), soonest first. Staff only. */
-export function cappedEvents(slug: CommunitySlug, days = 10): EventRef[] {
-  return upcoming(slug, days).filter((e) => e.cap).map(ref);
-}
-
-/** How a family hears back about an RSVP or seat request: the channel they chose, in their language. */
-export function replyChannel(slug: CommunitySlug, from: string) {
-  const c = getStaffData(slug).contacts.find((x) => x.contact === from);
-  const how = !c ? "text" : c.channel === "Email" ? "email" : c.channel === "SMS" ? "text" : "text and email";
-  return { how, lang: c?.lang ?? "English" };
-}
-
 /* ------------------------------------------------------------ alert settings */
 
-export type AlertChannel = "Text" | "Email" | "In the app";
-export interface AlertSetting { kind: StaffAlert["kind"]; label: string; detail: string; who: { key: string; name: string; role: string; on: AlertChannel[] }[] }
+export type AlertChannel = "Text" | "Email" | "In the portal";
+export interface AlertSetting { kind: string; label: string; detail: string; who: { key: string; name: string; role: string; on: AlertChannel[] }[] }
 
-/** Who gets which alert, and how. Staff change these on the Alerts screen. */
+/** Who gets which alert, and how (Settings). Each alert opens the same card that's on Today. */
 export function alertSettings(slug: CommunitySlug): AlertSetting[] {
   const s = getStaffData(slug);
   const r = s.roles;
   const p = (key: string, on: AlertChannel[]) => ({ key, name: staffName(s, key), role: s.people[key]?.role ?? "", on });
   return [
-    { kind: "inquiry", label: "New inquiry", detail: "Website, Google, AI search and referral partners. Instant reply already sent.", who: [p(r.tours, ["Text", "In the app"]), p(r.approver, ["Email"])] },
-    { kind: "tour", label: "Tour booked", detail: "Booked online or by phone, with the confirmation and reminder sent.", who: [p(r.tours, ["Text", "Email", "In the app"]), p(r.approver, ["In the app"])] },
-    { kind: "rsvp", label: "Family RSVP waiting", detail: "Approve within 1 business day; the family is told by text or email.", who: [p(r.calendar, ["Text", "In the app"]), p(r.lantern, ["In the app"])] },
-    { kind: "seat", label: "Seat request from a family", detail: "Check with the resident first, then confirm or decline.", who: [p(r.calendar, ["Text", "In the app"])] },
-    { kind: "stale", label: "Page going stale", detail: "A page hasn’t changed for longer than it should.", who: [p(r.calendar, ["Email"]), p(r.approver, ["Email"])] },
-    { kind: "reply", label: "Family replies", detail: "Replies to texts and emails, translated into English.", who: [p(r.calendar, ["In the app"]), p(r.approver, ["Email", "In the app"])] },
+    { kind: "post", label: "A post to approve", detail: "Resident photos, changes, prices and special menus.", who: [p(r.approver, ["Text", "In the portal"])] },
+    { kind: "rsvp", label: "A family request, once the resident says yes", detail: "Family RSVPs and seat requests. Approve within 1 business day.", who: [p(r.calendar, ["Text", "In the portal"]), p(r.lantern, ["In the portal"])] },
+    { kind: "ask", label: "A resident hasn’t answered", detail: "Ask them in person, then tap their answer.", who: [p(r.calendar, ["Text", "In the portal"])] },
+    { kind: "inquiry", label: "A new inquiry or tour", detail: "The instant reply has already gone.", who: [p(r.tours, ["Text", "In the portal"]), p(r.approver, ["Email"])] },
+    { kind: "reply", label: "A reply the AI couldn’t handle", detail: "Unclear, care or health questions. The AI answers everything else.", who: [p(r.calendar, ["In the portal"]), p(r.approver, ["Email"])] },
+    { kind: "verify", label: "A new family member to check", detail: "Signed up themselves; the resident has agreed.", who: [p(r.calendar, ["In the portal"])] },
+    { kind: "stale", label: "A page going stale", detail: "A page hasn’t changed for longer than it should.", who: [p(r.calendar, ["Email"]), p(r.approver, ["Email"])] },
   ];
 }
 

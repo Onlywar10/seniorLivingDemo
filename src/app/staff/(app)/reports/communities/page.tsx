@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { NotYours } from "@/components/staff/portal/NotYours";
+import { sectionsFor } from "@/data/staff/shared";
+import { getStaffRole as getRole } from "@/data/staff/server";
+import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
 import { Icon } from "@/components/Icon";
 import { OpenCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, Kpi, Meter, PageHead, fmt } from "@/components/staff/ui";
 import { occupancy, scorecardMonths } from "@/data/staff";
 import { evidence, leadershipRow, type PromiseStatus } from "@/data/staff/alpha";
 import { communitySlugs } from "@/lib/sites";
-import "../../alpha.css";
 
 export const metadata: Metadata = { title: "All communities" };
 
@@ -13,6 +16,8 @@ const promiseTone: Record<PromiseStatus, "good" | "warn" | "bad" | "neutral"> = 
 const show = (v: number, f?: string) => (f === "pct" ? `${v}%` : f === "dec" ? (v > 10 ? `${v.toFixed(1)}%` : v.toFixed(1)) : fmt(v));
 
 export default async function LeadershipPage() {
+  const as = await getRole();
+  if (!sectionsFor[as].includes("reports")) return <NotYours section="Reports" who={as === "sales" ? "sales" : as === "events" ? "the events team" : "your"} />;
   const rows = communitySlugs.map(leadershipRow);
   const m = scorecardMonths();
   const sum = (f: (r: (typeof rows)[number]) => number) => rows.reduce((n, r) => n + f(r), 0);
@@ -28,6 +33,7 @@ export default async function LeadershipPage() {
         <button type="button" className="sx-btn"><Icon name="download" /> Day-90 results report</button>
         <button type="button" className="sx-btn sx-btn-primary"><Icon name="mail" /> Email the scorecards</button>
       </PageHead>
+      <ReportTabs />
 
       <div className="sx-kpis">
         <Kpi label="Families reached this week" value={<>{fmt(sum((r) => r.familiesReached))}<small> / {fmt(sum((r) => r.families))}</small></>} note="opened at least one message" />

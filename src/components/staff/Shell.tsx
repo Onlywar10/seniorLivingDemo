@@ -1,87 +1,71 @@
 "use client";
 
+// The staff workspace frame: six sections organised by job, shown according to who is signed in, with one
+// "waiting" number (on Today). On a phone the main sections sit in a tab bar at the bottom; the rest open from "More".
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState, type ReactNode } from "react";
-import { user } from "@/data/staff/people";
+import { usePathname, useRouter } from "next/navigation";
+import { Fragment, useEffect, useState, useTransition, type ReactNode } from "react";
+import { AS_COOKIE, sectionsFor, type Section, type StaffRole } from "@/data/staff/shared";
+import { staffPeople } from "@/data/staff/people";
 import { Icon } from "../Icon";
 import { CommunitySwitcher, useStaffCommunity } from "./StaffCommunity";
 import { XIcon } from "./ui";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
-type Item = { href: string; label: string; icon?: IconName; x?: "dash" | "repeat" | "trend" | "door" | "key" | "clipboard" | "shield"; badge?: number };
+interface Me { as: StaffRole; key: string; name: string; first: string; title: string; preset: string }
 
-const navFor = (approvals: number, unread: number, alertCount: number, signups: number): { group: string; items: Item[] }[] => [
-  {
-    group: "Overview",
-    items: [
-      { href: "/staff/dashboard", label: "Dashboard", x: "dash" },
-      { href: "/staff/alerts", label: "Alerts", icon: "bell", badge: alertCount },
-      { href: "/staff/scorecard", label: "Monthly scorecard", icon: "chart" },
-      { href: "/staff/leadership", label: "All communities", icon: "building" },
-    ],
-  },
-  {
-    group: "Publish",
-    items: [
-      { href: "/staff/publish", label: "Post once", icon: "send" },
-      { href: "/staff/approvals", label: "Approvals", icon: "check", badge: approvals },
-      { href: "/staff/calendar", label: "Calendar", icon: "calendar" },
-      { href: "/staff/menus", label: "Menus", icon: "fork" },
-      { href: "/staff/photo-post", label: "Photo post", icon: "image" },
-      { href: "/staff/library", label: "Library & print", icon: "printer" },
-    ],
-  },
-  {
-    group: "Events",
-    items: [
-      { href: "/staff/sign-ups", label: "Sign-ups & RSVPs", x: "clipboard", badge: signups },
-      { href: "/staff/attendance", label: "Attendance", icon: "users" },
-      { href: "/staff/suggestions", label: "Resident suggestions", icon: "star" },
-    ],
-  },
-  {
-    group: "Families",
-    items: [
-      { href: "/staff/messages", label: "Messages", icon: "sms", badge: unread },
-      { href: "/staff/families", label: "Families & contacts", icon: "heart" },
-      { href: "/staff/surveys", label: "Surveys", icon: "list" },
-    ],
-  },
-  {
-    group: "Growth",
-    items: [
-      { href: "/staff/tours", label: "Tours & enquiries", x: "door" },
-      { href: "/staff/apartments", label: "Apartments & waitlist", x: "key" },
-      { href: "/staff/seo", label: "Search (SEO)", icon: "search" },
-      { href: "/staff/geo", label: "AI search (GEO)", icon: "sparkle" },
-    ],
-  },
-  {
-    group: "Settings",
-    items: [
-      { href: "/staff/team", label: "Team & roles", x: "shield" },
-    ],
-  },
-];
+const info: Record<Section, { href: string; label: string; icon?: IconName; x?: "shield" | "door"; hint: string }> = {
+  today: { href: "/staff/today", label: "Today", icon: "sun", hint: "What needs you" },
+  post: { href: "/staff/post", label: "Post", icon: "send", hint: "Say it once, everywhere" },
+  calendar: { href: "/staff/calendar", label: "Calendar", icon: "calendar", hint: "Events, sign-ups, menus" },
+  people: { href: "/staff/people", label: "People", icon: "users", hint: "Residents and families" },
+  prospects: { href: "/staff/prospects", label: "Prospects", x: "door", hint: "Inquiries, tours, waitlist" },
+  reports: { href: "/staff/reports", label: "Reports", icon: "chart", hint: "Read monthly" },
+  settings: { href: "/staff/settings", label: "Settings", x: "shield", hint: "Team, alerts, print" },
+};
 
-export function Shell({ children, badges }: { children: ReactNode; badges: { approvals: number; unread: number; alerts: number; signups: number } }) {
+const ico = (s: Section) => (info[s].icon ? <Icon name={info[s].icon!} /> : <XIcon name={info[s].x!} />);
+
+/** Signs in as someone else (the events lead, sales or the manager) and rebuilds the screen for them. */
+function useSignInAs() {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return {
+    pending,
+    go: (as: StaffRole) => {
+      document.cookie = `${AS_COOKIE}=${as}; path=/; max-age=31536000; samesite=lax`;
+      start(() => router.refresh());
+    },
+  };
+}
+
+export function Shell({ children, me, people, waiting }: { children: ReactNode; me: Me; people: Me[]; waiting: number }) {
   const path = usePathname();
   const { scope, current, site } = useStaffCommunity();
   const name = current ? current.name : "Wrenhaven Senior Living";
-  const unread = badges.unread;
-  const nav = navFor(badges.approvals, unread, badges.alerts, badges.signups);
+  const sections = sectionsFor[me.as];
   const [open, setOpen] = useState(false);
+  const [who, setWho] = useState(false);
+  const { go, pending } = useSignInAs();
+  const on = (s: Section) => path === info[s].href || path.startsWith(info[s].href + "/");
+  const color = staffPeople[me.key]?.color ?? "var(--terra-deep)";
+  const initials = staffPeople[me.key]?.initials ?? me.first[0];
+  // Phone tab bar: Today, Post, Calendar and the person's own fourth section; everything else under "More".
+  const tabs = sections.slice(0, 4);
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    if (!open && !who) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      setWho(false);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, who]);
 
   return (
-    <div className={`sx ${open ? "nav-open" : ""}`} data-no-translate>
+    <div className={`sx ${open ? "nav-open" : ""}`} data-no-translate data-as={me.as}>
       <a className="sx-skip" href="#sx-main">
         Skip to content
       </a>
@@ -99,43 +83,63 @@ export function Shell({ children, badges }: { children: ReactNode; badges: { app
         </div>
         <CommunitySwitcher />
         <nav className="sx-nav">
-          {nav.map((g) => (
-            <div key={g.group}>
-              <p className="sx-nav-g">{g.group}</p>
-              <ul>
-                {g.items.map((it) => (
-                  <li key={it.href}>
-                    <Link href={it.href} onClick={() => setOpen(false)} aria-current={path === it.href ? "page" : undefined}>
-                      {it.icon ? <Icon name={it.icon} /> : <XIcon name={it.x!} />}
-                      <span>{it.label}</span>
-                      {!!it.badge && (
-                        <span className="sx-nav-badge">
-                          {it.badge}
-                          <span className="vh"> waiting</span>
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <ul>
+            {sections.map((s) => (
+              <li key={s}>
+                <Link href={info[s].href} onClick={() => setOpen(false)} aria-current={on(s) ? "page" : undefined}>
+                  {ico(s)}
+                  <span>{info[s].label}</span>
+                  {s === "today" && waiting > 0 && (
+                    <span className="sx-nav-badge">
+                      {waiting}
+                      <span className="vh"> waiting for you</span>
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </nav>
         <Link className="sx-kinlight" href="/kinlight" title="Kinlight, the platform this workspace runs on">
           <i aria-hidden="true" />
           <span>Powered by <b>Kinlight</b></span>
         </Link>
-        <div className="sx-user">
-          <span className="sx-avatar" style={{ background: "var(--terra-deep)" }} aria-hidden="true">
-            {user.initials}
-          </span>
-          <span className="sx-user-t">
-            <b>{user.name}</b>
-            <span>{user.role}</span>
-          </span>
-          <Link href="/staff" aria-label="Sign out" className="sx-out">
-            <Icon name="logout" />
-          </Link>
+        <div className="sx-user pt-user">
+          <button type="button" className="pt-user-btn" aria-expanded={who} aria-controls="pt-who" onClick={() => setWho((w) => !w)} aria-busy={pending || undefined}>
+            <span className="sx-avatar" style={{ background: color }} aria-hidden="true">
+              {initials}
+            </span>
+            <span className="sx-user-t">
+              <b>{me.name}</b>
+              <span>{pending ? "Switching…" : `${me.title} · ${me.preset}`}</span>
+            </span>
+            <Icon name="chev" />
+          </button>
+          {who && (
+            <div className="pt-who" id="pt-who">
+              <p>Signed in as</p>
+              <ul>
+                {people.map((p) => (
+                  <li key={p.as}>
+                    <button
+                      type="button"
+                      aria-current={p.as === me.as ? "true" : undefined}
+                      onClick={() => {
+                        setWho(false);
+                        if (p.as !== me.as) go(p.as);
+                      }}
+                    >
+                      <b>{p.name}</b>
+                      <span>{p.title} · {p.preset}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/staff" className="pt-who-out">
+                <Icon name="logout" /> Sign out
+              </Link>
+            </div>
+          )}
         </div>
       </aside>
       <div className="sx-main">
@@ -143,29 +147,42 @@ export function Shell({ children, badges }: { children: ReactNode; badges: { app
           <button type="button" className="sx-burger" aria-label="Open menu" aria-expanded={open} aria-controls="sx-nav" onClick={() => setOpen(true)}>
             <Icon name="menu" />
           </button>
-          <Link href="/staff/dashboard" className="sx-top-brand" aria-label="Dashboard">
+          <Link href="/staff/today" className="sx-top-brand" aria-label="Today">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/img/brand/dots.png" alt="" width={28} height={28} />
             <span>{name}</span>
           </Link>
           <div className="sx-top-right">
-            <Link href="/staff/publish" className="sx-btn sx-btn-primary sx-top-post" aria-label="New post">
-              <Icon name="plus" /> <span>Post</span>
-            </Link>
-            <Link href="/staff/alerts" className="sx-bell" aria-label={`Alerts: ${badges.alerts} new`}>
-              <Icon name="bell" />
-              {badges.alerts > 0 && <i />}
-            </Link>
-            <Link href={site("/")} className="sx-site" target="_blank" rel="noopener" aria-label="View website (opens in a new tab)">
-              <Icon name="globe" /> <span>View website</span>
-            </Link>
+            {!on("today") && !on("post") && (
+              <Link href="/staff/post" className="sx-btn sx-btn-primary sx-top-post" aria-label="Post something">
+                <Icon name="plus" /> <span>Post</span>
+              </Link>
+            )}
+            {scope !== "all" && (
+              <Link href={site("/")} className="sx-site" target="_blank" rel="noopener" aria-label="View website (opens in a new tab)">
+                <Icon name="globe" /> <span>View website</span>
+              </Link>
+            )}
           </div>
         </div>
         <main className="sx-page" id="sx-main">
-          {/* Remount the screen when the community changes, so editors start from the new community's data. */}
-          <Fragment key={scope}>{children}</Fragment>
+          {/* Remount the screen when the community or the person changes, so each starts from their own data. */}
+          <Fragment key={`${scope}-${me.as}`}>{children}</Fragment>
         </main>
       </div>
+      <nav className="pt-tabs" aria-label="Sections">
+        {tabs.map((s) => (
+          <Link key={s} href={info[s].href} aria-current={on(s) ? "page" : undefined}>
+            {ico(s)}
+            <span>{info[s].label}</span>
+            {s === "today" && waiting > 0 && <i aria-label={`${waiting} waiting for you`}>{waiting}</i>}
+          </Link>
+        ))}
+        <button type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="sx-nav">
+          <Icon name="menu" />
+          <span>More</span>
+        </button>
+      </nav>
       {open && <button type="button" className="sx-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setOpen(false)} />}
     </div>
   );

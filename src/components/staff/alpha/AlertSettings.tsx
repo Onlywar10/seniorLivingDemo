@@ -6,7 +6,7 @@ import type { AlertChannel, AlertSetting } from "@/data/staff/alpha";
 import { Icon } from "../../Icon";
 import { Avatar } from "../ui";
 
-const channels: AlertChannel[] = ["Text", "Email", "In the app"];
+const channels: AlertChannel[] = ["Text", "Email", "In the portal"];
 
 export function AlertSettings({ rules }: { rules: AlertSetting[] }) {
   const [on, setOn] = useState<Record<string, boolean>>(() =>
@@ -50,7 +50,7 @@ export function AlertSettings({ rules }: { rules: AlertSetting[] }) {
         </table>
       </div>
       <div className="at-foot">
-        <span className="sx-hint">Urgent alerts (a new inquiry, a family waiting) repeat by text after 30 minutes if nobody opens them.</span>
+        <span className="sx-hint">Each alert opens the same card as Today, so one tap decides it. Urgent ones repeat by text after 30 minutes if nobody opens them.</span>
         {saved ? (
           <span className="al-done good" role="status"><Icon name="check" /> Saved</span>
         ) : (

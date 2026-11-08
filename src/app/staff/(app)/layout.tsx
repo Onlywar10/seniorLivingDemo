@@ -3,11 +3,12 @@ import type { ReactNode } from "react";
 import { Shell } from "@/components/staff/Shell";
 import { StaffCommunityProvider, type StaffCommunityOption } from "@/components/staff/StaffCommunity";
 import { communities } from "@/data/communities";
-import { staffSummary } from "@/data/staff";
-import { getStaffScope } from "@/data/staff/server";
-import { alerts, eventRequests } from "@/data/staff/alpha";
+import { queueFor, viewer, viewers } from "@/data/staff/portal";
+import { getStaffRole, getStaffScope } from "@/data/staff/server";
 import { communitySlugs } from "@/lib/sites";
 import "../staff.css";
+import "../alpha.css";
+import "../portal.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const scope = await getStaffScope();
@@ -20,22 +21,21 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function StaffLayout({ children }: { children: ReactNode }) {
   const scope = await getStaffScope();
+  const as = await getStaffRole();
   const options: StaffCommunityOption[] = communitySlugs.map((slug) => {
     const { site } = communities[slug];
     return { slug, name: site.name, short: site.short, city: site.address.city };
   });
-  // Sidebar badges: the selected community's, or every community's in the overview.
-  const sums = (scope === "all" ? [...communitySlugs] : [scope]).map(staffSummary);
-  const slugs = scope === "all" ? [...communitySlugs] : [scope];
-  const badges = {
-    approvals: sums.reduce((n, s) => n + s.approvals, 0),
-    unread: sums.reduce((n, s) => n + s.unread, 0),
-    alerts: slugs.reduce((n, sl) => n + alerts(sl).filter((a) => a.mins < 60 * 24).length, 0),
-    signups: slugs.reduce((n, sl) => n + eventRequests(sl).filter((r) => r.status === "waiting").length, 0),
-  };
+  // The signed-in person, and the one number that says how much is waiting on them (their "Needs you" queue).
+  const base = scope === "all" ? communitySlugs[0] : scope;
+  const me = viewer(base, as);
+  const people = viewers(base);
+  const waiting = scope === "all" ? 0 : queueFor(scope, as).length;
   return (
     <StaffCommunityProvider scope={scope} options={options}>
-      <Shell badges={badges}>{children}</Shell>
+      <Shell me={me} people={people} waiting={waiting}>
+        {children}
+      </Shell>
     </StaffCommunityProvider>
   );
 }

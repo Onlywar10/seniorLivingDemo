@@ -12,6 +12,26 @@ export const STAFF_COOKIE = "wh-staff-community";
 export const DEFAULT_STAFF_COMMUNITY: CommunitySlug = "alder-bend";
 export const parseStaffScope = (v: string | null | undefined): StaffScope => (v === "all" ? "all" : isCommunity(v) ? v : DEFAULT_STAFF_COMMUNITY);
 
+/* ------------------------------------------------------------ who is signed in */
+
+/**
+ * Who is using the workspace, by what they do: the events lead (Nora at Alder Bend), sales (Priya) or the manager
+ * (Renata, the executive director and administrator). The same three exist in every community, so the choice
+ * survives a change of community. Kept in a cookie so server pages can build each person's own view.
+ */
+export type StaffRole = "events" | "sales" | "manager";
+export const AS_COOKIE = "wh-staff-as";
+export const parseAs = (v: string | null | undefined): StaffRole => (v === "sales" || v === "manager" ? v : "events");
+/** The workspace sections each person sees. */
+export type Section = "today" | "post" | "calendar" | "people" | "prospects" | "reports" | "settings";
+export const sectionsFor: Record<StaffRole, Section[]> = {
+  events: ["today", "post", "calendar", "people"],
+  sales: ["today", "post", "calendar", "prospects"],
+  manager: ["today", "post", "calendar", "people", "prospects", "reports", "settings"],
+};
+/** The preset role each person holds (Settings → Team). */
+export const presetOf: Record<StaffRole, "Approver" | "Sales" | "Administrator"> = { events: "Approver", sales: "Sales", manager: "Administrator" };
+
 /** A page on a community's public website: siteHref("kestrel-point", "/calendar") → "/kestrel-point/calendar". */
 export const siteHref = (scope: StaffScope, path = "/") => (scope === "all" ? path : path === "/" ? `/${scope}` : `/${scope}${path}`);
 
