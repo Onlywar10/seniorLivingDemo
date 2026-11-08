@@ -1,5 +1,5 @@
 // The community's upcoming public and family events, placed relative to today so the calendar always has one of each
-// coming up: an open house anyone can sign up for, and a family barbecue families RSVP to from their weekly message.
+// coming up: an open house and a holiday craft fair anyone can sign up for, and a family barbecue families RSVP to from their weekly message.
 import { addDays, dow, iso, today } from "@/lib/clock";
 import type { CalEvent } from "@/data/shared";
 
@@ -35,6 +35,18 @@ export function specialsOn(dateIso: string, copy: SpecialsCopy): Seed[] {
       special: true,
     });
   }
+  if (dateIso === nextWeekday(6, 1)) {
+    out.push({
+      kind: "public",
+      start: 10 * 60,
+      end: 14 * 60,
+      title: "Holiday Craft Fair",
+      desc: "Handmade gifts from local makers and our own residents, hot cider, and carols from the Calder Strings. Free and open to everyone; bring the grandchildren. Let us know you’re coming so we save you a cider.",
+      room: copy.barbecueRoom,
+      cat: "community",
+      special: true,
+    });
+  }
   if (dateIso === nextWeekday(0, 9)) {
     out.push({
       kind: "family",
@@ -51,4 +63,4 @@ export function specialsOn(dateIso: string, copy: SpecialsCopy): Seed[] {
 }
 
 /** The dates of the next open house and family barbecue, for screens that link to them. */
-export const nextSpecials = () => ({ openHouse: nextWeekday(6, 8), barbecue: nextWeekday(0, 9) });
+export const nextSpecials = () => ({ openHouse: nextWeekday(6, 8), craftFair: nextWeekday(6, 1), barbecue: nextWeekday(0, 9) });

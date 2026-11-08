@@ -1084,6 +1084,38 @@ const intents: Intent[] = [
       cta: src("tour", c.l),
     }),
   },
+  {
+    // "What is daily life here really like?": a short picture of a day, today's real calendar, then an invitation to visit.
+    test: has(/daily life|day to day|typical day|average day|a day here|(life|living) here|really like|what (is|s) it like|vida diaria|dia normal|como es (la vida|vivir)/, /日常|平常的一天|一天是怎样|生活怎么样|住在这里是什么感觉/),
+    run: (c) => {
+      const t = today();
+      const now = nowMinutes();
+      const left = publicEvents(t).filter((e) => e.start > now);
+      const day = left.length >= 3 ? t : addDays(t, 1);
+      const evs = pick(day === t ? left : publicEvents(day), 5);
+      const n = C.venueOrder.length;
+      const isToday = day === t;
+      const lunch = lunchOnUs();
+      return {
+        lang: c.l,
+        text: say(
+          c.l,
+          `Your days are your own. Most people start with breakfast in ${n > 1 ? "one of our restaurants" : "the restaurant"} or in their own kitchen, then pick from classes, clubs, music and outings, or skip it all for a quiet afternoon. ${isToday ? "Here’s what’s still on today:" : `Here’s how tomorrow, ${longDate(day)}, looks:`}`,
+          `Sus días son suyos. Muchos empiezan con el desayuno en ${n > 1 ? "uno de nuestros restaurantes" : "el restaurante"} o en su propia cocina, y luego eligen entre clases, clubes, música y salidas, o una tarde tranquila. ${isToday ? "Esto es lo que queda hoy:" : `Así se ve mañana, ${esDate(day)}:`}`,
+          `您的时间由您安排。很多住户在餐厅或自己的厨房吃早餐，然后参加课程、俱乐部、音乐活动或外出游览，也可以安静地度过一个下午。${isToday ? "以下是今天接下来的活动：" : `以下是明天（${zhDate(day)}）的安排：`}`,
+        ),
+        groups: [{ lines: evs.map((e) => evLine(e, c.l)) }],
+        after: say(
+          c.l,
+          `The best way to know is to spend an hour with us.${lunch ? " Lunch is on us." : ""}`,
+          `La mejor manera de saberlo es pasar una hora con nosotros.${lunch ? " La comida corre por nuestra cuenta." : ""}`,
+          `最好的了解方式是来这里待上一个小时。${lunch ? "我们请您吃午餐。" : ""}`,
+        ),
+        source: src("calendar", c.l),
+        cta: { label: say(c.l, "Book a tour", "Agendar una visita", "预约参观"), href: "/tour" },
+      };
+    },
+  },
   { test: has(/\b(talk to|speak (to|with)|call me|call back|callback|representative|real person|human|hablar con|llamenme|llameme)\b/, /人工|真人|客服|回电|给我打电话|打电话给我|联系我|顾问/), run: (c) => leadAnswer(c.l) },
   { test: has(/thanksgiving|turkey|accion de gracias/, /感恩节|火鸡/), run: (c) => thanksgivingAnswer(c.l) },
   { test: has(/veteran/, /退伍军人|老兵/), run: (c) => veteransAnswer(c.l) },
