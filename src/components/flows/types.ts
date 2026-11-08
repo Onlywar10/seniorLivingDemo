@@ -22,7 +22,7 @@ export type Frame =
   | { kind: "paper"; node: ReactNode }
   /** A whole email (not on a phone), scrolled to the part being acted on. */
   | { kind: "mail"; node: ReactNode }
-  | { kind: "site"; path: string; host: string; actions: SiteAction[]; /** Keep the site's chat button (hidden otherwise). */ chat?: boolean; /** A staff workspace page: the community it should show, and who is signed in. */ staff?: string; as?: "events" | "sales" | "manager" };
+  | { kind: "site"; path: string; host: string; actions: SiteAction[]; /** Keep the site's chat button (hidden otherwise). */ chat?: boolean; /** A staff workspace page: the community it should show, and who is signed in. */ staff?: string; as?: "events" | "sales" | "manager" | "kitchen" | "desk" };
 
 /** `dwell`: how long each frame stays up while the storyboard plays, in ms. Set by bands.tsx. */
 export interface Preview { frames: Frame[]; dwell?: number[] }

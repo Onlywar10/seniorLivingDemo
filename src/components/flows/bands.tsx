@@ -144,14 +144,14 @@ export function buildBands(slug: CommunitySlug): Band[] {
   ]);
   // The staff workspace, in the same desktop browser window, showing this community, signed in as the right person:
   // the events lead (Nora), sales (Priya) or the manager (Renata).
-  type As = "events" | "sales" | "manager";
+  type As = "events" | "sales" | "manager" | "kitchen" | "desk";
   const team = (path: string, actions: SiteAction[], as: As = "events"): Preview => ({ frames: [{ kind: "site", path: `/staff${path}`, host: `${domain}/staff`, actions, staff: slug, as }] });
   // The cards a text alert opens: the photo post to approve, a family RSVP the resident said yes to, a resident who
   // hasn't answered, a new family member to check.
   const q = queue(slug);
   const cardOf = (kind: string, test: (x: (typeof q)[number]) => boolean = () => true) => q.find((x) => x.kind === kind && test(x))?.id ?? q[0].id;
   const newsCard = cardOf("post", (x) => x.kind === "post" && /news post/i.test(x.postKind));
-  const tPost = team("/post?type=photo", [
+  const tPost = team("/post?type=photos", [
     { do: "wait", ms: 700 },
     { do: "point", sel: ".pt-shots button", n: 0 },
     { do: "scroll", sel: ".pt-form textarea" },
@@ -161,27 +161,30 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "scroll", sel: ".pt-submit button" },
     { do: "point", sel: ".pt-submit button" },
   ]);
-  const tMenus = team("/calendar/menus", [
+  const tMenus = team("/menus", [
     { do: "wait", ms: 900 },
     { do: "scroll", sel: "button.sx-btn-terra", text: "Publish menus" },
     { do: "point", sel: "button.sx-btn-terra", text: "Publish menus" },
-  ]);
+  ], "kitchen");
   const tApprovePost = team(`/card/${newsCard}`, [
     { do: "wait", ms: 900 },
     { do: "point", sel: ".pt-q h3" },
     { do: "point", sel: ".pt-act button.sx-btn-primary" },
   ], "manager");
-  const tCalEdit = team("/calendar", [
+  // Something changed today: one quick form on Today. It goes to everyone booked and updates the website.
+  const tCalEdit = team("/today", [
     { do: "wait", ms: 900 },
-    { do: "click", sel: ".ced-ev", n: 9 },
-    { do: "wait", ms: 900 },
-    { do: "point", sel: ".sx-drawer a", text: "Change or cancel" },
+    { do: "scroll", sel: ".pt-changed" },
+    { do: "click", sel: ".pt-changed button.sx-btn-terra" },
+    { do: "wait", ms: 500 },
+    { do: "click", sel: ".pt-chg-form .sx-seg button", text: "Running late" },
+    { do: "point", sel: ".pt-chg-line" },
+    { do: "click", sel: ".pt-chg-form button[type=submit]" },
+    { do: "wait", ms: 600 },
+    { do: "point", sel: ".pt-reach" },
+    { do: "wait", ms: 1200 },
   ]);
-  const tApprove = team(`/card/${cardOf("post")}`, [
-    { do: "wait", ms: 900 },
-    { do: "point", sel: ".pt-act button.sx-btn-primary" },
-  ], "manager");
-  const tUrgent = team("/post?type=change", [
+  const tUrgent = team("/post?type=announcement", [
     { do: "wait", ms: 900 },
     { do: "click", sel: ".pt-urgent input" },
     { do: "type", sel: ".pt-form textarea", value: `Fire alarm test at 10:30 this morning. There’s no need to leave. Questions? Call the front desk at ${s.brand.phone}.` },
@@ -202,7 +205,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "point", sel: ".pt-facts span", n: 0 },
     { do: "point", sel: ".pt-act button.sx-btn-primary" },
   ]);
-  const tSignupAsk = team(`/card/${cardOf("ask")}`, [
+  const tSignupAsk = team(`/card/${cardOf("ask", (x) => x.kind === "ask" && !x.lantern)}`, [
     { do: "wait", ms: 900 },
     { do: "point", sel: ".pt-facts span", n: 0 },
     { do: "point", sel: ".pt-act button.sx-btn-primary" },
@@ -252,7 +255,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "point", sel: ".pt-outcome", n: 0 },
     { do: "wait", ms: 900 },
   ], "sales");
-  const tApartments = team("/prospects", [
+  const tApartments = team("/website", [
     { do: "wait", ms: 700 },
     { do: "scroll", sel: ".pt-plans li", text: plan.code },
     { do: "click", sel: ".pt-plans li button", text: plan.code },
@@ -570,7 +573,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
           title: "Hear about any alerts",
           hook: `When an event moves or plans change, families hear the same day. Emergencies go out within minutes.`,
           steps: [
-            { id: "f-change-text", scene: "bell", label: "A change", actor: "auto", when: "Same day, once a manager approves", text: `${musical.title}: new time`, preview: phones(famChange) },
+            { id: "f-change-text", scene: "bell", label: "A change", actor: "auto", when: "If their resident is booked on it", text: `${musical.title}: new time`, preview: phones(famChange) },
             { id: "f-change-urgent", scene: "bell", label: "Urgent news", actor: "auto", when: "Within minutes, no approval needed", text: "Visiting paused until Friday", preview: phones(famUrgent) },
           ],
         },
@@ -668,13 +671,30 @@ export function buildBands(slug: CommunitySlug): Band[] {
           ],
         },
         {
+          id: "r-invite",
+          title: "A personal invite",
+          hook: `When an activity matches what ${R} enjoys, ${R} gets a personal invite by text. One word books a seat.`,
+          steps: [
+            { id: "r-invite-text", scene: "text", label: "Invited by interest", actor: "auto", when: "The morning of", text: `${x.invEv.title}?`, preview: phones(x.resInviteNote) },
+            { id: "r-invite-yes", scene: "reply", label: "Replies YES", actor: "resident", text: "YES", preview: phones(x.resInviteYes), next: { tab: "staff", flow: "s-signups", text: "Staff see who’s booked" } },
+          ],
+        },
+        {
+          id: "r-checkin",
+          title: "Check in to an activity",
+          hook: `A QR sign at the door. ${R} scans it with the phone camera and is checked in. Staff tap in everyone else.`,
+          steps: [
+            { id: "r-checkin-scan", scene: "qr", label: "Scan the sign", actor: "resident", when: `At ${x.ckEv.title}`, text: "You’re checked in", preview: phones(x.resCheckin), next: { tab: "staff", flow: "s-signups", text: "Staff see it" } },
+          ],
+        },
+        {
           id: "r-alerts",
           email: re.alert,
           title: "Hear about any alerts",
-          hook: "A reminder before anything they’re booked on, changes the same day once approved, and urgent news within minutes.",
+          hook: "A reminder before anything they’re booked on, a change the moment staff send it, and urgent news within minutes.",
           steps: [
             { id: "r-alerts-hour", scene: "bell", label: "An hour before", actor: "auto", when: "Only if they’re booked", text: `In an hour: ${x.trip}`, preview: phones(x.resReminder) },
-            { id: "r-alerts-change", scene: "bell", label: "A change", actor: "auto", when: "Same day, once a manager approves", text: `${x.musical.title}: new time`, preview: phones(x.resChange) },
+            { id: "r-alerts-change", scene: "bell", label: "A change", actor: "auto", when: "The moment staff send it", text: `${x.musical.title}: new time`, preview: phones(x.resChange) },
             { id: "r-alerts-urgent", scene: "bell", label: "Urgent news", actor: "auto", when: "Within minutes, no approval needed", text: "Fire alarm test at 10:30", preview: phones(x.resUrgent) },
           ],
         },
@@ -711,7 +731,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
           hook: "A Monday nudge, one photo and one sentence in the staff workspace, one approval, and it’s on the website, in the families’ email and in print. Calendars and menus work the same way: upload the PDF, or photograph the paper calendar or menu.",
           steps: [
             { id: "s-post-nudge", scene: "bell", label: "Monday’s nudge", actor: "auto", via: "Text or email", when: "Monday, 9 am", text: "Share one moment 📷", preview: pick(staffSteps, 0) },
-            { id: "s-post-photo", scene: "camera", label: "One photo, one sentence", actor: "staff", via: "Staff workspace", when: "Menus and calendars too", preview: join(tPost, tMenus) },
+            { id: "s-post-photo", scene: "camera", label: "Photos from an activity", actor: "staff", via: "Staff workspace", when: "Kinlight writes the caption", preview: join(tPost, tMenus) },
             { id: "s-post-approve", scene: "approve", label: "A manager approves", actor: "staff", via: "Staff workspace", preview: tApprovePost },
             { id: "s-post-where", scene: "send", label: "Everywhere at once", actor: "auto", text: `${families} families`, preview: join(pick(staffSteps, 5), webPost) },
             { id: "s-post-stale", scene: "email", label: "A page going stale", actor: "auto", when: "If a calendar or menu isn’t updated", text: "Menu: 9 days old", preview: phones(staffStale) },
@@ -721,11 +741,10 @@ export function buildBands(slug: CommunitySlug): Band[] {
           id: "s-change",
           email: se.approve,
           title: "Send a change or an alert",
-          hook: "Change an event once. After a manager approves, families and booked residents are told the same day. Emergencies skip approval and go out within minutes.",
+          hook: "Something changed today? One quick form on Today: everyone booked on it and their families are told straight away, and the website updates. Emergencies go to everyone within minutes.",
           steps: [
-            { id: "s-change-edit", scene: "calendar", label: "Move an event", actor: "staff", via: "Staff workspace", when: "Or write an alert", preview: tCalEdit },
-            { id: "s-change-approve", scene: "approve", label: "A manager approves", actor: "staff", via: "Staff workspace", lane: 0, when: "Within 1 business day", preview: tApprove },
-            { id: "s-change-told", scene: "send", label: "Told the same day", actor: "auto", lane: 0, when: "Families and booked residents", text: "Same day", preview: phones(famChange, x.resChange), next: { tab: "family", flow: "f-change", text: "What families get" } },
+            { id: "s-change-edit", scene: "bell", label: "Something changed", actor: "staff", via: "Staff workspace", lane: 0, when: "Moved, new room, running late, cancelled", preview: tCalEdit },
+            { id: "s-change-told", scene: "send", label: "Everyone booked is told", actor: "auto", lane: 0, when: "Straight away, website too", text: "Straight away", preview: phones(famChange, x.resChange), next: { tab: "family", flow: "f-change", text: "What families get" } },
             { id: "s-change-emergency", scene: "bell", label: "An emergency", actor: "staff", via: "Staff workspace", lane: 1, when: "No approval needed", text: "Urgent", preview: tUrgent },
             { id: "s-change-now", scene: "send", label: "Everyone, within minutes", actor: "auto", lane: 1, text: "Within minutes", preview: phones(famUrgent, x.resUrgent), next: { tab: "resident", flow: "r-alerts", text: "What residents get" } },
           ],
@@ -739,7 +758,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
             { id: "s-signups-yes", scene: "approve", label: "Resident said yes: approve", actor: "staff", via: "Staff workspace", lane: 0, when: "Family told straight away", preview: tSignupApprove, next: { tab: "family", flow: "f-joinin", text: `${me} gets the answer` } },
             { id: "s-signups-ask", scene: "talk", label: "No answer: ask in person", actor: "staff", via: "In person", lane: 1, when: "Then tap their answer", preview: tSignupAsk },
             { id: "s-signups-book", scene: "list", label: "Book residents who said YES", actor: "staff", via: "Staff workspace", when: "Or signed up at the desk", preview: tSignupBook, next: { tab: "resident", flow: "r-signup", text: `${R} gets the details` } },
-            { id: "s-signups-att", scene: "list", label: "Tap who came", actor: "staff", via: "Staff workspace", when: "Feeds the scorecard", preview: tAttend },
+            { id: "s-signups-att", scene: "list", label: "QR check-ins, then tap the rest", actor: "staff", via: "Staff workspace", when: "Feeds Reports", preview: tAttend },
           ],
         },
         {

@@ -236,6 +236,47 @@ export function moreScreens(slug: CommunitySlug) {
       : undefined;
 
 
+  /* ---------------------------------------------------------------- residents: personal invites and QR check-in */
+
+  // A personal invite: the event matches the resident's interests, so Kinlight texts them. One word books it.
+  const invEv = soon.find((e) => /bridge|bingo|club|trivia|card/i.test(e.title) && kindOf(e) === "resident" && !e.lantern) ?? musical;
+  const invWhen = invEv.date === iso(t) ? (invEv.start >= 17 * 60 ? "tonight" : "today") : day(invEv.date);
+  const invite = `${short(invEv.title)} ${invWhen} at ${fmtTime(invEv.start).replace(":00", "")}, ${mom}. Want a seat? Reply YES.`;
+  const resInviteNote: TourStep = {
+    label: "A personal invite",
+    time: "8:30",
+    dark: true,
+    caption: `${mom} likes ${/bingo|trivia|card|bridge|club/i.test(invEv.title) ? "cards and games" : "music"}, so Kinlight sends a personal invite when a matching activity is on. Staff wrote nothing.`,
+    screen: <LockScreen date={longDate(t)} time="8:30" wallpaper="/img/gardening.jpg" notices={[{ app: "Messages", title: name, text: invite, time: "now" }]} />,
+  };
+  const resInviteYes: TourStep = {
+    label: "One word books it",
+    time: "8:34",
+    caption: `${mom} replies YES and is booked. Kinlight confirms with the time and place, and reminds ${mom} before it starts.`,
+    screen: <SmsThread {...th} bubbles={[{ time: "Today 8:30 AM", text: invite }, { me: true, text: "YES" }, { time: "8:34 AM", text: `You’re booked, ${mom}! ${short(invEv.title)}, ${day(invEv.date)} at ${fmtTime(invEv.start)}${invEv.room ? `, ${invEv.room}` : ""}. We’ll remind you an hour before.` }]} />,
+  };
+
+  // QR check-in: a sign at each activity. Scanning it checks the resident in under the number we know. No login.
+  const ckEv = todays.find((e) => e.cat === "fitness") ?? todays[0] ?? musical;
+  const resCheckin: TourStep = {
+    label: "Scan to check in",
+    time: fmtTime(ckEv.start).replace(/ (am|pm)$/, ""),
+    caption: `A QR sign at the door of every activity. ${mom} scans it with the phone camera and is checked in, from the number we already know. No app, no login.`,
+    screen: (
+      <div className="fl-checkin">
+        <div className="fl-checkin-top">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO} alt="" /> {name}
+        </div>
+        <div className="fl-checkin-ok" aria-hidden="true">✓</div>
+        <b>You’re checked in to {short(ckEv.title)}</b>
+        <p>{fmtTime(ckEv.start)}{ckEv.room ? ` · ${ckEv.room}` : ""}</p>
+        <small>Checked in as {mom}, from your phone number. Not you? Tell a member of staff.</small>
+        <span className="fl-checkin-next">Enjoy the class, {mom}!</span>
+      </div>
+    ),
+  };
+
   /* ---------------------------------------------------------------- residents: full outings, alerts, sharing, replies */
 
   const resOfferNote: TourStep = {
@@ -537,6 +578,11 @@ export function moreScreens(slug: CommunitySlug) {
     resJoinAsk,
     resOfferNote,
     resOfferAsk,
+    resInviteNote,
+    resInviteYes,
+    resCheckin,
+    invEv,
+    ckEv,
     resFull,
     resPlaceOpens,
     resUrgent,
