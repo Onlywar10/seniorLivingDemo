@@ -336,9 +336,11 @@
 .pt-rules select { font: inherit; font-size: 14px; padding: 6px 10px; min-height: 40px; border: 1px solid #c6cfc2; border-radius: 8px; width: 100%; }
 @media (max-width: 600px) { .pt-rules li { grid-template-columns: 1fr; } }
 
-/* The part of a section a role sees ("View only", "Announcements only"), beside its name in the menu. */
-.sx-nav a .pt-nav-part { margin-left: auto; font-size: 11px; font-weight: 500; color: #aeb8be; white-space: nowrap; }
-.sx-nav a .pt-nav-part + .sx-nav-badge { margin-left: 6px; }
+/* The part of a section a role sees ("View only", "Announcements only"), on a small line under its name in the menu. */
+.sx-nav-t { display: grid; flex: 1; min-width: 0; line-height: 1.25; }
+.sx-nav-t > span, .sx-nav a .pt-nav-part { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sx-nav a .pt-nav-part { font-size: 11px; font-weight: 500; color: #aeb8be; }
+.sx-nav a .sx-nav-badge { flex: none; }
 
 /* ---------------------------------------------------------------- Today: the full set of blocks */
 .pt-main { display: grid; gap: 22px; min-width: 0; }

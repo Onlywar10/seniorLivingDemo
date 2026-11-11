@@ -92,8 +92,10 @@ export function Shell({ children, me, people, waiting }: { children: ReactNode; 
               <li key={s}>
                 <Link href={info[s].href} onClick={() => setOpen(false)} aria-current={on(s) ? "page" : undefined}>
                   {ico(s)}
-                  <span>{info[s].label}</span>
-                  {accessLabel[accessOf(me.as, s) ?? "full"] && <small className="pt-nav-part">{accessLabel[accessOf(me.as, s) ?? "full"]}</small>}
+                  <span className="sx-nav-t">
+                    <span>{info[s].label}</span>
+                    {accessLabel[accessOf(me.as, s) ?? "full"] && <small className="pt-nav-part">{accessLabel[accessOf(me.as, s) ?? "full"]}</small>}
+                  </span>
                   {s === "today" && waiting > 0 && (
                     <span className="sx-nav-badge">
                       {waiting}
