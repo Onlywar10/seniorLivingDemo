@@ -79,7 +79,7 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
   const pub = publicPick(slug);
   const weekly = `Hi ${me}, here’s the best of this week at ${name}: ${photo.title.toLowerCase()}. 📷\n\nComing up, open to everyone: ${pub.title}, ${enWhen(pub)}. Bring a friend! Details on our website:`;
   const reply = `Mom looks so happy! Can I bring my kids to the barbecue? They’re 6 and 9.`;
-  const answer = `Of course, ${me}! Grandchildren are very welcome, and there are lawn games just for them. Tap your personal link to tell us how many are coming.`;
+  const answer = `Of course, ${me}! Grandchildren are very welcome, and there are lawn games just for them. Reply with how many are coming and we’ll check with ${mom} first.`;
   const thread = (extra: { me?: boolean; text: ReactNode; time?: string }[], typing = false) => (
     <>
     {extra.length > 0 && <ToEnd />}
@@ -229,9 +229,9 @@ export function familyStory(slug: CommunitySlug): TourStep[] {
       ),
     },
     {
-      label: "The personal link",
+      label: "Or tap RSVP",
       time: "5:08",
-      caption: `The RSVP button opens ${me}’s personal link: no app, no login. ${me} says ${party} are coming to the barbecue, asks for a seat for ${mom} on the outing (staff check with ${mom} first), and can change language or channel, or unsubscribe, at the bottom.`,
+      caption: `Replying to the text is enough. The RSVP button works too: a one-purpose page, no app, no login. ${me} says ${party} are coming to the barbecue, asks for a seat for ${mom} on the outing (staff check with ${mom} first), and can change language or channel, or unsubscribe, at the bottom.`,
       screen: (
         <Browser host={link}>
           <div className="ph-pl">

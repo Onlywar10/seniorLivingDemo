@@ -1,30 +1,30 @@
 "use client";
 
-// People: each resident's record (their own messages, interests, life story, participation, photo consent, what they
-// share with family, legal representative) and their family list, with each person's status and access. Invite,
-// re-send, verify and remove are one tap. New residents get a guided welcome checklist. Changes stay in this browser.
+// People: every resident, A to Z by last name, with filters and a search that also finds family members. Each row
+// opens the resident's own page (/staff/people/[name]). Also exports the family invite form and the welcome
+// checklist, which the resident page uses.
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { residentHref } from "../residentHref";
 import type { Engagement, Interest, Welcome, WelcomeStep } from "@/data/staff/engage";
-import type { Access, FamilyMember, FamilyStatus, ResidentRecord } from "@/data/staff/portal";
+import type { FamilyMember, ResidentRecord } from "@/data/staff/portal";
 import { Icon } from "../../Icon";
 import { Badge, Initials } from "../ui";
+import { Help } from "./Help";
 
 type Filter = "all" | "new" | "notseen" | "lantern" | "lang" | "nophoto" | "notjoined";
-const statusTone: Record<FamilyStatus, "good" | "info" | "warn" | "neutral"> = { Joined: "good", Invited: "info", "Waiting for a check": "warn", Stopped: "neutral" };
 const first = (n = "") => n.split(" ")[0];
+const lastOf = (n = "") => n.split(" ").slice(-1)[0];
 
-export function People({ records, total, eng, welcomes, interests, me, community, initial }: {
+export function People({ records, total, eng, welcomes, interests, initial }: {
   records: ResidentRecord[]; total: number; eng: Record<string, Engagement>; welcomes: Welcome[]; interests: readonly Interest[]; me: string; community: string; initial?: string;
 }) {
-  const [list, setList] = useState(records);
+  const [list] = useState(() => [...records].sort((a, b) => lastOf(a.name).localeCompare(lastOf(b.name)) || a.name.localeCompare(b.name)));
   const [q, setQ] = useState("");
   const [f, setF] = useState<Filter>(initial && welcomes.some((w) => w.name === initial) ? "new" : "all");
   const [interest, setInterest] = useState<string>("");
-  const [open, setOpen] = useState<string | null>(initial ?? records[0]?.name ?? null);
-  const [extra, setExtra] = useState<Record<string, Partial<Engagement>>>({});
-  const engOf = (n: string): Engagement | undefined => (eng[n] ? { ...eng[n], ...extra[n] } : undefined);
+  const engOf = (n: string): Engagement | undefined => eng[n];
   const welcomeOf = (n: string) => welcomes.find((w) => w.name === n);
-  const [toast, setToast] = useState("");
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return list.filter((r) => {
@@ -40,138 +40,66 @@ export function People({ records, total, eng, welcomes, interests, me, community
     });
   }, [q, f, list, interest, eng, welcomes]);
 
-  // A search that hides the open record opens the first match instead.
-  const shownOpen = open !== null && q.trim() && !rows.some((r) => r.name === open) ? rows[0]?.name ?? null : open;
-  const say = (t: string) => { setToast(t); window.setTimeout(() => setToast(""), 3200); };
-  const patch = (name: string, fn: (r: ResidentRecord) => ResidentRecord) => setList((xs) => xs.map((r) => (r.name === name ? fn(r) : r)));
-  const patchMember = (res: string, who: string, m: Partial<FamilyMember> | null) =>
-    patch(res, (r) => ({ ...r, family: m === null ? r.family.filter((x) => x.name !== who) : r.family.map((x) => (x.name === who ? { ...x, ...m } : x)) }));
-
   return (
     <div className="pt-people">
       <div className="sx-card sx-card-body pt-people-bar">
         <label className="sx-form pt-search">
           <span className="vh">Search residents and family</span>
-          <input className="sx-input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a name or apartment" />
+          <input className="sx-input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a resident, family member or apartment" />
         </label>
         <div className="sx-chips" role="group" aria-label="Show">
           {([["all", "Everyone"], ["new", "New this week"], ["notseen", "Haven’t been out in 2 weeks"], ["lantern", "Lantern"], ["lang", "Other languages"], ["nophoto", "No photo consent"], ["notjoined", "Not yet joined"]] as const).map(([k, l]) => (
             <button key={k} type="button" aria-pressed={f === k} onClick={() => setF(k)}>{l}</button>
           ))}
         </div>
-        <label className="sx-form pt-int-filter">
-          <span>Interest</span>
-          <select value={interest} onChange={(e) => setInterest(e.target.value)}>
-            <option value="">Any</option>
-            {interests.map((i) => <option key={i}>{i}</option>)}
-          </select>
-        </label>
-        <p className="sx-hint" aria-live="polite">Showing {rows.length} of {list.length} recently updated residents · {total} in all</p>
+        <div className="pe-bar-foot">
+          <label className="sx-form pt-int-filter">
+            <span>Interest</span>
+            <select value={interest} onChange={(e) => setInterest(e.target.value)}>
+              <option value="">Any</option>
+              {interests.map((i) => <option key={i}>{i}</option>)}
+            </select>
+          </label>
+          <p className="sx-hint" aria-live="polite">{rows.length} of {list.length} · A–Z by last name · {total} residents in all</p>
+        </div>
       </div>
 
       <ul className="pt-res-list">
         {rows.map((r) => {
-          const isOpen = shownOpen === r.name;
           const waiting = r.family.filter((m) => m.status === "Waiting for a check").length;
           const e = engOf(r.name);
           const w = welcomeOf(r.name);
+          const s = q.trim().toLowerCase();
+          // A search that matched a family member says who, so staff see which resident they belong to.
+          const famHit = s && !r.name.toLowerCase().includes(s) ? r.family.find((m) => m.name.toLowerCase().includes(s)) : undefined;
+          // At most two flags on a row, most important first.
+          const flags = [
+            w && <Badge key="new" tone="accent">New</Badge>,
+            !r.photoConsent && <Badge key="photo" tone="bad">No photo consent</Badge>,
+            waiting > 0 && <Badge key="check" tone="warn">{waiting} to check</Badge>,
+            e && e.lastDays >= 14 && <Badge key="out" tone="warn">Not out in {e.lastDays} days</Badge>,
+          ].filter(Boolean).slice(0, 2);
           return (
-            <li key={r.name} className={`pt-res${isOpen ? " open" : ""}`}>
-              <button type="button" className="pt-res-h" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : r.name)}>
+            <li key={r.name} className="pt-res">
+              <Link className="pt-res-h" href={residentHref(r.name)}>
                 <Initials name={r.name} size={40} color={r.lantern ? "var(--c-lantern, #8a5aa6)" : "var(--slate, #4c5b66)"} />
                 <span className="pt-res-t">
                   <b>{r.name}</b>
-                  <small>Apt {r.apt}{r.lantern ? " · Lantern" : ""} · {r.family.length} family {r.family.length === 1 ? "member" : "members"}</small>
+                  <small>{famHit ? <>Family: <mark>{famHit.name}</mark> ({famHit.relation.toLowerCase()})</> : <>{r.lantern ? r.apt : `Apt ${r.apt}`} · {r.family.length} family{e ? ` · ${e.last30} activities in 30 days` : ""}</>}</small>
                 </span>
-                <span className="pt-res-b">
-                  {w && <Badge tone="accent">New: welcome to finish</Badge>}
-                  {e && e.lastDays >= 14 && <Badge tone="warn">Not out in {e.lastDays} days</Badge>}
-                  {!r.photoConsent && <Badge tone="bad">No photo consent</Badge>}
-                  {waiting > 0 && <Badge tone="warn">{waiting} to check</Badge>}
-                </span>
-                <Icon name="chev" />
-              </button>
-              {isOpen && (
-                <div className="pt-res-body">
-                  {w && <WelcomeChecklist w={w} r={r} interests={interests} community={community} onDone={(msg) => say(msg)} />}
-                  <dl className="pt-res-dl">
-                    <div><dt>Their own messages</dt><dd>{r.channel}{r.channel !== "Print only" ? ` · ${r.lang}` : ""}<small>{r.channel === "Print only" ? "Large print at the door and the front desk" : "What’s on, their bookings, and family who want to join them"}</small></dd></div>
-                    <div><dt>Photo consent</dt><dd><span>{r.photoConsent ? <><Icon name="check" /> On file</> : <><Icon name="alert" /> None on file</>}</span><small>{r.photoConsent ? "Photos with them can be posted" : "Posts with them are blocked until they’re cropped out"}</small></dd></div>
-                    <div>
-                      <dt>Shares with family</dt>
-                      <dd>
-                        <label className="sx-switch">
-                          <input type="checkbox" checked={r.shares} onChange={(e) => { patch(r.name, (x) => ({ ...x, shares: e.target.checked, family: x.family.map((m) => ({ ...m, access: (e.target.checked && m.status === "Joined" ? "Their resident" : "Community news") as Access })) })); say(e.target.checked ? `${first(r.name)}’s week is shared with their family again` : `${first(r.name)}’s week is no longer shared. Family keep the community news.`); }} />
-                          {r.shares ? "Their week and photos" : "Community news only"}
-                        </label>
-                        <small>{first(r.name)} decides; they can turn it off by text or by telling staff.</small>
-                      </dd>
-                    </div>
-                    {e && (
-                      <>
-                        <div>
-                          <dt>Interests</dt>
-                          <dd>
-                            <span className="pt-ints">{e.interests.length ? e.interests.map((i) => <span key={i}>{i}</span>) : "Not asked yet"}</span>
-                            <small>Personal invites go out for matching events: {e.invites.sent} in the last 30 days, {e.invites.yes} said yes.</small>
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Participation</dt>
-                          <dd>
-                            {e.last30} {e.last30 === 1 ? "activity" : "activities"} in the last 30 days
-                            <small>Last came: {e.lastLabel}{e.lastDays < 60 && e.last30 ? `, to ${e.lastActivity}` : ""}. {e.visits.length ? `${e.visits.length} 1:1 visit${e.visits.length === 1 ? "" : "s"}: ${e.visits.map((v) => `${v.date} with ${first(v.by)} (${v.note.toLowerCase()})`).join("; ")}.` : "No 1:1 visits logged."}</small>
-                            <button type="button" className="sx-btn sx-btn-sm" onClick={() => { setExtra((x) => ({ ...x, [r.name]: { visits: [...e.visits, { date: "Today", by: me, note: "Visit logged" }] } })); say(`1:1 visit with ${first(r.name)} logged. Counted in Reports.`); }}>Log a 1:1 visit</button>
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Legal representative</dt>
-                          <dd>{e.legalRep ? `${e.legalRep.name}, ${e.legalRep.relation.toLowerCase()}` : "None"}<small>{e.legalRep ? `Asked about family requests and consent for ${first(r.name)}.` : `${first(r.name)} decides for themselves.`}</small></dd>
-                        </div>
-                        <div className="pt-story">
-                          <dt>Life story <Badge tone="neutral">Private</Badge></dt>
-                          <dd><span>{e.story}</span><small>Written with {first(r.name)}. For conversation, activity ideas and 1:1 visits. Never published or sent.</small></dd>
-                        </div>
-                      </>
-                    )}
-                  </dl>
-
-                  <p className="sx-hint pt-beta pt-beta-in"><Badge tone="neutral">Coming in Beta</Badge> Telling families what {first(r.name)} joined (“went to 4 activities this week”), once the family hub and consent are in place. Until then, families are never told about participation automatically.</p>
-                  <h3>Family</h3>
-                  <ul className="pt-fam">
-                    {r.family.map((m) => (
-                      <li key={m.name}>
-                        <span className="pt-fam-t">
-                          <b>{m.name}</b>
-                          <small>{m.relation} · {m.channel} · {m.lang}</small>
-                          {m.note && <small>{m.note}</small>}
-                        </span>
-                        <span className="pt-fam-s">
-                          <Badge tone={statusTone[m.status]}>{m.status}</Badge>
-                          <small>{m.access}</small>
-                        </span>
-                        <span className="pt-fam-a">
-                          {m.status === "Waiting for a check" && <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => { patchMember(r.name, m.name, { status: "Joined", access: r.shares ? "Their resident" : "Community news", note: undefined }); say(`${m.name} verified. They now hear about ${first(r.name)}.`); }}><Icon name="check" /> Verify</button>}
-                          {m.status === "Invited" && <button type="button" className="sx-btn sx-btn-sm" onClick={() => say(`Invite sent again to ${m.name}. That’s the last reminder.`)}>Re-send invite</button>}
-                          <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => { patchMember(r.name, m.name, null); say(`${m.name} removed. They get nothing more from us.`); }}>Remove</button>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="sx-hint pt-beta pt-beta-in"><Badge tone="neutral">Coming in Beta</Badge> Family photos and messages that {first(r.name)} sees, in the app.</p>
-                  <Invite onInvite={(m) => { patch(r.name, (x) => ({ ...x, family: [...x.family, m] })); say(`Invite sent to ${m.name} by ${m.channel.toLowerCase()}. One reminder in a few days, then it stops.`); }} resident={r} />
-                </div>
-              )}
+                <span className="pt-res-b">{flags}</span>
+                <Icon name="right" />
+              </Link>
             </li>
           );
         })}
+        {rows.length === 0 && <li className="pt-empty">Nobody matches. Try a first name, a family member or an apartment.</li>}
       </ul>
-      {toast && <div className="sx-toast" role="status"><Icon name="check" /> {toast}</div>}
     </div>
   );
 }
 
-function Invite({ resident, onInvite }: { resident: ResidentRecord; onInvite: (m: FamilyMember) => void }) {
+export function Invite({ resident, onInvite }: { resident: ResidentRecord; onInvite: (m: FamilyMember) => void }) {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ name: "", relation: "Daughter", phone: "", email: "", lang: "English" });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -192,7 +120,10 @@ function Invite({ resident, onInvite }: { resident: ResidentRecord; onInvite: (m
         setF({ name: "", relation: "Daughter", phone: "", email: "", lang: "English" });
       }}
     >
-      <p className="sx-hint">They get one invite (“{resident.name.split(" ")[0]}’s community would like to send you news. Reply YES to join.”), one reminder, then it stops.</p>
+      <div className="pe-form-h">
+        <b>Invite a family member</b>
+        <Help label="What they receive"><p>One text or email: “{first(resident.name)}’s community would like to send you news. Reply YES to join.”</p><p>One reminder, then it stops.</p></Help>
+      </div>
       <div className="sx-row">
         <label>Name<input value={f.name} onChange={set("name")} required /></label>
         <label>Relationship<select value={f.relation} onChange={set("relation")}>{["Daughter", "Son", "Wife", "Husband", "Granddaughter", "Grandson", "Niece", "Nephew", "Friend"].map((x) => <option key={x}>{x}</option>)}</select></label>
@@ -211,7 +142,9 @@ function Invite({ resident, onInvite }: { resident: ResidentRecord; onInvite: (m
 }
 
 /** Welcoming a new resident: one guided checklist, so nothing depends on memory. Stays on Today until it's finished. */
-function WelcomeChecklist({ w, r, interests, community, onDone }: { w: Welcome; r: ResidentRecord; interests: readonly Interest[]; community: string; onDone: (msg: string) => void }) {
+export function WelcomeChecklist({ w, r, interests, community, celebrate, onCelebrate, onDone }: {
+  w: Welcome; r: ResidentRecord; interests: readonly Interest[]; community: string; celebrate: boolean; onCelebrate: (yes: boolean) => void; onDone: (msg: string) => void;
+}) {
   const [steps, setSteps] = useState<WelcomeStep[]>(w.steps);
   const [open, setOpen] = useState<WelcomeStep["k"] | null>(w.steps.find((x) => !x.done)?.k ?? null);
   const [chosen, setChosen] = useState<Interest[]>([]);
@@ -227,6 +160,8 @@ function WelcomeChecklist({ w, r, interests, community, onDone }: { w: Welcome; 
   };
   const lastN = w.name.split(" ").slice(-1)[0];
   const moveIn = [`${["Carol", "Daniel", "Lisa"][w.name.length % 3]} ${lastN}`, `${["Mark", "Anne", "Ruth"][w.apt.length % 3]} ${lastN}`];
+  // The consent step also asks whether they're happy to be celebrated: it decides the welcome post.
+  const label = (x: WelcomeStep) => (x.k === "consent" ? "Photo consent, sharing and celebrations" : x.label);
   return (
     <section className="pt-welcome" aria-label={`Welcome checklist for ${w.name}`}>
       <header>
@@ -238,14 +173,14 @@ function WelcomeChecklist({ w, r, interests, community, onDone }: { w: Welcome; 
           <li key={x.k} className={x.done ? "done" : open === x.k ? "open" : ""}>
             <button type="button" className="pt-wstep" aria-expanded={open === x.k} onClick={() => setOpen(open === x.k ? null : x.k)}>
               <span className="pt-wnum" aria-hidden="true">{x.done ? <Icon name="check" /> : i + 1}</span>
-              <span><b>{x.label}</b><small>{x.done ? "Done" : x.detail}</small></span>
+              <span><b>{label(x)}</b><small>{x.done ? "Done" : x.detail}</small></span>
             </button>
             {open === x.k && !x.done && (
               <div className="pt-wbody">
-                {x.k === "messages" && <><p>{first(w.name)} gets what’s on, reminders and invites by <b>{r.channel.toLowerCase()}</b>, in {r.lang}.</p><button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => finish(x.k)}>Confirm</button></>}
+                {x.k === "messages" && <><p>By <b>{r.channel.toLowerCase()}</b>, in {r.lang}.</p><button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => finish(x.k)}>Confirm</button></>}
                 {x.k === "interests" && (
                   <>
-                    <p>Ask {first(w.name)} what they enjoy. Personal invites to matching events start straight away.</p>
+                    <p>What does {first(w.name)} enjoy?</p>
                     <div className="sx-chips" role="group" aria-label="Interests">
                       {interests.map((i) => <button key={i} type="button" aria-pressed={chosen.includes(i)} onClick={() => setChosen((c) => (c.includes(i) ? c.filter((y) => y !== i) : [...c, i]))}>{i}</button>)}
                     </div>
@@ -255,22 +190,39 @@ function WelcomeChecklist({ w, r, interests, community, onDone }: { w: Welcome; 
                     </div>
                   </>
                 )}
-                {x.k === "consent" && <><p>From the move-in paperwork: photo consent <b>on file</b>, and {first(w.name)} <b>shares their week and photos</b> with verified family.</p><button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => finish(x.k)}>Confirm</button></>}
-                {x.k === "rep" && <><p>Does someone decide for {first(w.name)}? Most residents decide for themselves.</p><div className="pt-act"><button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => finish(x.k)}>No one: they decide</button></div></>}
+                {x.k === "consent" && (
+                  <>
+                    <p>From the move-in paperwork: photo consent <b>on file</b>; shares their week and photos with verified family.</p>
+                    <div className="pe-ask">
+                      <span>Happy to be celebrated?</span>
+                      <span className="sx-seg" role="group" aria-label={`Is ${first(w.name)} happy to be celebrated?`}>
+                        <button type="button" aria-pressed={celebrate} onClick={() => onCelebrate(true)}>Yes</button>
+                        <button type="button" aria-pressed={!celebrate} onClick={() => onCelebrate(false)}>No</button>
+                      </span>
+                      <Help label="About celebrations"><p>Birthday and welcome posts only go out for residents who say yes. No age is ever shared.</p></Help>
+                    </div>
+                    <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => finish(x.k)}>Confirm</button>
+                  </>
+                )}
                 {x.k === "family" && (
                   <>
-                    <p>From the move-in contacts. Each person gets the invite text: “{first(w.name)}’s community would like to send you news. Reply YES to join.” One reminder, then it stops.</p>
+                    <div className="pe-form-h">From the move-in contacts <Help label="What they receive"><p>“{first(w.name)}’s community would like to send you news. Reply YES to join.” One reminder, then it stops.</p></Help></div>
                     <ul className="pt-wfam">{moveIn.map((n) => <li key={n}><Icon name={sent ? "check" : "users"} /> {n} {sent && <small>Invited</small>}</li>)}</ul>
                     <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => { setSent(true); finish(x.k, `Invites sent to ${moveIn.join(" and ")}.`); }}><Icon name="send" /> Send {moveIn.length} invites</button>
                   </>
                 )}
-                {x.k === "post" && (
+                {x.k === "post" && (celebrate ? (
                   <>
                     <p className="pt-chg-line"><Icon name="spark" /> “Please welcome {first(w.name)} to the {w.floor}! Say hello at lunch.”</p>
-                    <p className="sx-hint"><Icon name="check" /> Consent checked: first name and floor only. Goes to the website, the newsletter and the lobby notice at {community}.</p>
+                    <div className="pe-form-h sx-hint"><Icon name="check" /> Consent checked <Help label="Where it goes"><p>First name and floor only. Goes to the website, the newsletter and the lobby notice at {community}.</p></Help></div>
                     <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => finish(x.k, "Welcome post published.")}><Icon name="send" /> Post the welcome</button>
                   </>
-                )}
+                ) : (
+                  <>
+                    <p>No welcome post: {first(w.name)} would rather not be celebrated.</p>
+                    <button type="button" className="sx-btn sx-btn-sm" onClick={() => finish(x.k)}>Skip the post</button>
+                  </>
+                ))}
               </div>
             )}
           </li>

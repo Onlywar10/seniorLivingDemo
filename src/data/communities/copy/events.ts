@@ -69,14 +69,14 @@ export const eventsCopy: Record<CommunitySlug, EventsCopy> = {
 export const calendarCopy: Record<CommunitySlug, CalendarCopy> = {
   "alder-bend": {
     metaDescription:
-      "Today’s classes, clubs, bus trips and happy hours at Alder Bend in Fairhollow, CA. Browse by day, week or month, filter by interest, sign up for trips online and print a large-print calendar.",
+      "Today’s classes, clubs, bus trips and happy hours at Alder Bend in Fairhollow, CA. Browse by day, week or month, filter by interest, add events to your phone and print a large-print calendar.",
     titleEm: "Alder Bend",
     lanternLede: "Lantern has its own unhurried rhythm: gardening, ceramics, storytelling, visits from Thor the therapy dog and an outing every week. Lantern residents are welcome at every community event as well.",
     photo: { src: "/img/drum-circle.jpg", alt: "Residents playing hand drums together at Friday’s Drum Circle" },
   },
   "kestrel-point": {
     metaDescription:
-      "Today’s classes, clubs, bus trips and happy hours at Kestrel Point in Rivermead, CA. Browse by day, week or month, filter by interest, sign up for trips online and print a large-print calendar.",
+      "Today’s classes, clubs, bus trips and happy hours at Kestrel Point in Rivermead, CA. Browse by day, week or month, filter by interest, add events to your phone and print a large-print calendar.",
     titleEm: "Kestrel Point",
     lanternLede: "Lantern runs its own activity calendar, twelve hours a day: ceramics, music, pet therapy, storytelling, gardening and an outing every week. Lantern residents are welcome at every community event as well.",
     photo: { src: "/img/bocce-women.jpg", alt: "Two residents playing bocce in the courtyard" },

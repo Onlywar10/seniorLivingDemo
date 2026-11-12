@@ -34,7 +34,8 @@ export default async function Home() {
   const { site, living, pricing, venues, awards } = c;
   const copy = homeCopy[c.slug];
   const d = today();
-  const events = c.eventsOn(d).map(live);
+  // Today and tomorrow, from the same calendar (and the same count) as the Calendar page and Lifestyle.
+  const events = c.eventsOn(d, iso(d)).map(live);
   const tomorrow = c.eventsOn(addDays(d, 1), iso(d)).map(live);
   const menus = c.venueOrder.map((v) => c.menuFor(v, d));
   const soup = menus[0].soup;
@@ -106,7 +107,12 @@ export default async function Home() {
                 <time dateTime={iso(d)}>{t(longDate(d))}</time>
               </h2>
             </div>
-            <p className="hm-today-greet">{t(`${greeting()} from ${site.address.city}. Here’s what’s happening around the community.`)}</p>
+            <div className="hm-today-greet">
+              <p>{t(`${greeting()} from ${site.address.city}. Here’s what’s happening around the community.`)}</p>
+              <Link className="link-arrow" href="/calendar">
+                {t(events.length === 1 ? "1 thing on the calendar today" : `${events.length} things on the calendar today`)} <Icon name="arrow" />
+              </Link>
+            </div>
           </div>
           <div className="hm-today-grid">
             <TodayLive events={events} tomorrow={tomorrow} tomorrowLabel={`Tomorrow, ${shortDate(addDays(d, 1))}`} serverNow={nowMinutes()} quiet={copy.quiet} wrapUp={copy.wrapUp} />
@@ -395,19 +401,20 @@ export default async function Home() {
         <div className="wrap">
           <div className="hm-stay">
             <span className="hm-stay-ic">
-              <Icon name="mail" />
+              <Icon name="heart" />
             </span>
             <div>
-              <h2 id="hm-stay-h">{t("Stay connected")}</h2>
-              <p>{t("Have the monthly calendar, new menus and the latest Events & Adventures stories sent to your inbox, or follow along on Facebook.")}</p>
+              <p className="eyebrow">{t("For families")}</p>
+              <h2 id="hm-stay-h">{t("Stay close, without an app")}</h2>
+              <p>{t("News, photos and your parent’s week by text or email, in your language. Reply to a text to join them at an event.")}</p>
             </div>
             <div className="btn-row">
               <Link className="btn btn-green" href="/stay-connected">
-                {t("Sign up")}
+                {t("For families")}
               </Link>
-              <a className="btn btn-ghost" href={site.facebook} target="_blank" rel="noreferrer">
-                <Icon name="facebook" /> Facebook
-              </a>
+              <Link className="btn btn-ghost" href="/photos">
+                <Icon name="image" /> {t("Photo albums")}
+              </Link>
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { NotThisReport } from "@/components/staff/portal/ReportsParts";
 import { sectionAccess } from "@/data/staff/access";
 import { Icon } from "@/components/Icon";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
+import { Help } from "@/components/staff/portal/Help";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, Kpi, PageHead, fmt, pctChange } from "@/components/staff/ui";
 import { scorecardMonths } from "@/data/staff";
@@ -31,18 +32,20 @@ export default async function SearchPage() {
   const fixed = s.wrongFacts.filter((w) => w.status === "fixed").length;
   return (
     <>
-      <PageHead title="Website and AI search" sub={`How families find ${s.brand.name} on Google, and what AI tools tell them, in ${m.month}. Fixing what AI tools say is Kinlight’s job: here’s what we found and what we fixed.`} />
+      <PageHead title="Website and AI search" sub={`${s.brand.name} on Google and in AI tools, ${m.month}`}>
+        <Help label="Who does the fixing" align="end"><p>Fixing what Google and AI tools say is Kinlight’s job. This page shows what we found and what we fixed; there’s nothing for the team to do.</p></Help>
+      </PageHead>
       <ReportTabs access={access} />
 
       <div className="sx-kpis">
-        <Kpi label="Average place on Google" value={s.seo.avgPos.toFixed(1)} note={`for the searches below, ${Math.abs(s.seo.avgPosDelta).toFixed(1)} places ${s.seo.avgPosDelta < 0 ? "higher" : "lower"} than last month`} />
+        <Kpi label="Average place on Google" value={s.seo.avgPos.toFixed(1)} note={`${Math.abs(s.seo.avgPosDelta).toFixed(1)} places ${s.seo.avgPosDelta < 0 ? "higher" : "lower"} than last month`} />
         <Kpi label="People who saw you on Google" value={fmt(s.gbp.views)} delta={pctChange(s.gbp.views, s.gbp.viewsPrev)} note="vs last month" />
         <Kpi label="Calls from Google" value={s.gbp.calls} delta={pctChange(s.gbp.calls, s.gbp.callsPrev)} note={`${s.gbp.rating} stars, ${s.gbp.reviews} reviews`} />
         <Kpi label="AI answers that were correct" value={<>{correct}<small> / {s.answers.length}</small></>} note={`${fixed} wrong facts fixed this month`} />
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="When families search Google" sub="Where you show up for what people type" pad={false}>
+        <Card title="When families search Google" sub="Your place for each search" pad={false}>
           <div className="sx-table-wrap">
             <table className="sx-table">
               <thead><tr><th>Search</th><th className="num">Place</th><th>Since last month</th></tr></thead>
@@ -59,7 +62,7 @@ export default async function SearchPage() {
           </div>
         </Card>
 
-        <Card title="When families ask AI tools" sub="What ChatGPT, Google, Perplexity and Gemini said when we asked">
+        <Card title="When families ask AI tools" sub="ChatGPT, Google, Perplexity and Gemini">
           <ul className="pt-ai">
             {s.answers.slice(0, 6).map((a, i) => (
               <li key={a.engine + i}>
@@ -71,7 +74,7 @@ export default async function SearchPage() {
         </Card>
       </div>
 
-      <Card title="What we found and fixed" sub="Wrong facts we found in AI answers, where they came from, and what Kinlight did about them. Nothing for you to do.">
+      <Card title="What we found and fixed" sub="Wrong facts in AI answers" action={<Badge tone="neutral">Kinlight handles this</Badge>}>
         <ul className="pt-fixes">
           {s.wrongFacts.map((w) => (
             <li key={w.id}>

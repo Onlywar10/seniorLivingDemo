@@ -209,6 +209,22 @@ export function moreScreens(slug: CommunitySlug) {
     </Paper>
   );
 
+  // "Your week": the Sunday text for residents who opt in, from the same bookings as the printed sheet, with the trip's
+  // departure time and two invites that match what they enjoy.
+  const weekInvites = soon.filter((e) => kindOf(e) === "resident" && !e.lantern && e.date > iso(t) && e.title !== outing.title && e.title !== musical.title && /bridge|bingo|club|trivia|card|music|movie|garden|paint|craft/i.test(e.title)).filter((e, i, a) => a.findIndex((y) => y.title === e.title) === i).slice(0, 2);
+  const weekLines = [outing, musical, barbecue]
+    .slice()
+    .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
+    .map((e) => `• ${day(e.date)} ${fmtTime(e.start)} ${e.title}${e === outing ? ` (the bus leaves the ${outing.room} at ${fmtTime(outing.start)}; be there by ${meet})` : e === barbecue ? ` (${me} is coming)` : ""}`);
+  const inviteLines = weekInvites.map((e) => `• ${day(e.date)} ${fmtTime(e.start)} ${e.title}`);
+  const weekText = [`Good morning, ${mom}! Your week at ${name}:`, ...weekLines, ...(inviteLines.length ? ["", "You might enjoy:", ...inviteLines, "Reply YES to join."] : [])].join("\n");
+  const resWeekText: TourStep = {
+    label: "Your week",
+    time: "8:00",
+    caption: `Every Sunday morning, ${mom}’s own week by text (or email): what ${mom} is booked on, the trip’s departure time, and invites that match what ${mom} enjoys. Reply YES to join one.`,
+    screen: <SmsThread {...th} bubbles={[{ time: "Sunday 8:00 AM", text: weekText }, ...(weekInvites[0] ? [{ me: true, text: "YES" }, { time: "8:04 AM", text: `You’re booked for ${weekInvites[0].title}, ${day(weekInvites[0].date)} ${fmtTime(weekInvites[0].start)}. See you there, ${mom}!` }] : [])]} />,
+  };
+
   /* ---------------------------------------------------------------- the family, while the resident is asked */
 
   const famPending: TourStep = {
@@ -325,12 +341,6 @@ export function moreScreens(slug: CommunitySlug) {
     time: "11:02",
     caption: `${me} asked to see ${mom}’s week. ${mom} decides, by text or in person.`,
     screen: <SmsThread {...th} bubbles={[{ time: "Today 11:02 AM", text: `Hi ${mom}, ${me} would like to see what you’re signed up for each week, and photos of you that we share. Is that OK? Reply YES or NO. You can change your mind any time.` }, { me: true, text: "Yes, that’s fine" }, { time: "11:05 AM", text: `Thanks, ${mom}! Just tell us if you change your mind.` }]} />,
-  };
-  const resShareRep: TourStep = {
-    label: "Or their legal representative",
-    time: "11:02",
-    caption: `In memory care, the resident’s legal representative may answer instead. Here ${me} holds that role, and ${sib} has asked to see ${mom}’s week.`,
-    screen: <SmsThread {...th} bubbles={[{ time: "Today 11:02 AM", text: `Hi ${me}, as ${mom}’s legal representative: ${sib} would like to see what ${mom} is signed up for each week, and photos of ${mom} that we share. Is that OK? Reply YES or NO.` }, { me: true, text: "YES" }, { time: "11:06 AM", text: `Thank you, ${me}. We’ll start sending ${sib} ${mom}’s week.` }]} />,
   };
   const resShareOff: TourStep = {
     label: "Turn it off any time",
@@ -588,7 +598,6 @@ export function moreScreens(slug: CommunitySlug) {
     resUrgent,
     resShareNote,
     resShareAsk,
-    resShareRep,
     resShareOff,
     replyAck,
     thanksNote,
@@ -601,6 +610,7 @@ export function moreScreens(slug: CommunitySlug) {
     resIdea,
     resSurvey,
     resWeek,
+    resWeekText,
     famPending,
     famOwnLang,
     proInstantText,

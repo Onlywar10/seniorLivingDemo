@@ -93,9 +93,9 @@ export function EventDialog({ event, signup, todayIso, now, phone, phoneHref, on
             <div className="cal-dialog-note">
               <Icon name="heart" />
               <div>
-                <b>{t("Families: RSVP from your weekly message")}</b>
+                <b>{t("Families: reply to your text to RSVP")}</b>
                 <p>
-                  {t("Not getting the weekly message yet? Call the front desk at ")}<a href={phoneHref}>{phone}</a>{t(" or ")}
+                  {t("We check with your resident first, then confirm. Not getting our texts yet? Call the front desk at ")}<a href={phoneHref}>{phone}</a>{t(" or ")}
                   <Link href="/stay-connected">{t("sign up for family updates")}</Link>.
                 </p>
               </div>
@@ -105,7 +105,7 @@ export function EventDialog({ event, signup, todayIso, now, phone, phoneHref, on
           {!past && kind === "resident" && (
             <p className="cal-dialog-note">
               <Icon name="users" />
-              <span>{t("Residents: sign up with the activities team. Families: ask for a seat from your weekly message.")}</span>
+              <span>{t("Residents: reply YES to the invite text, or sign up with the activities team. Families: reply to your text to ask for a seat; we check with your resident first.")}</span>
             </p>
           )}
 

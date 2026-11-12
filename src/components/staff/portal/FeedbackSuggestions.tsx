@@ -71,7 +71,7 @@ export function FeedbackSuggestions({ ideas, residents, me }: { ideas: IdeaRow[]
               {x.status === "On the calendar" ? (
                 <span className="pt-idea-done">
                   <Icon name="check" />
-                  <span>{x.event ? `${x.event.title}, ${x.event.when}. ` : "On the calendar. "}{x.who ? `“Your idea made the calendar”: ${first(x.who)} was told.` : "Posted on the suggestion board: no name to tell."}</span>
+                  <span>{x.event ? `${x.event.title}, ${x.event.when}` : "On the calendar"}{x.who ? ` · ${first(x.who)} was told` : ""}</span>
                 </span>
               ) : x.status === "Not this time" ? (
                 <span className="sx-hint">Not this time{x.note ? `: ${x.note}` : ""}</span>

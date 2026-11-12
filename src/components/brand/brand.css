@@ -294,3 +294,14 @@
 
 /* Published portraits use the monogram's circle */
 .br-mono-photo, .inf-mono-photo { object-fit: cover; object-position: 50% 22%; background: var(--sand, #e2e6df); }
+
+/* Lifestyle: a short "What's on" strip; the Calendar has everything */
+.ls-on { display: flex; align-items: center; gap: 14px 24px; flex-wrap: wrap; }
+.ls-on-h { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.25rem; }
+.ls-on-h .icon { width: 20px; height: 20px; color: var(--terra-deep, #a4512f); }
+.ls-on-l { display: flex; flex-wrap: wrap; gap: 10px; flex: 1 1 520px; margin: 0; padding: 0; list-style: none; }
+.ls-on-l li { display: grid; gap: 2px; padding: 8px 14px 8px 12px; border-left: 4px solid var(--cat, var(--green)); border-radius: 8px; background: var(--cream, #faf6ee); min-width: 170px; flex: 1 1 170px; }
+.ls-on-l small { font-size: 0.85rem; color: var(--ink-3); }
+.ls-on-l b { font-size: 1rem; line-height: 1.3; }
+.br-gal-cards .br-gal-btn { height: auto; }
+.br-gal-cards li { display: grid; gap: 8px; align-content: start; }

@@ -18,10 +18,10 @@ export function WebsiteGalleries({ items }: { items: Gallery[] }) {
           <span className="ws-gal-img"><Image src={g.cover} alt="" fill sizes="(max-width: 700px) 100vw, 240px" /></span>
           <span className="ws-gal-t">
             <b>{g.title}</b>
-            <small>{g.photos} photos · {g.when}{g.heldBack ? ` · ${g.heldBack} held back: no photo consent on file` : ""}</small>
+            <small>{g.photos} photos · {g.when}{g.heldBack ? ` · ${g.heldBack} held back` : ""}</small>
           </span>
           <span className="ws-gal-s">
-            {g.hidden ? <Badge>Hidden from the website</Badge> : g.featured ? <Badge tone="accent"><Icon name="star" /> Featured</Badge> : <Badge tone="good">On the website</Badge>}
+            {g.hidden ? <Badge>Hidden</Badge> : g.featured ? <Badge tone="accent"><Icon name="star" /> Featured</Badge> : null}
           </span>
           <span className="ws-gal-a">
             {!g.hidden && (

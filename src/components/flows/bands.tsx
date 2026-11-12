@@ -151,15 +151,13 @@ export function buildBands(slug: CommunitySlug): Band[] {
   const q = queue(slug);
   const cardOf = (kind: string, test: (x: (typeof q)[number]) => boolean = () => true) => q.find((x) => x.kind === kind && test(x))?.id ?? q[0].id;
   const newsCard = cardOf("post", (x) => x.kind === "post" && /news post/i.test(x.postKind));
-  const tPost = team("/post?type=photos", [
-    { do: "wait", ms: 700 },
-    { do: "point", sel: ".pt-shots button", n: 0 },
-    { do: "scroll", sel: ".pt-form textarea" },
-    { do: "point", sel: ".pt-form textarea" },
-    { do: "scroll", sel: ".pt-tags" },
-    { do: "point", sel: ".pt-tags li", n: 0 },
-    { do: "scroll", sel: ".pt-submit button" },
-    { do: "point", sel: ".pt-submit button" },
+  // Photos live on events: added when editing the event in Calendar, captioned by Kinlight.
+  const tPost = team("/calendar?photos=1", [
+    { do: "wait", ms: 1200 },
+    { do: "scroll", sel: ".pc-photo-form .pt-shots button" },
+    { do: "point", sel: ".pc-photo-form .pt-shots button", n: 0 },
+    { do: "scroll", sel: ".pc-photo-post button" },
+    { do: "point", sel: ".pc-photo-post button" },
   ]);
   const tMenus = team("/menus", [
     { do: "wait", ms: 900 },
@@ -200,14 +198,19 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "point", sel: ".pt-reqs li", n: 0 },
     { do: "wait", ms: 1200 },
   ]);
-  const tSignupApprove = team(`/card/${cardOf("rsvp")}`, [
+  // A resident's yes confirms the request on its own and the family is told: nobody approves it.
+  const tSignupApprove = team("/calendar", [
     { do: "wait", ms: 900 },
-    { do: "point", sel: ".pt-facts span", n: 0 },
-    { do: "point", sel: ".pt-act button.sx-btn-primary" },
+    { do: "click", sel: ".sx-seg button", text: "Month" },
+    { do: "wait", ms: 600 },
+    { do: "click", sel: ".ced-ev", text: "Family Barbecue" },
+    { do: "wait", ms: 1000 },
+    { do: "scroll", sel: ".pt-reqs .al-steps li.done", n: 2 },
+    { do: "point", sel: ".pt-reqs .al-steps li.done", n: 2 },
   ]);
   const tSignupAsk = team(`/card/${cardOf("ask", (x) => x.kind === "ask" && !x.lantern)}`, [
     { do: "wait", ms: 900 },
-    { do: "point", sel: ".pt-facts span", n: 0 },
+    { do: "point", sel: ".pt-asks li", n: 0 },
     { do: "point", sel: ".pt-act button.sx-btn-primary" },
   ]);
   const tSignupBook = team("/calendar", [
@@ -244,11 +247,6 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "type", sel: ".pt-invite input", value: `Olivia ${fam.f.resident.split(" ").slice(-1)[0]}` },
     { do: "point", sel: ".pt-invite button[type=submit]" },
   ]);
-  const tVerify = team(`/card/${cardOf("verify")}`, [
-    { do: "wait", ms: 900 },
-    { do: "point", sel: ".pt-facts span", n: 1 },
-    { do: "point", sel: ".pt-act button.sx-btn-primary" },
-  ]);
   const tTours = team("/prospects", [
     { do: "wait", ms: 700 },
     { do: "scroll", sel: ".sx-card", text: "Tours this week" },
@@ -267,13 +265,14 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "scroll", sel: ".pt-wait" },
     { do: "point", sel: ".pt-wait li", n: 0 },
   ], "sales");
-  const tInbox = team(`/card/${cardOf("reply")}`, [
+  const tInbox = team(`/card/${cardOf("reply", (x) => x.kind === "reply" && x.for.includes("events"))}`, [
     { do: "wait", ms: 900 },
     { do: "point", sel: ".pt-quote" },
-    { do: "point", sel: ".pt-hint" },
+    { do: "click", sel: ".pt-q-h .pt-help summary" },
+    { do: "point", sel: ".pt-help-body" },
     { do: "wait", ms: 900 },
   ]);
-  const tTranslate = team(`/card/${cardOf("reply", (x) => x.kind === "reply" && x.lang !== "English")}`, [
+  const tTranslate = team(`/card/${cardOf("reply", (x) => x.kind === "reply" && x.for.includes("events") && x.lang !== "English")}`, [
     { do: "wait", ms: 900 },
     { do: "point", sel: ".pt-orig" },
     { do: "point", sel: ".pt-reply textarea" },
@@ -317,9 +316,25 @@ export function buildBands(slug: CommunitySlug): Band[] {
       {name}
     </div>
   );
+  const famRsvpText: TourStep = {
+    label: "Replies to the text",
+    caption: `Family events come with an invitation by text. ${me} replies with how many are coming; Kinlight reads the reply, checks it back (“Reply YES to confirm”) and asks ${mom} first.`,
+    screen: (
+      <SmsThread
+        {...th(s, name)}
+        bubbles={[
+          { time: "Wednesday 10:00 AM", text: `Families welcome: ${barbecue.title}, ${enWhen(barbecue)} in the ${barbecue.room}. Want to join ${mom}? Reply with how many are coming.`, link: { title: `RSVP · ${barbecue.title}`, host: `${link}/rsvp` } },
+          { me: true, text: `${fam.party} of us!` },
+          { time: "10:02 AM", text: `RSVP ${fam.party} people for the ${barbecue.title}, ${enWhen(barbecue)}? Reply YES to confirm.` },
+          { me: true, text: "YES" },
+          { time: "10:03 AM", text: `Thanks, ${me}! We’ll check with ${mom} first, then confirm.` },
+        ]}
+      />
+    ),
+  };
   const famRsvpPage: TourStep = {
     label: "RSVP to a family event",
-    caption: `The RSVP button in ${mom}’s week opens this page. ${me} says how many guests are coming, then taps RSVP. No login; events with a limit show the places left, events without one don’t.`,
+    caption: `Or the link in the text (or in ${mom}’s week) opens this page. ${me} says how many guests are coming, then taps RSVP. No login; events with a limit show the places left, events without one don’t.`,
     screen: (
       <Browser host={`${link}/rsvp`}>
         <div className="ph-pl">
@@ -345,16 +360,17 @@ export function buildBands(slug: CommunitySlug): Band[] {
   const shareAsk = `Hi ${mom}, ${me} would like to see what you’re signed up for each week, and photos of you that we share. Is that OK? Reply YES or NO. You can change your mind any time.`;
   const momShare: TourStep = {
     label: `${mom} agrees to share`,
-    caption: `${mom} decides. ${me} only sees ${mom}’s week if ${mom} says yes (or ${mom}’s legal representative does). Asked in person if ${mom} has no phone.`,
+    caption: `${mom} decides. ${me} only sees ${mom}’s week if ${mom} says yes. Asked in person if ${mom} has no phone.`,
     screen: <SmsThread {...th(s, name)} bubbles={[{ time: "Today 11:02 AM", text: shareAsk }, { me: true, text: "Yes, that’s fine" }, { time: "11:05 AM", text: `Thanks, ${mom}! Just tell the front desk if you change your mind.` }]} />,
   };
   const momWeek: TourStep = {
     label: `${mom}’s week`,
-    caption: `Every Monday, only to family ${mom} has agreed to share with: what ${mom} is signed up for this week, photos of ${mom} from last week when staff posted some, and family events to join ${mom} at. No photos? That part is simply left out.`,
+    caption: `${mom}’s own section of the Sunday email, only for family ${mom} has agreed to share with: what ${mom} is signed up for this week, photos of ${mom} from last week when staff posted some, and family events to join ${mom} at. No photos? That part is simply left out.`,
     screen: (
-      <Mail name={name} domain={domain} to={me} subject={`${mom}’s week at ${name}`} time="8:00 AM">
-        <p className="ph-em-p">Hi {me}, here’s what {mom} is signed up for this week.</p>
-        <p className="ph-em-h">This week</p>
+      <Mail name={name} domain={domain} to={me} subject={`This week at ${name}, and ${mom}’s week`} time="Sun 5:00 PM">
+        <p className="ph-em-p">Hi {me}, here’s {mom}’s week, then everything else that’s on.</p>
+        <p className="ph-em-h">{mom}’s week</p>
+        <p className="ph-em-p"><b>Booked on</b></p>
         {weekAhead.map((e) => (
           <p className="ph-em-p phx-menu" key={e.id}>
             <b>{dayShort(fromIso(e.date)).split(",")[0]} {fmtTime(e.start)}:</b> {e.title}
@@ -380,6 +396,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
             <small>{enWhen(barbecue)} · {barbecue.room}</small>
           </span>
         </div>
+        <p className="ph-em-p">Reply to our text with how many are coming, or tap RSVP.</p>
         <span className="ph-em-btn">RSVP</span>
         <div className="ph-em-foot">{mom} chose to share this with you. {mom} or the {name} team can turn it off at any time.</div>
       </Mail>
@@ -559,11 +576,11 @@ export function buildBands(slug: CommunitySlug): Band[] {
         {
           id: "f-mine",
           email: em.mine,
-          title: "See what your parent is up to",
-          hook: `Each week, what ${mom} is signed up for, with photos of ${mom} from last week when there are some. Only if ${mom} agrees, and ${mom} or staff can turn it off.`,
+          title: "Your parent’s week",
+          hook: `${mom}’s own section of the Sunday email: what ${mom} is booked on, and photos of ${mom} from last week when there are some. Only if ${mom} agrees, and ${mom} or staff can turn it off.`,
           steps: [
             { id: "f-mine-agree", scene: "reply", label: `${mom} agrees to share`, actor: "resident", when: "Or in person, if no phone", text: "Yes, that’s fine", preview: phones(momShare) },
-            { id: "f-mine-week", scene: "email", label: `${mom}’s week`, actor: "auto", when: "Every Monday", text: `${mom}’s week`, preview: phones(momWeek) },
+            { id: "f-mine-week", scene: "email", label: `${mom}’s week`, actor: "auto", when: "Sunday, in the weekly email", text: `${mom}’s week`, preview: phones(momWeek) },
             { id: "f-mine-toggle", scene: "list", label: "On or off, any time", actor: "staff", via: "Text or staff workspace", when: `By ${mom} or by staff`, preview: phones(momToggle) },
           ],
         },
@@ -581,10 +598,10 @@ export function buildBands(slug: CommunitySlug): Band[] {
           id: "f-joinin",
           email: em.join,
           title: "Join your parent at an event",
-          hook: `${me} sees a family event in ${mom}’s week and RSVPs. ${mom} is asked first, by text, and ${me} hears the answer.`,
+          hook: `Family events come with an invitation. ${me} replies to the text to RSVP (or taps the link in it). ${mom} is asked first, by text, and ${me} hears the answer.`,
           steps: [
-            { id: "f-joinin-email", scene: "email", label: `Taps RSVP in ${mom}’s week`, actor: "family", when: "The family event in Monday’s email", text: `${mom}’s week`, preview: { frames: [{ kind: "mail", node: em.mine.node }] } },
-            { id: "f-joinin-rsvp", scene: "rsvp", label: "How many are coming?", actor: "family", via: "Form", when: "Then one tap to RSVP", preview: phones(famRsvpPage) },
+            { id: "f-joinin-text", scene: "reply", label: "Replies to the text", actor: "family", when: "The invitation, midweek", text: `${fam.party} of us!`, preview: phones(famRsvpText) },
+            { id: "f-joinin-rsvp", scene: "rsvp", label: "Or taps the link in it", actor: "family", via: "Action page", when: "The same RSVP, one tap", preview: phones(famRsvpPage) },
             { id: "f-joinin-ask", scene: "text", label: `${mom} is asked`, actor: "auto", via: "Text or email", when: "In person, if no phone", text: `${me} wants to join you`, preview: phones(x.resJoinAsk), next: { tab: "resident", flow: "r-join", text: `${mom}’s side` } },
             { id: "f-joinin-yes", scene: "reply", label: `${mom} says yes`, actor: "resident", lane: 0, text: "YES! 😊", preview: phones(x.resJoin) },
             { id: "f-joinin-confirmed", scene: "text", label: `${me} is confirmed`, actor: "auto", lane: 0, when: "With the details", text: "You’re confirmed 🎉", preview: phones(x.famJoinYes) },
@@ -657,6 +674,15 @@ export function buildBands(slug: CommunitySlug): Band[] {
           steps: [
             { id: "r-today-text", scene: "text", label: "Today’s activities", actor: "auto", when: "Every morning, 8 am", text: `Good morning, ${R}!`, preview: phones(x.resMorning) },
             { id: "r-today-print", scene: "print", label: "In large print too", actor: "auto", with: true, when: "Calendar, menus and flyers", preview: join(paperOf(calendarPaper), paperOf(menuPaper), paperOf(flyerPaper)) },
+          ],
+        },
+        {
+          id: "r-week",
+          title: "Your week",
+          hook: `Every Sunday, ${R}’s own week by text or email: what ${R} is booked on, trips with their departure times, and invites that match what ${R} enjoys. One word books a seat. The same week comes printed in large print.`,
+          steps: [
+            { id: "r-week-text", scene: "text", label: "Your week", actor: "auto", when: "Sunday, 8 am", text: `Your week, ${R}`, preview: phones(x.resWeekText) },
+            { id: "r-week-print", scene: "print", label: "Printed too", actor: "auto", with: true, when: "Under the door on Monday", preview: paperOf(x.resWeek) },
           ],
         },
         {
@@ -752,10 +778,10 @@ export function buildBands(slug: CommunitySlug): Band[] {
         {
           id: "s-signups",
           title: "Handle sign-ups",
-          hook: "Family asked, resident answered, staff approved, family told. Residents who reply YES are booked here too, and attendance is a tap on the day.",
+          hook: "Family asked, resident answered, family told: a yes confirms it on its own. Residents who reply YES are booked here too, and attendance is a tap on the day.",
           steps: [
             { id: "s-signups-stages", scene: "list", label: "Every request, by stage", actor: "staff", via: "Staff workspace", preview: tSignups },
-            { id: "s-signups-yes", scene: "approve", label: "Resident said yes: approve", actor: "staff", via: "Staff workspace", lane: 0, when: "Family told straight away", preview: tSignupApprove, next: { tab: "family", flow: "f-joinin", text: `${me} gets the answer` } },
+            { id: "s-signups-yes", scene: "approve", label: "Resident said yes: confirmed", actor: "staff", via: "Staff workspace", lane: 0, when: "Family told straight away, no approval", preview: tSignupApprove, next: { tab: "family", flow: "f-joinin", text: `${me} gets the answer` } },
             { id: "s-signups-ask", scene: "talk", label: "No answer: ask in person", actor: "staff", via: "In person", lane: 1, when: "Then tap their answer", preview: tSignupAsk },
             { id: "s-signups-book", scene: "list", label: "Book residents who said YES", actor: "staff", via: "Staff workspace", when: "Or signed up at the desk", preview: tSignupBook, next: { tab: "resident", flow: "r-signup", text: `${R} gets the details` } },
             { id: "s-signups-att", scene: "list", label: "QR check-ins, then tap the rest", actor: "staff", via: "Staff workspace", when: "Feeds Reports", preview: tAttend },
@@ -765,10 +791,9 @@ export function buildBands(slug: CommunitySlug): Band[] {
           id: "s-contacts",
           email: se.invite,
           title: "Manage family contacts",
-          hook: `Invite family at move-in, check people who sign up themselves, and see what each person gets. News about a resident only goes to family the resident agreed to.`,
+          hook: `Invite family at move-in and see what each person gets. News about a resident only goes to family the resident agreed to.`,
           steps: [
             { id: "s-contacts-invite", scene: "send", label: "Add family at move-in", actor: "staff", via: "Staff workspace", when: "Invites go out by text and email", text: "Invite sent", preview: tImport },
-            { id: "s-contacts-verify", scene: "approve", label: "Check a self sign-up", actor: "staff", via: "Staff workspace", when: `${R} has agreed`, preview: tVerify, next: { tab: "resident", flow: "r-share", text: `${R} is asked` } },
             { id: "s-contacts-list", scene: "list", label: "Everyone, and what they get", actor: "staff", via: "Staff workspace", preview: tFamilies },
           ],
         },

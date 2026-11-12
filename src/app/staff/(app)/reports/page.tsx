@@ -1,47 +1,50 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import "@/app/staff/reports.css";
 import { Icon } from "@/components/Icon";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
+import { Help } from "@/components/staff/portal/Help";
 import { NotYours } from "@/components/staff/portal/NotYours";
 import { ReportsActions } from "@/components/staff/portal/ReportsActions";
 import { Leadership } from "@/components/staff/portal/ReportsLeadership";
-import { EvidenceTable, LeadsBySource, nextFirst, show } from "@/components/staff/portal/ReportsParts";
+import { EvidenceNotes, EvidenceTable, LeadsBySource, PromiseStatusMark, nextFirst, show } from "@/components/staff/portal/ReportsParts";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
-import { Badge, Card, Delta, Meter, PageHead, fmt, pctChange } from "@/components/staff/ui";
+import { Card, Delta, Meter, PageHead, fmt, pctChange } from "@/components/staff/ui";
 import { scorecardMonths } from "@/data/staff";
 import { sectionAccess } from "@/data/staff/access";
-import { adoption, evidence, promises, type PromiseStatus } from "@/data/staff/alpha";
+import { adoption, evidence, promises } from "@/data/staff/alpha";
 import { prospectNumbers } from "@/data/staff/reports";
 import { getStaffCommunity } from "@/data/staff/server";
 
 export const metadata: Metadata = { title: "Monthly scorecard" };
 
-const promiseTone: Record<PromiseStatus, "good" | "warn" | "bad" | "neutral"> = { Kept: "good", "At risk": "warn", Missed: "bad", "Not due yet": "neutral" };
-
 /** Monthly figures that are outcomes (shown in "Evidence we track"); the rest are reach and activity. */
 const evidenceKeys = new Set(["Enquiries", "Tours", "Deposits", "Move-ins", "Occupancy", "Google rating"]);
 
-export default async function ScorecardPage() {
+export default async function ScorecardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { access } = await sectionAccess("reports");
   if (!access) return <NotYours section="Reports" />;
+  // Activities staff open Reports on Engagement; the scorecard is a tab for them.
+  if (access === "community" && (await searchParams).tab !== "scorecard") redirect("/staff/reports/engagement");
   const sc = await getStaffCommunity();
   const tabs = <ReportTabs access={access} />;
   if (!sc) return access === "full" ? <Leadership tabs={tabs} title="Monthly scorecard · All communities" /> : <PickCommunity screen="Reports" />;
   const { s } = sc;
   const m = scorecardMonths();
+  const sourcesHelp = <Help label="About inquiry sources" align="end"><p>{m.month}, with {m.prev} in brackets.</p><p>Public event sign-ups count as inquiries.</p></Help>;
 
   // Sales: only the prospect numbers.
   if (access === "prospect-numbers") {
     const pn = prospectNumbers(s.slug);
     return (
       <>
-        <PageHead title={`Prospect numbers · ${m.label}`} sub={`${s.brand.name}: inquiries, how fast they heard from a person, tours and move-ins, compared with ${m.prev}. Numbers we track, not targets.`} />
+        <PageHead title={`Prospect numbers · ${m.label}`} sub={`${s.brand.name}, compared with ${m.prev}`} />
         <div className="sx-grid g-2">
-          <Card title="Prospect numbers" sub={`${m.month} compared with ${m.prev}`} pad={false}>
+          <Card title="Prospect numbers" sub={`${m.month} and ${m.prev}`} action={<EvidenceNotes rows={pn.rows} />} pad={false}>
             <EvidenceTable rows={pn.rows} month={m.month} prev={m.prev} />
           </Card>
-          <Card title="Where inquiries came from" sub={`${m.month}, with ${m.prev} in brackets. Public event sign-ups count as inquiries.`}>
+          <Card title="Where inquiries came from" sub={m.month} action={sourcesHelp}>
             <LeadsBySource sources={pn.sources} prevValues={pn.sourcesPrev} month={m.month} prev={m.prev} />
           </Card>
         </div>
@@ -57,22 +60,26 @@ export default async function ScorecardPage() {
   const activity = scoreRows.filter((r) => !evidenceKeys.has(r.k));
   return (
     <>
-      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`${s.brand.name}: the promises Kinlight made, how the team is using it, and the outcomes we track, compared with ${m.prev}.`}>
+      <PageHead title={`Monthly scorecard · ${m.label}`} sub={`${s.brand.name}, compared with ${m.prev}`}>
         <ReportsActions month={m.month} to={`${s.people[s.roles.approver].name} and Wrenhaven`} next={nextFirst()} />
       </PageHead>
       {tabs}
 
       <div className="sx-grid g-21">
-        <Card title={`Our ${ps.length} promises this month`} sub={`${kept} of ${ps.length} kept${ps.length - kept ? ` · ${ps.length - kept} at risk` : ""}`} pad={false}>
+        <Card
+          title={`Our ${ps.length} promises`}
+          sub={`${kept} of ${ps.length} kept${ps.length - kept ? ` · ${ps.length - kept} at risk` : ""}`}
+          action={<Help label="How promises are checked" align="end"><p>Each promise is checked every month from Kinlight’s own records: the approval log, delivery reports, uptime and the page history.</p><p>Nobody fills in a spreadsheet.</p></Help>}
+          pad={false}
+        >
           <div className="sx-table-wrap">
-            <table className="sx-table">
-              <thead><tr><th>Promise</th><th>Target</th><th>Status</th><th>Evidence</th></tr></thead>
+            <table className="sx-table rp-promises">
+              <thead><tr><th>Promise</th><th>Status</th><th>Evidence</th></tr></thead>
               <tbody>
                 {ps.map((p) => (
                   <tr key={p.code}>
-                    <td><span className="sc-code">{p.code}</span> <b>{p.promise}</b></td>
-                    <td><small style={{ marginTop: 0 }}>{p.target}</small></td>
-                    <td className="rp-nowrap"><Badge tone={promiseTone[p.status]}>{p.status === "Kept" && <Icon name="check" />} {p.status}</Badge></td>
+                    <td><span className="sc-code">{p.code}</span> <b>{p.promise}</b><small>{p.target}</small></td>
+                    <td className="rp-nowrap"><PromiseStatusMark status={p.status} /></td>
                     <td><small style={{ marginTop: 0 }}>{p.evidence}</small></td>
                   </tr>
                 ))}
@@ -86,7 +93,7 @@ export default async function ScorecardPage() {
               {highlights.map((h) => <li key={h}><Icon name="star" /><span>{h}</span></li>)}
             </ul>
           </Card>
-          <Card title="Top posts" sub="By families reached and opens">
+          <Card title="Top posts" sub="By reach">
             <ul className="top-posts">
               {topPosts.map((p) => (
                 <li key={p.title}>
@@ -101,7 +108,7 @@ export default async function ScorecardPage() {
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="Adoption" sub="Is the team using it, and are families reading it?" pad={false}>
+        <Card title="Adoption" sub="Is the team using it?" action={<Help label="About adoption" align="end"><p>Whether staff are adding photos and events, and whether families are reading them. Measured every month against the alpha’s targets.</p><p>Time saved comes from the team’s time diary.</p></Help>} pad={false}>
           <div className="sx-table-wrap">
             <table className="sx-table">
               <thead><tr><th>Measure</th><th>This month</th><th>Target</th></tr></thead>
@@ -121,13 +128,13 @@ export default async function ScorecardPage() {
             </table>
           </div>
         </Card>
-        <Card title="Evidence we track" sub={`Outcomes we follow and compare with ${m.prev}. Not promises, so no targets.`} pad={false}>
+        <Card title="Evidence we track" sub={`${m.month} and ${m.prev}`} action={<EvidenceNotes rows={ev} />} pad={false}>
           <EvidenceTable rows={ev} month={m.month} prev={m.prev} />
         </Card>
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="Reach and activity" sub={`${m.month} compared with ${m.prev}`} pad={false}>
+        <Card title="Reach and activity" sub={`${m.month} and ${m.prev}`} pad={false}>
           <div className="sx-table-wrap">
             <table className="sx-table">
               <thead><tr><th>Measure</th><th className="num">{m.month}</th><th className="num">{m.prev}</th><th>Change</th></tr></thead>
@@ -147,7 +154,7 @@ export default async function ScorecardPage() {
             </table>
           </div>
         </Card>
-        <Card title="Where inquiries came from" sub={`${m.month}, with ${m.prev} in brackets. Public event sign-ups count as inquiries.`}>
+        <Card title="Where inquiries came from" sub={m.month} action={sourcesHelp}>
           <LeadsBySource sources={s.enquirySources} prevValues={s.enquirySourcesPrev} month={m.month} prev={m.prev} />
         </Card>
       </div>

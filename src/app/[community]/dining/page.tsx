@@ -5,7 +5,9 @@ import { getT } from "@/i18n/server";
 import { PageHero } from "@/components/PageHero";
 import { Icon } from "@/components/Icon";
 import { Dots } from "@/components/Logo";
-import { MenuBoard, type MenuDay } from "@/components/dining/MenuBoard";
+import { MenuBoard, type MenuDay, type VenueShape } from "@/components/dining/MenuBoard";
+import { menuBoard } from "@/data/staff/menus";
+import { courseLabels, cycleWeek } from "@/data/shared";
 import { LunchBooking, type BookDate } from "@/components/dining/LunchBooking";
 import { getCommunity } from "@/lib/community-server";
 import { diningCopy } from "@/data/communities/copy/dining";
@@ -33,18 +35,46 @@ export default async function DiningPage() {
   const nowMin = nowMinutes();
   const sun = sundayOf(now);
 
+  // Each restaurant in its own shape, from the same menu the kitchen keeps in Menus: the cycle's lunch and dinner,
+  // the chef's special, or the Perch's daily board. Holiday and theme menus only once they're approved.
+  const board = menuBoard(c.slug);
+  const shapeOn = (d: Date): Record<string, VenueShape> => Object.fromEntries(board.venues.map((v) => {
+    if (v.template === "cycle" && v.cycle) {
+      const w = cycleWeek(v.cycle, d);
+      const day = v.cycle.days[w]?.[d.getUTCDay()] ?? [];
+      return [v.venue.key, {
+        line: v.cycle.weeks > 1 ? `Cycle week ${w + 1} of ${v.cycle.weeks} · ${v.cycle.season} menu` : `${v.cycle.season} menu`,
+        meals: v.meals.map((p) => {
+          const m = day.find((x) => x.period === p.key);
+          const items = (["entree", "alternate", "soup"] as const).flatMap((k) => (m?.courses[k] ? [{ course: courseLabels[k], name: m.courses[k]!.name, desc: k === "entree" ? m.courses[k]!.desc : undefined, tags: m.courses[k]!.tags }] : []));
+          return { label: p.label, time: fmtRange(m?.start ?? p.start, m?.end ?? p.end), items };
+        }).filter((m) => m.items.length),
+        book: "Dinner is by reservation",
+      }];
+    }
+    if (v.template === "daily") {
+      const vals = v.daily.find((x) => x.date === iso(d))?.values ?? {};
+      return [v.venue.key, { slots: (v.slots ?? []).map((s) => ({ label: s.label, period: s.period, ...(vals[s.key] ?? { name: iso(d) > todayIso ? "Posted that morning" : "" }) })).filter((x) => x.name) }];
+    }
+    return [v.venue.key, { book: "Walk in any time" }];
+  }));
+  const approved = board.holidays.filter((h) => h.status === "approved");
   const days: MenuDay[] = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(sun, i);
-    return { date: iso(d), label: dayShort(d), long: longDate(d), menus: allMenus(d) };
+    return { date: iso(d), label: dayShort(d), long: longDate(d), menus: allMenus(d), shape: shapeOn(d) };
   });
+  const theme = approved.find((h) => h.kind === "theme" && h.date >= todayIso);
   const tg = fromIso(THANKSGIVING);
   // The restaurant serving the holiday dinner: whichever venue's menu marks the day as a holiday.
   const tgVenueKey = c.venueOrder.find((v) => c.menuFor(v, tg).holiday);
   const tgVenue = tgVenueKey ? venues[tgVenueKey] : undefined;
   const daysToTg = Math.round((tg.getTime() - now.getTime()) / 86_400_000);
-  const showTg = !!tgVenue && daysToTg >= 0 && daysToTg <= 42;
+  // Nothing about a holiday menu goes public until the approver has said yes.
+  const tgApproved = approved.some((h) => h.date === THANKSGIVING && h.kind === "holiday");
+  const showTg = tgApproved && !!tgVenue && daysToTg >= 0 && daysToTg <= 42;
+  const smsTo = `sms:${site.phone.replace(/\D/g, "")}`;
   const tgDay: MenuDay | undefined = showTg && !days.some((d) => d.date === THANKSGIVING)
-    ? { date: THANKSGIVING, label: dayShort(tg), long: longDate(tg), menus: allMenus(tg) }
+    ? { date: THANKSGIVING, label: dayShort(tg), long: longDate(tg), menus: allMenus(tg), shape: {} }
     : undefined;
 
   // This week's and next week's happy hours (the public calendar carries no rooms for resident events, so match by title).
@@ -96,9 +126,11 @@ export default async function DiningPage() {
               <p className="eyebrow light">{t(`Thursday, November 26 · ${tgVenue.name}`)}</p>
               <h2 id="din-tg-h">{t("Thanksgiving Dinner — ")}<em>{t("reserve your table")}</em></h2>
               <p>{t("Herb-roasted turkey with sage pan gravy, honey-glazed ham, sourdough sage stuffing and three kinds of pie. Served 11:00 am–3:00 pm, by reservation. Families are warmly welcome.")}</p>
+              <p className="din-tg-how">{t(`To book, text ${tgVenue.name} with how many are coming and which seating, or reply to your Sunday email. Seatings:`)} {t("11:30 am")} · {t("1:30 pm")}. {t("Prefer to call? ")}{site.phone}</p>
               <div className="btn-row">
-                <a className="btn btn-light" href="#lunch-thanksgiving">{t("Reserve your table")}</a>
+                <a className="btn btn-light" href={`${smsTo}?&body=${encodeURIComponent("Thanksgiving, 2 of us at the 11:30 seating")}`}><Icon name="sms" /> {t("Text to reserve")}</a>
                 <a className="btn btn-outline-light" href="#menus-thanksgiving">{t("See the Thanksgiving menu")}</a>
+                <a className="btn btn-outline-light" href="#lunch-thanksgiving">{t("Or book online")}</a>
               </div>
             </div>
             <p className="din-tg-count" aria-hidden="true"><b>{daysToTg}</b>{t(" days to go")}</p>
@@ -114,7 +146,10 @@ export default async function DiningPage() {
             <h2 id="din-menus-h">{t("What’s cooking ")}<em>{t("today")}</em></h2>
             <p>{t("Menus change daily and the Juniper Room’s dinner menu changes every week. Pick a day to see what’s on.")}</p>
           </div>
-          <MenuBoard days={days} extra={tgDay} todayIso={todayIso} nowMin={nowMin} />
+          <MenuBoard days={days} extra={tgDay} todayIso={todayIso} nowMin={nowMin} phone={site.phone} />
+          {theme && (
+            <p className="din-theme"><Icon name="star" /> {t(theme.name)} · {t(dayShort(fromIso(theme.date)))} · {t(`${theme.venueName} is full, so text us to join the waitlist.`)}</p>
+          )}
         </div>
       </section>
 

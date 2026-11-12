@@ -152,7 +152,7 @@ export default async function Fitness() {
             <div className="sec-head">
               <p className="eyebrow">{t("This week")}</p>
               <h2 id="br-classes-h">{t("Fitness classes, next 7 days")}</h2>
-              <p>{t("Most classes are drop-in, no sign-up needed. For the rest, residents sign up with the activities team.")}</p>
+              <p>{t("Most classes are drop-in, no sign-up needed. For the rest, residents reply YES to the reminder text, or sign up with the activities team.")}</p>
             </div>
             <Link className="btn btn-green" href="/calendar">
               <Icon name="calendar" /> {t("Full calendar")}

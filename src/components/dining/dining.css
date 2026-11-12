@@ -170,3 +170,22 @@
   .din-mosaic { grid-template-rows: 120px 90px 120px; }
   .din-ask { align-items: flex-start; }
 }
+
+/* Each restaurant in its own shape; the always-available menu once, folded; text-first booking */
+.din-cycle { margin: 0 0 10px; font-size: 0.92rem; font-weight: 700; letter-spacing: 0.04em; color: var(--terra-deep); }
+.din-meals { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+.din-course { display: block; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.din-slots { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.din-slots li { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--paper); border: 1px solid var(--rule); }
+.din-slots small { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.din-slots b { font-size: 1.05rem; }
+.din-slots span { color: var(--ink-2); font-size: 0.92rem; }
+.din-always { margin-top: 16px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.din-always summary { cursor: pointer; font-weight: 700; color: var(--green-ink); min-height: 40px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.din-always summary small { font-weight: 400; color: var(--ink-3); }
+.din-always .din-sections { margin-top: 10px; }
+.din-book { display: flex; gap: 8px; align-items: flex-start; margin: 14px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--green-tint); color: var(--green-ink); font-weight: 600; }
+.din-book .icon { width: 17px; height: 17px; flex: none; margin-top: 3px; }
+.din-theme { display: flex; gap: 8px; align-items: center; margin: 18px 0 0; font-weight: 600; color: var(--terra-deep); }
+.din-theme .icon { width: 17px; height: 17px; }
+.din-tg-how { font-weight: 600; }

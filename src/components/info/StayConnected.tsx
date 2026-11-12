@@ -19,12 +19,12 @@ const langs = [
 ] as const;
 type LangKey = (typeof langs)[number]["key"];
 
+/** The four things families can get (the same four as on /phones). */
 const topics = [
-  { key: "calendar", label: "Weekly calendar digest", note: "Sunday mornings: the week’s trips, music and special events" },
-  { key: "menu", label: "Daily menu", note: "Lunch and dinner specials, each morning at 9:00 am" },
-  { key: "photos", label: "Photos & news", note: "New albums and stories, about twice a month" },
-  { key: "lantern", label: "Lantern updates", note: "Lantern’s weekly outing and family events" },
-  { key: "urgent", label: "Urgent notices only", note: "Weather, closures and anything time-sensitive" },
+  { key: "news", label: "Community news", note: "A highlight by text midweek, the whole week by email on Sunday" },
+  { key: "week", label: "Your resident’s week", note: "Photos they’re in and outings they’re booked on, if they choose to share" },
+  { key: "alerts", label: "Alerts", note: "Weather, closures, and changes to events you’re coming to" },
+  { key: "invites", label: "Invitations to family events", note: "Reply to the text to RSVP" },
 ];
 
 const relationships = ["Daughter", "Son", "Spouse or partner", "Grandchild", "Sibling", "Other family", "Friend", "Resident (myself)", "Care professional"];
@@ -88,20 +88,15 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
   // The digest language starts as the page language; the visitor can pick any of the six.
   const [lang, setLang] = useState<LangKey>(pageLang);
   const [channel, setChannel] = useState<"text" | "email" | "both">("text");
-  const [picked, setPicked] = useState<string[]>(["calendar", "photos"]);
+  const [picked, setPicked] = useState<string[]>(["news", "alerts", "week", "invites"]);
+  const [resident, setResident] = useState("");
   const [sms, setSms] = useState(false);
   const [err, setErr] = useState("");
-  const [done, setDone] = useState<null | { name: string }>(null);
+  const [done, setDone] = useState<null | { name: string; resident: boolean }>(null);
   const doneRef = useRef<HTMLHeadingElement>(null);
   const wantsText = channel !== "email";
 
-  const toggle = (k: string) => {
-    setPicked((p) => {
-      if (k === "urgent") return p.includes("urgent") ? [] : ["urgent"];
-      const base = p.filter((x) => x !== "urgent");
-      return base.includes(k) ? base.filter((x) => x !== k) : [...base, k];
-    });
-  };
+  const toggle = (k: string) => setPicked((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]));
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -109,8 +104,8 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
     if (wantsText && !sms) return setErr("To receive texts, please check the box to agree to text messages — or choose email instead.");
     const f = new FormData(e.currentTarget);
     setErr("");
-    // Only the first name is shown back. The resident's name and apartment go to the team and are never displayed on the website.
-    setDone({ name: String(f.get("name") ?? "") });
+    // Only the first name is shown back. The resident's name goes to the team and is never displayed on the website.
+    setDone({ name: String(f.get("name") ?? ""), resident: !!String(f.get("resident") ?? "").trim() });
     requestAnimationFrame(() => {
       doneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       doneRef.current?.focus({ preventScroll: true });
@@ -150,11 +145,14 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
             .
           </h2>
           <p className="muted">
-            {wantsText
-              ? t(`Your first weekly text arrives Sunday morning${channel === "both" ? ", with the email version in your inbox" : ""}.`)
-              : t("Your first weekly email arrives Sunday morning.")}{" "}
+            {t("A welcome message is on its way, and community news starts this week.")}{" "}
             {t("You’ll receive: ")}
             {received}.
+          </p>
+          <p className="muted">
+            {done.resident
+              ? t("Our team will check with your resident before anything personal is shared. Once they agree, their week joins your Sunday email.")
+              : t("You didn’t give a resident’s name, so you’ll get community news only. Call the front desk any time to add it.")}
           </p>
           <p className="small muted">
             {wantsText ? t("Reply STOP at any time to stop texts, or HELP for help. ") : ""}
@@ -164,7 +162,7 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
             {t("Change my choices")}
           </button>
         </div>
-        <figure className="sc-phone" aria-label="Preview of your first weekly message" data-no-translate>
+        <figure className="sc-phone" aria-label="Preview of your first message" data-no-translate>
           <div className="sc-phone-top">
             <span className="sc-phone-av">{site.short}</span>
             <b>{site.name}</b>
@@ -271,14 +269,10 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
               <input id="sc-email" name="email" type="email" autoComplete="email" required />
             </div>
           )}
-          <div className="field">
+          <div className="field full">
             <label htmlFor="sc-res">{t("Resident’s name (optional)")}</label>
-            <input id="sc-res" name="resident" />
-          </div>
-          <div className="field">
-            <label htmlFor="sc-apt">{t("Apartment (optional)")}</label>
-            <input id="sc-apt" name="apartment" inputMode="numeric" aria-describedby="sc-apt-note" />
-            <small id="sc-apt-note" className="sc-field-note">{t("Leave it blank if you prefer. It only helps our team match you to your loved one, and it is never shown on the website.")}</small>
+            <input id="sc-res" name="resident" value={resident} onChange={(e) => setResident(e.target.value)} aria-describedby="sc-res-note" />
+            <small id="sc-res-note" className="sc-field-note">{t("With it, our team checks with your resident before anything personal is shared. Without it, you get community news only. It’s never shown on the website.")}</small>
           </div>
           {wantsText && (
             <div className="full">

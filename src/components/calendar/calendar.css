@@ -207,3 +207,6 @@
   .cal-legend { font-size: 10pt; }
   .cal-print-sub { display: block; font-family: var(--font-body), sans-serif; font-size: 10pt; margin-top: 4pt; }
 }
+
+.cal-count { margin: 0 0 10px; font-size: 0.98rem; color: var(--ink-2); }
+.cal-count b { font-size: 1.3rem; color: var(--green-deep, #2e4d33); }

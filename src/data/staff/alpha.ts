@@ -9,6 +9,7 @@ import { nextSpecials } from "@/data/communities/specials";
 import { addDays, dayShort, fmtTime, fromIso, hash, iso, nowMinutes, today } from "@/lib/clock";
 import { getStaffData } from "./index";
 import type { Contact, StaffData } from "./shared";
+import { weekNumbers } from "./week";
 
 /* ------------------------------------------------------------ helpers */
 
@@ -44,7 +45,7 @@ export interface EventRequest {
   party: number;
   mins: number;
   status: RequestStatus;
-  via: "Personal link" | "Reply to weekly text, finished on the personal link" | "In person with staff" | "Website form";
+  via: "Replied to the text" | "Replied to the weekly text" | "In person with staff" | "Website form";
   lang?: string;
   note?: string;
   /** Public sign-ups: how to reach them (they become sales leads). */
@@ -62,16 +63,16 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
   const fam = s.contacts.filter((c) => c.sms || c.emailOpt);
   const out: EventRequest[] = [];
 
-  // Family RSVPs from the personal link: a few waiting, the rest confirmed.
+  // Family RSVPs by reply to the weekly text: a few waiting, the rest confirmed.
   family.forEach((e, n) => {
     fam.filter((c) => !c.lantern).slice(0, 9).forEach((c, i) => {
       // The first family event: six RSVPs the residents have said yes to (staff approve them together), and one
-      // resident who hasn't answered yet. Later family events: one or two waiting, the rest confirmed.
-      const waiting = n === 0 ? i !== 2 && i < 7 : i < 2;
+      // resident who hasn't answered yet. Later family events: all confirmed already.
+      const waiting = n === 0 && i !== 2 && i < 7;
       out.push({
         id: `rsvp-${e.id}-${i}`, kind: "family-rsvp", event: ref(e), from: c.contact, relation: c.relation, resident: c.resident,
-        party: 1 + (hash(c.contact) % 4), mins: 25 + i * 190 + n * 40, status: waiting ? "waiting" : i === 2 ? "checking" : "confirmed",
-        via: i === 1 ? "Reply to weekly text, finished on the personal link" : "Personal link", lang: c.lang,
+        party: 1 + (hash(c.contact) % 4), mins: 25 + i * 190 + n * 40, status: waiting ? "waiting" : i === 2 && n === 0 ? "checking" : "confirmed",
+        via: i === 1 ? "Replied to the weekly text" : "Replied to the text", lang: c.lang,
         note: i === 0 ? "Bringing the grandchildren, ages 6 and 9" : i === 2 ? "Needs a wheelchair-accessible table" : undefined,
       });
     });
@@ -85,15 +86,15 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
     out.push({
       id: `seat-${e.id}`, kind: "seat-request", event: ref(e), from: c.contact, relation: c.relation, resident: c.resident,
       party: 1, mins: 40 + i * 260, status: i === 0 ? "waiting" : i === 1 ? "checking" : i === 4 ? "declined" : "confirmed",
-      via: "Personal link", lang: c.lang,
+      via: "Replied to the text", lang: c.lang,
       note: i === 1 ? `Checking with ${first(c.resident)} at lunch today` : i === 4 ? `${first(c.resident)} would rather stay for bingo that afternoon` : undefined,
     });
   });
 
-  // A Lantern family's RSVP: no text goes to the resident. Staff ask in person, or the legal representative decides.
+  // A Lantern family's RSVP: no text goes to the resident. Staff ask in person.
   const lc = s.contacts.find((c) => c.lantern && (c.sms || c.emailOpt));
   if (lc && family[0])
-    out.push({ id: `rsvp-${family[0].id}-lantern`, kind: "family-rsvp", event: ref(family[0]), from: lc.contact, relation: lc.relation, resident: lc.resident, party: 2, mins: 140, status: "checking", via: "Personal link", lang: lc.lang });
+    out.push({ id: `rsvp-${family[0].id}-lantern`, kind: "family-rsvp", event: ref(family[0]), from: lc.contact, relation: lc.relation, resident: lc.resident, party: 2, mins: 140, status: "checking", via: "Replied to the text", lang: lc.lang });
 
   // Residents who signed up in person, booked straight into the list.
   trips.slice(0, 4).forEach((e, i) => {
@@ -241,15 +242,15 @@ export function printItems(slug: CommunitySlug): PrintItem[] {
   return [
     { id: "p1", title: `${month} activity calendar`, size: "Tabloid · 16 pt", copies: 120, note: "For every apartment door and the Lobby", ready: true },
     { id: "p2", title: "Lantern activity calendar", size: "Tabloid · 20 pt", copies: 30, note: "Pictures beside each activity", ready: true },
-    { id: "p3", title: "This week’s menus", size: "Letter · 18 pt", copies: 60, note: `All ${c.venueOrder.length} restaurants at ${c.site.name}`, ready: true },
+    { id: "p3", title: "This week’s menus", size: "Letter · 18 pt", copies: 60, note: `All ${c.venueOrder.length} restaurants at ${c.site.name}, with the standing menus`, ready: true },
     { id: "p4", title: `Family Barbecue flyer · ${dayShort(fromIso(sp.barbecue))}`, size: "Letter · 24 pt", copies: 40, note: "For the front desk and the elevators", ready: true },
-    { id: "p5", title: "Family QR poster: “Get the weekly update”", size: "Tabloid", copies: 6, note: "Families scan it to sign up; one at the front desk, one by each elevator", ready: true },
+    { id: "p5", title: "Family QR poster: “Get the weekly update”", size: "Tabloid", copies: 6, note: "Front desk and each elevator", ready: true },
     {
       id: "p7", title: "QR check-in signs, this week", size: "Letter · 28 pt", copies: signs,
-      note: "One for each activity. A resident scans it with their phone and is checked in under the number we know, no login", ready: true,
+      note: "One for each activity", ready: true,
       sign: next ? { id: next.id, title: next.title, when: when(next), place: next.room } : undefined,
     },
-    { id: "p6", title: "Suggestion slips", size: "Letter · 4 per page", copies: 100, note: "“What would you like to see?” with a QR code. Slips go in the box at the front desk", ready: true },
+    { id: "p6", title: "Suggestion slips", size: "Letter · 4 per page", copies: 100, note: "For the box at the front desk", ready: true },
   ];
 }
 
@@ -269,6 +270,7 @@ export function teamRoles(slug: CommunitySlug) {
     if (k === r.lantern) return { preset: "Approver", status: "Active", adjusted: "Approves Lantern family requests" };
     if (k === r.menus || /Culinary|Dining/.test(role)) return { preset: "Kitchen", status: "Active" };
     if (k === r.desk || /Fitness/.test(role)) return { preset: "Poster", status: "Active" };
+    if (/Care Partner/.test(role)) return { preset: "Caregiver", status: "Active" };
     if (/Business Office/.test(role)) return { preset: "Poster", status: "Active", adjusted: "Also edits apartments and prices on the website" };
     const h = hash(k);
     return { preset: "Poster", status: h % 4 === 0 ? "Invited" : "Active" };
@@ -293,7 +295,7 @@ export function promises(slug: CommunitySlug): KPromise[] {
     { code: "D4", promise: "One post reaches every channel", target: "Every post reaches 3 or more channels", status: "Kept", evidence: `${s.scoreRows.find((r) => r.k === "Posts published")?.now ?? 50} posts, average 4.2 channels each` },
     { code: "D5", promise: "Changes arrive fast", target: "Website and families updated within 15 minutes", status: "Kept", evidence: "Slowest change this month: 6 minutes" },
     { code: "D6", promise: "Messages arrive", target: "95% or more delivered, in the family’s language", status: "Kept", evidence: `${s.weekKpis.deliveredRate}% delivered; ${s.languages.length} languages` },
-    { code: "D7", promise: "Nothing wrong goes out", target: "Zero sends without approval", status: "Kept", evidence: "0 sends without approval (approval log)" },
+    { code: "D7", promise: "Nothing wrong goes out", target: "Nothing goes out without the approval your rules require (resident photos, prices, special menus, family requests); emergencies only skip it", status: "Kept", evidence: "Every resident photo, price, special menu and family request approved first; 0 exceptions (approval log)" },
     { code: "D8", promise: "No inquiry left waiting", target: "Instant reply day or night; your team told within 5 minutes", status: "Kept", evidence: `${s.scoreRows.find((r) => r.k === "Enquiries")?.now ?? 50} inquiries, all answered instantly; slowest hand-off 2 min` },
     { code: "D9", promise: "Easy to find", target: "Live-facts feed and Google Business Profile accurate; monthly AI-answer report", status: slug === "alder-bend" ? "Kept" : "At risk", evidence: slug === "alder-bend" ? "Feed and profile accurate; AI-answer report sent" : "One AI answer still shows the old Lantern price; correction submitted" },
     { code: "D10", promise: "It stays up", target: "99.5% uptime or better", status: "Kept", evidence: "99.98% this month" },
@@ -307,8 +309,9 @@ export function adoption(slug: CommunitySlug): Adoption[] {
   const s = getStaffData(slug);
   const reached = s.weekKpis.familiesReached;
   const optedPct = Math.round((s.community.contacts / s.community.residents) * 100);
+  const wk = weekNumbers(slug);
   return [
-    { code: "T1", measure: "Staff post every week", target: "1+ update in 10 of the last 12 weeks", value: "8 of 8 weeks so far", pct: 100, ok: true },
+    { code: "T1", measure: "Staff add photos or events every week", target: "Photos or events added in 10 of the last 12 weeks", value: "8 of 8 weeks so far", pct: 100, ok: true, note: `This week: ${wk.photos} photos and ${wk.activities} activities` },
     { code: "T2", measure: "Training sticks", target: "80% of trained staff post on their own within 14 days", value: "9 of 10 staff", pct: 90, ok: true },
     { code: "T3", measure: "Pages stay current", target: "No page older than 7 days", value: "1 page at 6 days (Fitness)", pct: 96, ok: true, note: "Reminder sent" },
     { code: "T4", measure: "Families reachable", target: "60% by day 30, 70% by day 90", value: `${Math.min(optedPct, 88)}% of residents have an opted-in family contact`, pct: Math.min(optedPct, 88), ok: optedPct >= 60 },

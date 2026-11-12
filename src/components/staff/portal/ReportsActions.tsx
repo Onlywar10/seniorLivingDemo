@@ -16,9 +16,9 @@ export function ReportsActions({ month, to, next }: { month: string; to: string;
       {done === "mail" ? (
         <span className="al-done good" role="status"><Icon name="check" /> Sent to {to}</span>
       ) : (
-        <button type="button" className="sx-btn sx-btn-primary" onClick={() => setDone("mail")} title={`Emailed automatically on ${next}`}><Icon name="mail" /> Email it now</button>
+        <button type="button" className="sx-btn sx-btn-primary" onClick={() => setDone("mail")} title={`Sends to ${to}. Emailed automatically on ${next}`}><Icon name="mail" /> Email it now</button>
       )}
-      <span className="rp-when">Emailed to {to} on the 1st · next on {next}</span>
+      <span className="rp-when">Emailed on the 1st · next {next}</span>
     </>
   );
 }

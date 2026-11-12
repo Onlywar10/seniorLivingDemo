@@ -86,7 +86,10 @@ export function familiesReport(slug: CommunitySlug) {
     thankYous: ty,
     concerns: cs,
     concernsOpened: cs.length,
-    concernsResolved: cs.filter((c) => c.status === "Resolved").length,
+    // Care concerns are passed to the care team and recorded in the community’s own care system: not tracked here.
+    concernsOwned: cs.filter((c) => !c.care).length,
+    concernsResolved: cs.filter((c) => !c.care && c.status === "Resolved").length,
+    concernsPassed: cs.filter((c) => !!c.care).length,
     ai: { handled: aiCount, toStaff: replied - aiCount, examples: handled },
   };
 }

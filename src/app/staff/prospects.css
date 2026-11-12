@@ -1,0 +1,51 @@
+/* Prospects: the tabbed list (New, Tours this week, Event sign-ups, Everyone), the person panel and the waitlist by
+   floor plan. Uses the staff tokens. */
+
+/* ---------- tabs and list */
+.pq-tabs { padding: 0 12px; }
+.pq-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--sx-soft); color: var(--sx-ink-2); font-size: 12px; font-weight: 700; }
+.pq-tabs [aria-selected="true"] .pq-count { background: var(--green-tint); color: var(--green-ink); }
+.pq-panel { min-height: 240px; }
+.pq-empty { padding: 24px 16px; }
+.pq-tours { padding: 4px 16px 12px; }
+
+.pq-list { list-style: none; margin: 0; padding: 0; }
+.pq-list > li { display: flex; align-items: center; gap: 8px 12px; border-bottom: 1px solid var(--sx-line-2); padding-right: 16px; }
+.pq-list > li:last-child { border-bottom: 0; }
+.pq-row { flex: 1; min-width: 0; text-align: left; font: inherit; color: inherit; background: transparent; border: 0; padding: 11px 16px; display: grid; gap: 2px; cursor: pointer; }
+.pq-row:hover { background: var(--sx-soft); }
+.pq-row:hover b { text-decoration: underline; }
+.pq-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14.5px; }
+.pq-sub { font-size: 12.5px; color: var(--sx-ink-3); }
+.pq-snip { font-size: 13px; color: var(--sx-ink-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pq-row small { font-size: 12px; color: var(--sx-ink-3); }
+.pq-acts { display: flex; gap: 6px; flex: none; }
+
+/* A name that opens the person panel (Tours this week). */
+.pq-name { font: inherit; font-weight: 700; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--sx-line); text-underline-offset: 3px; }
+.pq-name:hover { text-decoration-color: currentColor; }
+
+@media (max-width: 640px) {
+  .pq-list > li { flex-direction: column; align-items: stretch; padding: 0 0 10px; }
+  .pq-acts { padding: 0 16px; }
+}
+
+/* ---------- person panel */
+.pq-d { display: grid; gap: 16px; }
+.pq-d-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13.5px; color: var(--sx-ink-2); }
+.pq-d-sec { display: grid; gap: 10px; border-top: 1px solid var(--sx-line-2); padding-top: 14px; }
+.pq-d-sec h3 { margin: 0; font-size: 15px; }
+.pq-wrote { background: var(--sx-soft); border-radius: 10px; padding: 10px 12px; }
+.pq-wrote small { font-size: 12px; color: var(--sx-ink-3); font-weight: 600; }
+.pq-wrote p { margin: 2px 0 0; font-size: 14.5px; }
+.pq-phone { display: grid; justify-items: center; gap: 10px; }
+.pq-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pq-notes li { font-size: 14px; padding: 8px 10px; background: var(--sx-soft); border-radius: 8px; display: grid; gap: 2px; }
+.pq-notes small { font-size: 12px; color: var(--sx-ink-3); }
+.pq-note-add { gap: 8px; }
+
+/* ---------- waitlist by floor plan */
+.pq-wait { display: grid; gap: 16px; }
+.pq-wait-plan h3 { margin: 0; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; font-size: 14.5px; padding-bottom: 4px; border-bottom: 1px solid var(--sx-line); }
+.pq-wait-plan h3 small { font-weight: 600; color: var(--sx-ink-3); font-size: 12px; }
+.pq-wait-c { display: inline-flex; gap: 8px; align-items: center; font-size: 12.5px; font-weight: 600; color: var(--sx-ink-2); }

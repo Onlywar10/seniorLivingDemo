@@ -24,13 +24,13 @@ const priority = (e: CalEvent) => (e.special ? 3 : 0) + (kindOf(e) !== "resident
 const kindTag = { public: "Open to the public", family: "Family event" } as const;
 
 /** The interactive calendar: views, filters, event detail and public event sign-up. */
-export function CalendarApp({ view, lantern, todayIso, nowMin, label, days, month, todayInRange, hrefs, phone, phoneHref }: {
-  view: CalView; lantern: boolean; todayIso: string; nowMin: number; label: string; days: CalDay[]; month: number;
+export function CalendarApp({ view, lantern, initialCats = [], todayIso, nowMin, label, days, month, todayInRange, hrefs, phone, phoneHref }: {
+  view: CalView; lantern: boolean; initialCats?: Cat[]; todayIso: string; nowMin: number; label: string; days: CalDay[]; month: number;
   todayInRange: boolean; hrefs: Hrefs; phone: string; phoneHref: string;
 }) {
   const { t } = useT();
   const c = useCommunity();
-  const [active, setActive] = useState<Cat[]>([]);
+  const [active, setActive] = useState<Cat[]>(initialCats);
   const [now, setNow] = useState(nowMin);
   const [openId, setOpenId] = useState<string | null>(null);
   const [signups, setSignups] = useState<Record<string, PublicSignup>>({});

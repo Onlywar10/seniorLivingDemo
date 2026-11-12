@@ -487,10 +487,17 @@ export const nav = [
     { label: "Events & Adventures", href: "/events-adventures" },
     { label: "Fitness", href: "/fitness" },
     { label: "Amazing Spaces", href: "/spaces" },
+    { label: "Clubs & Groups", href: "/clubs" },
+    { label: "Photo Albums", href: "/photos" },
     { label: "What is LIVE?", href: "/lifestyle#live" },
   ] },
   { label: "Calendar", href: "/calendar" },
   { label: "Dining", href: "/dining" },
+  { label: "For Families", href: "/stay-connected", children: [
+    { label: "Stay Connected", href: "/stay-connected" },
+    { label: "Photo Albums", href: "/photos" },
+    { label: "Activity Calendar", href: "/calendar" },
+  ] },
   { label: "About", href: "/about", children: [
     { label: "Our Team", href: "/team" },
     { label: "Purpose & Values", href: "/about" },

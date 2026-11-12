@@ -5,18 +5,18 @@ import { Icon } from "@/components/Icon";
 import { OpenCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, Kpi, Meter, PageHead, fmt } from "@/components/staff/ui";
 import { scorecardMonths } from "@/data/staff";
-import { evidence, leadershipRow, type PromiseStatus } from "@/data/staff/alpha";
+import { evidence, leadershipRow } from "@/data/staff/alpha";
 import { concerns } from "@/data/staff/engage";
 import { communitySlugs } from "@/lib/sites";
-import { ComingLater, nextFirst, show } from "./ReportsParts";
+import { Help } from "./Help";
+import { ComingLater, PromiseStatusMark, nextFirst, show } from "./ReportsParts";
 import { ReportsActions } from "./ReportsActions";
-
-const promiseTone: Record<PromiseStatus, "good" | "warn" | "bad" | "neutral"> = { Kept: "good", "At risk": "warn", Missed: "bad", "Not due yet": "neutral" };
 
 export function Leadership({ tabs, title = "All communities" }: { tabs: ReactNode; title?: string }) {
   const rows = communitySlugs.map((slug) => {
     const r = leadershipRow(slug);
-    const concernsOpen = concerns(slug).filter((c) => c.status !== "Resolved").length;
+    // Care concerns go to the care team and its own system, so they aren’t open concerns here.
+    const concernsOpen = concerns(slug).filter((c) => !c.care && c.status !== "Resolved").length;
     return { ...r, concernsOpen, waiting: r.approvals + r.rsvpsWaiting + r.seatsWaiting + r.askWaiting + concernsOpen };
   });
   const m = scorecardMonths();
@@ -28,19 +28,23 @@ export function Leadership({ tabs, title = "All communities" }: { tabs: ReactNod
 
   return (
     <>
-      <PageHead title={title} sub={`Wrenhaven leadership view · ${m.label} · ${rows.length} communities side by side: each one’s promises, adoption and requests waiting.`}>
+      <PageHead title={title} sub={`Wrenhaven · ${m.label} · ${rows.length} communities side by side`}>
+        <Help label="About the monthly report" align="end">
+          <p>Each community’s one-page report is emailed on the 1st to its executive director and to Wrenhaven leadership. Next on {nextFirst()}.</p>
+          <p>Every approval, booking, check-in and reply feeds it on its own: nobody fills in a spreadsheet.</p>
+        </Help>
         <ReportsActions month={m.month} to="Wrenhaven leadership" next={nextFirst()} />
       </PageHead>
       {tabs}
 
       <div className="sx-kpis">
         <Kpi label="Promises kept" value={<>{sum((r) => r.kept)}<small> / {rows.length * promiseCount}</small></>} note={`${m.month}, all communities`} />
-        <Kpi label="Adoption measures met" value={<>{sum((r) => r.adoptionOk)}<small> / {rows.length * adoptionCodes.length}</small></>} note="against the alpha’s targets" />
+        <Kpi label="Adoption measures met" value={<>{sum((r) => r.adoptionOk)}<small> / {rows.length * adoptionCodes.length}</small></>} note="against the targets" />
         <Kpi label="Families reached this week" value={<>{fmt(sum((r) => r.familiesReached))}<small> / {fmt(sum((r) => r.families))}</small></>} note="opened at least one message" />
         <Kpi label="Requests waiting" value={sum((r) => r.waiting)} note="approvals, family requests and concerns" />
       </div>
 
-      <Card title="Side by side" sub={`${m.month} · open a community to see its own reports`} pad={false}>
+      <Card title="Side by side" sub={m.month} pad={false}>
         <div className="sx-table-wrap">
           <table className="sx-table">
             <thead>
@@ -90,7 +94,7 @@ export function Leadership({ tabs, title = "All communities" }: { tabs: ReactNod
                 <li key={p.code}>
                   <span className="ld-code">{p.code}</span>
                   <span>
-                    <b>{p.promise}</b> <Badge tone={promiseTone[p.status]}>{p.status}</Badge>
+                    <b>{p.promise}</b> <PromiseStatusMark status={p.status} />
                     <small>{p.evidence}</small>
                   </span>
                 </li>
@@ -100,7 +104,7 @@ export function Leadership({ tabs, title = "All communities" }: { tabs: ReactNod
         ))}
       </div>
 
-      <Card title="Adoption" sub="Is each team using it? Measured every month against the alpha’s adoption targets" pad={false}>
+      <Card title="Adoption" sub="Is each team using it?" pad={false}>
         <div className="sx-table-wrap">
           <table className="sx-table">
             <thead>
@@ -120,7 +124,7 @@ export function Leadership({ tabs, title = "All communities" }: { tabs: ReactNod
                       return a ? (
                         <td key={r.slug} className="rp-ad">
                           <span className="ld-ad">
-                            {a.ok ? <Badge tone="good"><Icon name="check" /> Met</Badge> : <Badge tone="warn">Not yet</Badge>}
+                            {a.ok ? <span className="sc-status hit"><Icon name="check" /> Met</span> : <span className="sc-status miss"><Icon name="minus" /> Not yet</span>}
                             <Meter v={a.pct} tone={a.ok ? "var(--green)" : "var(--olive)"} label={`${a.pct}%`} />
                           </span>
                           <small>{a.value}{a.note ? ` · ${a.note}` : ""}</small>
@@ -136,7 +140,7 @@ export function Leadership({ tabs, title = "All communities" }: { tabs: ReactNod
       </Card>
 
       <div className="sx-grid g-21">
-        <Card title="Evidence we track" sub={`${m.month}, with ${m.prev} underneath. Outcomes we follow and compare, never promise: no targets here.`} pad={false}>
+        <Card title="Evidence we track" sub={`${m.month}, with ${m.prev} underneath`} action={<Help label="About evidence" align="end"><p>Outcomes we follow and compare, never promise, so there are no targets.</p></Help>} pad={false}>
           <div className="sx-table-wrap">
             <table className="sx-table">
               <thead>
@@ -164,14 +168,9 @@ export function Leadership({ tabs, title = "All communities" }: { tabs: ReactNod
           </div>
         </Card>
         <div className="sx-grid">
-          <Card title="The monthly report">
-            <ul className="sx-list">
-              <li><b>Emailed on the 1st</b><br /><span className="sx-hint">Each community’s one-page report goes to its executive director and to Wrenhaven leadership. Next on {nextFirst()}.</span></li>
-              <li><b>Nobody fills in a spreadsheet</b><br /><span className="sx-hint">Every approval, booking, check-in and reply feeds the report on its own.</span></li>
-            </ul>
-          </Card>
           <ComingLater when="Coming in Full House" title="Occupancy, deposits and move-in tracking">
-            Conversion from inquiry to move-in, deposits and occupancy stay in your own sales system for now. Inquiries, tours and move-ins are already in the evidence above.
+            <p>Conversion from inquiry to move-in, deposits and occupancy stay in your own sales system for now.</p>
+            <p>Inquiries, tours and move-ins are already in the evidence.</p>
           </ComingLater>
         </div>
       </div>

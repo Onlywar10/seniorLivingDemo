@@ -3,8 +3,10 @@ import type { ReactNode } from "react";
 import { Shell } from "@/components/staff/Shell";
 import { StaffCommunityProvider, type StaffCommunityOption } from "@/components/staff/StaffCommunity";
 import { communities } from "@/data/communities";
-import { queueFor, viewer, viewers } from "@/data/staff/portal";
-import { getStaffRole, getStaffScope } from "@/data/staff/server";
+import { lite } from "@/data/staff/lite";
+import { queueAll, searchIndex, viewer, viewers } from "@/data/staff/portal";
+import { waitingReplies } from "@/data/staff/messages";
+import { getAlertRules, getAreaState, getStaffRole, getStaffScope } from "@/data/staff/server";
 import { communitySlugs } from "@/lib/sites";
 import "../staff.css";
 import "../alpha.css";
@@ -29,11 +31,14 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   // The signed-in person, and the one number that says how much is waiting on them (their "Needs you" queue).
   const base = scope === "all" ? communitySlugs[0] : scope;
   const me = viewer(base, as);
+  const areas = await getAreaState();
   const people = viewers(base);
-  const waiting = scope === "all" ? 0 : queueFor(scope, as).length;
+  // Every routed card in its smallest form: the menu counts this person's (and anything handed to them) in the browser.
+  const queue = scope === "all" ? [] : lite(queueAll(scope, await getAlertRules(), areas));
+  const replies = scope === "all" ? 0 : waitingReplies(scope, as);
   return (
     <StaffCommunityProvider scope={scope} options={options}>
-      <Shell me={me} people={people} waiting={waiting}>
+      <Shell me={me} people={people} queue={queue} replies={replies} found={scope === "all" ? [] : searchIndex(scope, as)}>
         {children}
       </Shell>
     </StaffCommunityProvider>

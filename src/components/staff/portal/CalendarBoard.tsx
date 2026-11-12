@@ -1,78 +1,67 @@
 "use client";
 
-// The calendar, for managing events that already exist. Week, month and day views; filters for Lantern, limited
-// seats, family and public events, and room clashes. Each event opens a panel with everything about it: what the
-// website shows, seats (staff only), family requests in progress, who's booked and how, booking a resident at the
-// desk, the waitlist, personal invites, attendance by QR check-in or staff tap, photos, the flyer and QR check-in sign,
-// and changing or cancelling it (everyone who planned around it is told). "+ Add" opens the same form as Post.
-// Full events offer the waitlist, never Approve; Lantern requests are asked in person or of the legal representative.
-// View-only for sales. Everything is saved in this browser only.
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { cats, eventKindLabel, type EventKind } from "@/data/shared";
-import type { NewEventSetup } from "@/data/staff/post";
-import { addDays, dayName, fmtRange, fmtTime, fromIso, hash, iso, monthName } from "@/lib/clock";
+// The calendar, for managing events that already exist. Week, month and day views (day on a phone), filters
+// (including "Mine" and "Needs attendance"), and an Ideas panel beside the calendar (templates, residents' ideas, what
+// worked): drag an idea onto a day to start an event there. A line marks "now" on today. Drag an event to another day
+// to move it; it asks whether to tell the people booked, and for a repeating event, whether it's this one or every
+// week. A room clash opens both events side by side, with Move and Change room. Each event opens the event sheet (the
+// same one Today opens). "+ Add" opens the same form as Post. View-only for sales. Saved in this browser only.
+import { useMemo, useState, useSyncExternalStore } from "react";
+import type { CalEvent } from "@/data/staff/calEvents";
+import type { IdeaPrefill, NewEventSetup, PhotoKit, PlanHelp, Template } from "@/data/staff/post";
+import { addDays, dayName, fmtTime, fromIso, iso, monthName, nowMinutes } from "@/lib/clock";
 import { Icon } from "../../Icon";
-import { TakeAttendance } from "../alpha/Attendance";
-import { useStaffCommunity } from "../StaffCommunity";
-import { Badge, XIcon } from "../ui";
+import { everyDay, useEventBoard } from "../eventStore";
+import { say, useLeaders } from "../store";
+import { XIcon } from "../ui";
 import { Drawer } from "./Drawer";
-import { NewEvent, type SavedEvent } from "./NewEvent";
+import { EventSheet, leaderOf } from "./EventSheet";
+import { Help } from "./Help";
+import { NewEvent, type EventPrefill, type SavedEvent } from "./NewEvent";
+import { calToPool } from "@/data/staff/pool";
+import { seatInfo } from "./seats";
 
-export interface Booking { name: string; via: string }
-export interface ReqRow {
-  id: string; from: string; relation: string; resident: string; party: number; kind: "rsvp" | "seat"; stage: 1 | 2 | 3 | 4; declined?: boolean;
-  /** A Lantern (memory care) resident: no text; asked in person, or their legal representative decides. */
-  lantern?: boolean; rep?: { name: string; relation: string };
-  /** Asked the legal representative instead of the resident. */
-  askedRep?: boolean;
-  /** The event was full, so the resident went on the waitlist. */
-  waitlisted?: boolean;
-}
+export type { Booking, CalEvent, ReqRow } from "@/data/staff/calEvents";
 
-export interface CalEvent {
-  id: string; date: string; start: number; end?: number; title: string; room: string; cat: string; color: string; catLabel: string;
-  kind: EventKind;
-  cap?: number; taken?: number; waitlist?: number; lantern?: boolean; leader?: string; desc?: string; rule?: string;
-  booked?: Booking[]; waiting?: string[]; clash?: string; isNew?: boolean;
-  requests?: ReqRow[];
-  /** Attendance, once taken: QR check-ins and staff taps (or a photo of the paper sheet). */
-  came?: { n: number; of: number; qr: number; staff: number; how: "tap" | "sheet"; by: string };
-  /** Personal invites to residents whose interests match. */
-  invites?: { invited: number; yes: number; interests: string[]; text: string; sentAt: string };
-  photos?: string[];
-  /** A resident's suggestion that became this event (their name, or "a resident"). */
-  idea?: string;
-  /** Waiting for the approver (it has a price). */
-  approval?: boolean;
-  cancelled?: boolean;
-}
+/** Phones get the day view first. */
+const phoneQuery = "(max-width: 700px)";
+const subPhone = (f: () => void) => { const m = window.matchMedia(phoneQuery); m.addEventListener("change", f); return () => m.removeEventListener("change", f); };
+const isPhone = () => window.matchMedia(phoneQuery).matches;
+/** Minutes since midnight, refreshed each minute, for the "now" line. */
+const subMinute = (f: () => void) => { const id = window.setInterval(f, 60_000); return () => window.clearInterval(id); };
 
-const webShows: Record<EventKind, string> = {
-  public: "Everything: name, day, time, place and description, with a sign-up form. Each sign-up is a lead for sales.",
-  family: "Name, day, time, place and description. Families RSVP by replying to their text or email.",
-  resident: "Name, day, time and description only. Never the seats, the room or a meeting point.",
-};
-const first = (n = "") => n.split(" ")[0];
+/** Open the calendar on one event (and its Photos area), or on Plan. */
+export interface CalFocus { id?: string; date?: string; photos?: boolean; plan?: boolean; clash?: string }
+
 type View = "week" | "month" | "day";
-type Filter = "all" | "lantern" | "seats" | "open" | "conflicts";
+type Filter = "all" | "mine" | "attendance" | "lantern" | "seats" | "open" | "conflicts";
 
-export function CalendarBoard({ events: initial, weekStarts, todayIso, residents, readOnly = false, setup, brand, approver }: { events: CalEvent[]; weekStarts: string[]; todayIso: string; residents: string[]; readOnly?: boolean; setup?: NewEventSetup; brand: { name: string; domain: string; phone: string }; approver: string }) {
-  const [events, setEvents] = useState(initial);
-  const [view, setView] = useState<View>("week");
-  const [w, setW] = useState(0);
-  const [dayIso, setDayIso] = useState(todayIso);
+/** A move waiting for "tell them?" (and "this one or every week?" for a repeating event). */
+interface Move { e: CalEvent; to: string; scope: "one" | "all"; tell: boolean }
+
+export function CalendarBoard({ events: initial, weekStarts, todayIso, residents, staff, me, readOnly = false, setup, brand, kit, plan, focus, invite }: { invite?: { lantern: string[]; interestsOf: Record<string, string[]> }; events: CalEvent[]; weekStarts: string[]; todayIso: string; residents: string[]; staff: string[]; me: string; readOnly?: boolean; setup?: NewEventSetup; brand: { name: string; domain: string; phone: string }; kit?: PhotoKit; plan?: PlanHelp; focus?: CalFocus }) {
+  const focused = focus?.id ? initial.find((e) => e.id === focus.id && (!focus.date || e.date === focus.date)) : undefined;
+  const weekOf = (d: string) => Math.max(0, weekStarts.findIndex((ws) => d >= ws && d <= iso(addDays(fromIso(ws), 6))));
+  // The calendar with this browser's changes: events added on Post, edits from Post, moves and cancellations here.
+  const { events, update: keep, series, writer } = useEventBoard(initial);
+  const phone = useSyncExternalStore(subPhone, isPhone, () => false);
+  const now = useSyncExternalStore(subMinute, nowMinutes, () => -1);
+  const leaders = useLeaders();
+  const [chosen, setView] = useState<View | null>(null);
+  const view: View = chosen ?? (phone ? "day" : "week");
+  // The Ideas panel sits beside the calendar, so an idea can be dragged onto a day.
+  const [ideasOpen, setIdeasOpen] = useState(!!(focus?.plan && plan && !readOnly));
+  const [dragIdea, setDragIdea] = useState<{ prefill: EventPrefill; idea?: IdeaPrefill } | null>(null);
+  const [clashOf, setClashOf] = useState<CalEvent | null>(focus?.clash ? initial.find((e) => e.id === focus.clash && (!focus.date || e.date === focus.date) && !!e.clash) ?? null : null);
+  const [drag, setDrag] = useState<CalEvent | null>(null);
+  const [over, setOver] = useState<string | null>(null);
+  const [move, setMove] = useState<Move | null>(null);
+  const [w, setW] = useState(focused ? weekOf(focused.date) : 0);
+  const [dayIso, setDayIso] = useState(focused?.date ?? todayIso);
   const [filter, setFilter] = useState<Filter>("all");
-  const [open, setOpen] = useState<CalEvent | null>(null);
-  const [adding, setAdding] = useState<{ date: string; n: number } | null>(null);
-  const [toast, setToast] = useState("");
-
-  useEffect(() => {
-    if (!toast) return;
-    const id = window.setTimeout(() => setToast(""), 3600);
-    return () => window.clearTimeout(id);
-  }, [toast]);
+  const [open, setOpen] = useState<CalEvent | null>(focused ?? null);
+  const [photoFocus, setPhotoFocus] = useState(!!(focused && focus?.photos));
+  const [adding, setAdding] = useState<{ date: string; n: number; prefill?: EventPrefill; idea?: IdeaPrefill } | null>(null);
 
   const lastIso = iso(addDays(fromIso(weekStarts[weekStarts.length - 1]), 6));
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => iso(addDays(fromIso(weekStarts[w]), i))), [w, weekStarts]);
@@ -82,23 +71,49 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
     const startCell = addDays(m1, -m1.getUTCDay());
     return Array.from({ length: 35 }, (_, i) => iso(addDays(startCell, i)));
   }, [todayIso]);
-  const show = (e: CalEvent) => (filter === "lantern" ? e.lantern : filter === "seats" ? !!e.cap : filter === "open" ? e.kind !== "resident" : filter === "conflicts" ? !!e.clash : true);
+  const ended = (e: CalEvent) => e.date < todayIso || (e.date === todayIso && now >= 0 && (e.end ?? e.start + 60) <= now);
+  const needsAttendance = (e: CalEvent) => ended(e) && !e.came && !e.cancelled && e.date >= iso(addDays(fromIso(todayIso), -7)) && e.cat !== "movies" && e.cat !== "faith";
+  const show = (e: CalEvent) => (filter === "mine" ? leaderOf(e, leaders) === me : filter === "attendance" ? needsAttendance(e) : filter === "lantern" ? e.lantern : filter === "seats" ? !!e.cap : filter === "open" ? e.kind !== "resident" : filter === "conflicts" ? !!e.clash : true);
   const clashes = events.filter((e) => e.clash && e.date >= todayIso && !e.cancelled);
   const firstD = fromIso(days[0]), lastD = fromIso(days[6]), dd = fromIso(dayIso);
   const range = view === "week" ? `${monthName(firstD).slice(0, 3)} ${firstD.getUTCDate()} – ${monthName(lastD).slice(0, 3)} ${lastD.getUTCDate()}` : view === "day" ? `${dayName(dd)}, ${monthName(dd).slice(0, 3)} ${dd.getUTCDate()}` : monthName(fromIso(todayIso));
-  const update = (e: CalEvent) => { setEvents((xs) => xs.map((x) => (x.id === e.id && x.date === e.date ? e : x))); setOpen(e); };
+  const update = (e: CalEvent) => {
+    keep(e);
+    setOpen(e);
+  };
+  /** Every week of a repeating event, from this date on. */
+  const everyWeek = (e: CalEvent, patch: Partial<CalEvent>) => {
+    series(e, patch);
+    setOpen({ ...e, ...patch });
+  };
+  const bookedOf = (e: CalEvent) => e.booked?.length ?? e.taken ?? e.invites?.yes ?? 0;
+  const drop = (to: string) => {
+    if (dragIdea) { const x = dragIdea; setDragIdea(null); setOver(null); add(to, x); return; }
+    const e = drag;
+    setDrag(null);
+    setOver(null);
+    if (!e || to === e.date || readOnly) return;
+    setMove({ e, to, scope: "one", tell: true });
+  };
+  const doMove = (m: Move) => {
+    const shift = Math.round((fromIso(m.to).getTime() - fromIso(m.e.date).getTime()) / 864e5);
+    const n = bookedOf(m.e);
+    if (m.scope === "all") writer.series(m.e, { rule: everyDay(m.to) }, shift);
+    else writer.one(m.e, { date: m.to });
+    setMove(null);
+    say(`Moved to ${dayName(fromIso(m.to))}${m.scope === "all" ? ", every week" : ""}.${m.tell && n ? ` Told ${n} booked.` : ""}`);
+  };
+  // The Preview tab of "+ Add" works from the calendar on screen.
+  const pool = useMemo(() => (setup ? { pool: events.filter((e) => !e.cancelled).map((e) => calToPool(e)), masthead: `The ${brand.name} Weekly` } : undefined), [events, setup, brand.name]);
   const busy = useMemo(() => events.filter((e) => e.isNew).map((e) => ({ date: e.date, start: e.start, end: e.end ?? e.start + 60, room: e.room, title: e.title })), [events]);
-  const add = (date: string) => setAdding((a) => ({ date, n: (a?.n ?? 0) + 1 }));
+  const add = (date: string, extra: { prefill?: EventPrefill; idea?: IdeaPrefill } = {}) => setAdding((a) => ({ date, n: (a?.n ?? 0) + 1, ...extra }));
+  const tomorrow = iso(addDays(fromIso(todayIso), 1));
+  const tplPrefill = (t: Template): EventPrefill => ({ title: t.title, kind: t.kind, cat: t.cat, minutes: t.minutes, cap: t.cap, interests: t.interests, repeat: t.repeat, photos: t.kind === "resident" && !t.cap ? 0 : 6 });
+  const fromTemplate = (t: Template) => add(tomorrow, { prefill: tplPrefill(t) });
+  const openEvent = (e: CalEvent) => { setPhotoFocus(false); setOpen(e); };
 
+  // The form puts it on the calendar (every date, if it repeats); here the calendar goes to its week.
   const saved = (s: SavedEvent) => {
-    const dates = [s.date];
-    if (s.repeat) for (let d = addDays(fromIso(s.date), 7); iso(d) <= lastIso; d = addDays(d, 7)) dates.push(iso(d));
-    const base: Omit<CalEvent, "date"> = {
-      id: s.id, kind: s.kind, start: s.start, end: s.end, title: s.title, room: s.room, cat: s.cat, color: cats[s.cat].color, catLabel: cats[s.cat].label,
-      cap: s.cap, taken: s.cap ? 0 : undefined, booked: s.cap ? [] : undefined, lantern: s.lantern, rule: s.repeat ? `Every ${dayName(fromIso(s.date))}` : undefined,
-      desc: s.desc, isNew: true, idea: s.idea, approval: s.approval,
-    };
-    setEvents((xs) => [...xs, ...dates.map((date) => ({ ...base, date }))]);
     const i = weekStarts.findIndex((ws) => s.date >= ws && s.date <= iso(addDays(fromIso(ws), 6)));
     if (i >= 0) setW(i);
     setDayIso(s.date);
@@ -107,21 +122,45 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
   const pill = (e: CalEvent) => {
     const full = e.cap && (e.taken ?? 0) >= e.cap;
     const waiting = e.requests?.filter((r) => r.stage === 3 && !r.declined).length ?? 0;
+    const needPhotos = !readOnly && !!e.wanted && !e.photos?.length && e.date <= todayIso && !e.cancelled;
     return (
-      <button type="button" className={`ced-ev ${e.clash ? "conflict" : ""} ${e.isNew ? "new" : ""}`} style={{ borderLeftColor: e.color, opacity: e.cancelled ? 0.55 : undefined }} onClick={() => setOpen(e)}>
+      <button
+        type="button"
+        className={`ced-ev ${e.clash ? "conflict" : ""} ${e.isNew ? "new" : ""}${drag === e ? " dragging" : ""}`}
+        style={{ borderLeftColor: e.color, opacity: e.cancelled ? 0.55 : undefined }}
+        onClick={() => openEvent(e)}
+        draggable={!readOnly && !e.cancelled && e.date >= todayIso}
+        onDragStart={(ev) => { setDrag(e); ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", e.id); }}
+        onDragEnd={() => { setDrag(null); setOver(null); }}
+        title={!readOnly && e.date >= todayIso ? "Drag to another day to move it" : undefined}
+      >
         <span className="t">
           {fmtTime(e.start)}
           {e.rule ? <span title={e.rule}><XIcon name="repeat" /><span className="vh"> {e.rule}</span></span> : e.clash ? <Icon name="alert" /> : null}
+          {needPhotos && <span className="pc-want" title={`Photos wanted: ${e.wanted}`}><Icon name="image" /><span className="vh"> Photos wanted: {e.wanted}</span></span>}
         </span>
         {e.cancelled ? <s>{e.title}</s> : e.title}
+        {e.late && !e.cancelled ? <span className="pc-new">{e.late} min late</span> : null}
         {e.kind !== "resident" && <span className={`ced-kind ${e.kind}`}>{e.kind === "public" ? "Public" : "Family"}</span>}
         {e.idea && <span className="ced-kind idea">Your idea</span>}
-        {e.approval && <span className="pc-new">Waiting for {first(approver)}</span>}
+        {e.approval && <span className="pc-new">Approval needed</span>}
         {e.cancelled && <span className="pc-new">Cancelled</span>}
-        {e.cap ? <span className={`cap ${full ? "full" : ""}`}>{e.taken}/{e.cap}{full && e.waitlist ? ` · ${e.waitlist} waiting` : ""}</span> : null}
+        {!e.cancelled && <span className={`cap${full ? " full" : ""}${e.cap ? "" : " open"}`} title={seatInfo(e).text}>{seatInfo(e).short}</span>}
         {!readOnly && waiting > 0 && <span className="cap pt-ced-wait">{waiting} to approve</span>}
       </button>
     );
+  };
+
+  /** The events of a day, with a line where "now" falls (today only). */
+  const withNow = (list: CalEvent[], isToday: boolean) => {
+    const at = isToday && now >= 0 ? list.findIndex((e) => e.start > now) : -2;
+    const line = (
+      <li key="now" className="pc-now" aria-label={`Now, ${fmtTime(now)}`}><span>Now {fmtTime(now)}</span></li>
+    );
+    const items = list.map((e) => <li key={e.id + e.date} className={isToday && now >= 0 && (e.end ?? e.start + 60) <= now ? "past" : undefined}>{pill(e)}</li>);
+    if (at === -2) return items;
+    if (at === -1) return [...items, line];
+    return [...items.slice(0, at), line, ...items.slice(at)];
   };
 
   const step = (n: number) => {
@@ -158,10 +197,11 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
         </div>
         <div>
           <div className="sx-chips" role="group" aria-label="Show">
-            {([["all", "All"], ["lantern", "Lantern"], ["seats", "Limited seats"], ["open", "Family & public"], ["conflicts", "Room clashes"]] as const).map(([k, l]) => (
+            {([["all", "All"], ...(readOnly ? [] : [["mine", "Mine"], ["attendance", `Needs attendance${events.filter(needsAttendance).length ? ` · ${events.filter(needsAttendance).length}` : ""}`]]), ["lantern", "Lantern"], ["seats", "Limited seats"], ["open", "Family & public"], ["conflicts", "Room clashes"]] as [Filter, string][]).map(([k, l]) => (
               <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>
             ))}
           </div>
+          {plan && !readOnly && <button type="button" className="sx-btn" aria-pressed={ideasOpen} onClick={() => setIdeasOpen((o) => !o)}><Icon name="spark" /> Ideas</button>}
           {!readOnly && setup && (
             <button type="button" className="sx-btn sx-btn-primary" onClick={() => add(view === "day" ? dayIso : days.includes(todayIso) ? todayIso : days[1])}>
               <Icon name="plus" /> Add event
@@ -170,30 +210,39 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
         </div>
       </div>
 
-      {readOnly && <p className="sx-callout info pc-viewonly"><Icon name="eye" /> <span>View only. To add or change an event, ask the activities team.</span></p>}
+      {readOnly && <p className="sx-callout info pc-viewonly"><Icon name="eye" /> <span>View only</span></p>}
 
       {!readOnly && clashes.length > 0 && (
         <div className="sx-callout">
           <Icon name="alert" />
           <p>
-            <b>Room clash:</b> {clashes[0].title} and {clashes[0].clash} are both in {clashes[0].room} at {fmtTime(clashes[0].start)} on {dayName(fromIso(clashes[0].date))}.{" "}
-            <button type="button" className="sx-link pt-linkbtn" onClick={() => setOpen(clashes[0])}>Review</button>
+            <b>Room clash:</b> {clashes[0].title} and {clashes[0].clash}, {clashes[0].room}, {dayName(fromIso(clashes[0].date))} {fmtTime(clashes[0].start)}.{" "}
+            <button type="button" className="sx-link pt-linkbtn" onClick={() => setClashOf(clashes[0])}>Review both</button>
           </p>
         </div>
       )}
 
+      <div className={`pc-main${ideasOpen && plan && !readOnly ? " with-ideas" : ""}`}>
+      <div className="pc-views">
       {view === "week" && (
         <div className="ced">
           {days.map((d) => {
             const date = fromIso(d);
             const list = events.filter((e) => e.date === d && show(e)).sort((a, b) => a.start - b.start);
             return (
-              <section key={d} className={`ced-day ${d === todayIso ? "today" : ""}`} aria-label={`${dayName(date)}, ${monthName(date)} ${date.getUTCDate()}`}>
+              <section
+                key={d}
+                className={`ced-day ${d === todayIso ? "today" : ""}${over === d ? " drop" : ""}`}
+                aria-label={`${dayName(date)}, ${monthName(date)} ${date.getUTCDate()}`}
+                onDragOver={(ev) => { if ((drag || dragIdea) && d >= todayIso) { ev.preventDefault(); setOver(d); } }}
+                onDragLeave={() => setOver((o) => (o === d ? null : o))}
+                onDrop={(ev) => { ev.preventDefault(); if (d >= todayIso) drop(d); }}
+              >
                 <div className="ced-h">
                   <span>{dayName(date).slice(0, 3)} {date.getUTCDate()}</span>
                   <small>{d === todayIso ? "Today" : `${list.length} events`}</small>
                 </div>
-                <ul className="ced-list">{list.map((e) => <li key={e.id + e.date}>{pill(e)}</li>)}</ul>
+                <ul className="ced-list">{withNow(list, d === todayIso)}</ul>
                 {!readOnly && setup ? <button type="button" className="ced-add" onClick={() => add(d)}>+ Add</button> : <span />}
               </section>
             );
@@ -206,15 +255,20 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => <div key={d} className="pt-month-h" role="columnheader">{d}</div>)}
           {monthDays.map((d) => {
             const date = fromIso(d);
-            const list = events.filter((e) => e.date === d && show(e) && (e.kind !== "resident" || e.cap || e.idea || e.isNew || filter !== "all")).sort((a, b) => a.start - b.start);
-            const other = events.filter((e) => e.date === d && show(e)).length - list.length;
+            const all = events.filter((e) => e.date === d && show(e));
+            // Fifteen activities a day can't be read in a month: show the count, and only what's special (one-offs,
+            // family and public events, trips with seats, ideas).
+            const special = all.filter((e) => !e.rule || e.kind !== "resident" || e.cap || e.idea || e.isNew).sort((a, b) => a.start - b.start);
             const inMonth = date.getUTCMonth() === fromIso(todayIso).getUTCMonth();
             return (
-              <div key={d} role="gridcell" className={`pt-month-d${d === todayIso ? " today" : ""}${inMonth ? "" : " out"}`}>
+              <div key={d} role="gridcell" className={`pt-month-d${d === todayIso ? " today" : ""}${inMonth ? "" : " out"}${over === d ? " drop" : ""}`}
+                onDragOver={(ev) => { if ((drag || dragIdea) && d >= todayIso) { ev.preventDefault(); setOver(d); } }}
+                onDragLeave={() => setOver((o) => (o === d ? null : o))}
+                onDrop={(ev) => { ev.preventDefault(); if (d >= todayIso) drop(d); }}>
                 <span className="pt-month-n">{date.getUTCDate()}</span>
-                <ul>{list.slice(0, 3).map((e) => <li key={e.id + e.date}>{pill(e)}</li>)}</ul>
-                {(other > 0 || list.length > 3) && (
-                  <button type="button" className="sx-link pt-linkbtn pc-sub" onClick={() => { setDayIso(d); setView("day"); }}>+{other + Math.max(0, list.length - 3)} more</button>
+                <ul>{special.slice(0, 2).map((e) => <li key={e.id + e.date}>{pill(e)}</li>)}</ul>
+                {all.length > 0 && (
+                  <button type="button" className="sx-link pt-linkbtn pc-sub" onClick={() => { setDayIso(d); setView("day"); }}>{all.length} {all.length === 1 ? "activity" : "activities"}{special.length > 2 ? ` · ${special.length - 2} more special` : ""}</button>
                 )}
               </div>
             );
@@ -226,321 +280,166 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
         <section className="sx-card sx-card-body pc-day" aria-label={range}>
           {(() => {
             const list = events.filter((e) => e.date === dayIso && show(e)).sort((a, b) => a.start - b.start);
-            return list.length ? <ul className="pc-day-list">{list.map((e) => <li key={e.id + e.date}>{pill(e)}</li>)}</ul> : <p className="sx-empty">Nothing on this day{filter !== "all" ? " for this filter" : ""}.</p>;
+            return list.length ? <ul className="pc-day-list">{withNow(list, dayIso === todayIso)}</ul> : <p className="sx-empty">Nothing on this day{filter !== "all" ? " for this filter" : ""}.</p>;
           })()}
           {!readOnly && setup && <button type="button" className="ced-add" onClick={() => add(dayIso)}>+ Add an event on {dayName(dd)}</button>}
         </section>
       )}
 
-      <p className="sx-note">
-        <XIcon name="repeat" /> Repeats weekly · Seats show for staff only; the website never shows seats, waitlists or meeting points. Changes publish to the website calendar, the newsletter and the printed calendar.
-      </p>
+      </div>
+      {ideasOpen && plan && !readOnly && (
+        <aside className="pc-ideas" aria-label="Ideas">
+          <header><h2>Ideas</h2><small>Tap to add, or drag onto a day</small><button type="button" className="sx-x" aria-label="Close ideas" onClick={() => setIdeasOpen(false)}><Icon name="x" /></button></header>
+          <Plan plan={plan} onTemplate={fromTemplate} onIdea={(i) => add(tomorrow, { idea: i, prefill: {} })}
+            onDragTemplate={(t) => setDragIdea(t ? { prefill: tplPrefill(t) } : null)}
+            onDragIdea={(i) => setDragIdea(i ? { idea: i, prefill: {} } : null)} />
+        </aside>
+      )}
+      </div>
 
-      {open && <EventPanel key={open.id + open.date} e={open} residents={residents} todayIso={todayIso} readOnly={readOnly} brand={brand} onClose={() => setOpen(null)} onChange={update} onToast={setToast} />}
-      {adding && setup && (
-        <Drawer wide title="New event" sub="The same form as Post. Kinlight does the rest." onClose={() => setAdding(null)}>
-          <NewEvent key={adding.n} inDrawer setup={setup} prefill={{ date: adding.date >= todayIso ? adding.date : todayIso }} extraBusy={busy} onSaved={saved} onAnother={() => add(adding.date)} />
+      {(
+        <div className="pc-legend">
+          <span><XIcon name="repeat" /> Repeats weekly</span>
+          {!readOnly && <span><Icon name="image" /> Photos wanted</span>}
+          {!readOnly && view === "week" && <span className="pc-drag-hint">Drag an event to another day to move it</span>}
+          <Help label="What the website shows">
+            <p>Seats, waitlists and meeting points are for staff only; the website never shows them.</p>
+            <p>Changes here update the website calendar, the newsletter and the printed calendar.</p>
+          </Help>
+        </div>
+      )}
+
+      {open && <EventSheet key={open.id + open.date} e={open} residents={residents} staff={staff} me={me} todayIso={todayIso} readOnly={readOnly} brand={brand} kit={kit} photoFocus={photoFocus} onClose={() => setOpen(null)} onChange={update} onSeries={everyWeek} setup={setup} lantern={invite?.lantern} interestsOf={invite?.interestsOf} />}
+      {move && (
+        <Drawer title={`Move ${move.e.title}?`} sub={`${dayName(fromIso(move.e.date))} → ${dayName(fromIso(move.to))}, ${monthName(fromIso(move.to)).slice(0, 3)} ${fromIso(move.to).getUTCDate()} · ${fmtTime(move.e.start)}`} onClose={() => setMove(null)}>
+          <div className="sx-form pc-move">
+            {move.e.rule && (
+              <div className="sx-seg" role="group" aria-label="Which dates">
+                <button type="button" aria-pressed={move.scope === "one"} onClick={() => setMove({ ...move, scope: "one" })}>This one</button>
+                <button type="button" aria-pressed={move.scope === "all"} onClick={() => setMove({ ...move, scope: "all" })}>Every week from now</button>
+              </div>
+            )}
+            <label className="pc-tell">
+              <input type="checkbox" checked={move.tell} onChange={(x) => setMove({ ...move, tell: x.target.checked })} />
+              <span>{bookedOf(move.e) ? <>Tell the <b>{bookedOf(move.e)}</b> people booked, and their families?</> : "Nobody is booked yet. The website and newsletter update."}</span>
+            </label>
+            {move.tell && bookedOf(move.e) > 0 && <q className="pc-msg">{move.e.title} has moved to {dayName(fromIso(move.to))} at {fmtTime(move.e.start)}{move.scope === "all" ? ", every week from now" : ""}. Same time, same place.</q>}
+            <div className="pt-act">
+              <button type="button" className="sx-btn sx-btn-primary" onClick={() => doMove(move)}><Icon name={move.tell && bookedOf(move.e) ? "send" : "check"} /> {move.tell && bookedOf(move.e) ? "Move and tell them" : "Move it"}</button>
+              <button type="button" className="sx-btn" onClick={() => setMove(null)}>Keep it where it was</button>
+            </div>
+          </div>
         </Drawer>
       )}
-      {toast && <div className="sx-toast" role="status"><Icon name="check" /> {toast}</div>}
+      {clashOf && (() => {
+        const other = events.find((x) => x.date === clashOf.date && x.room === clashOf.room && x.start === clashOf.start && x.title === clashOf.clash);
+        return <ClashReview a={clashOf} b={other} rooms={setup?.rooms ?? []} bookedOf={bookedOf} onClose={() => setClashOf(null)}
+          onFix={(x, patch, line) => {
+            keep({ ...x, ...patch, clash: undefined });
+            if (other) keep({ ...other, clash: undefined });
+            setClashOf(null);
+            say(line);
+          }} />;
+      })()}
+      {adding && setup && (
+        <Drawer wide title="New event" onClose={() => setAdding(null)}>
+          <NewEvent key={adding.n} inDrawer setup={setup} preview={pool} idea={adding.idea} prefill={{ ...adding.prefill, date: adding.date >= todayIso ? adding.date : todayIso }} extraBusy={busy} onSaved={saved} onAnother={() => add(adding.date)} />
+        </Drawer>
+      )}
     </div>
   );
 }
 
-/* ------------------------------------------------------------ a QR check-in sign, drawn from the event id */
+/* ------------------------------------------------------------ Plan: ideas, templates and what worked */
 
-function QrBlock({ seed }: { seed: string }) {
-  const n = 21;
-  const finder = (x: number, y: number) => {
-    const inBox = (ox: number, oy: number) => x >= ox && x < ox + 7 && y >= oy && y < oy + 7;
-    for (const [ox, oy] of [[0, 0], [n - 7, 0], [0, n - 7]] as const) {
-      if (inBox(ox, oy)) { const dx = x - ox, dy = y - oy; return dx === 0 || dy === 0 || dx === 6 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4) ? 1 : 0; }
-      if (x >= ox - 1 && x <= ox + 7 && y >= oy - 1 && y <= oy + 7) return 0;
-    }
-    return -1;
-  };
-  const cells: [number, number][] = [];
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-    const f = finder(x, y);
-    if (f === 1 || (f === -1 && hash(`${seed}:${x}:${y}`) % 2 === 0)) cells.push([x, y]);
-  }
+function Plan({ plan, onTemplate, onIdea, onDragTemplate, onDragIdea }: { plan: PlanHelp; onTemplate: (t: Template) => void; onIdea: (i: IdeaPrefill) => void; onDragTemplate: (t: Template | null) => void; onDragIdea: (i: IdeaPrefill | null) => void }) {
+  const trend = (t: number) => <small className={t > 0 ? "up" : t < 0 ? "down" : ""}>{t > 0 ? `▲ ${t}` : t < 0 ? `▼ ${-t}` : "–"}</small>;
   return (
-    <svg className="pc-qr" viewBox={`-1 -1 ${n + 2} ${n + 2}`} role="img" aria-label="QR code">
-      {cells.map(([x, y]) => <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" />)}
-    </svg>
+    <div className="pc-plan">
+      <section className="sx-card">
+        <header className="sx-card-head"><div><h2>Templates</h2></div></header>
+        <ul className="po-tpls">
+          {plan.templates.map((t) => (
+            <li key={t.k}>
+              <button type="button" onClick={() => onTemplate(t)} draggable onDragStart={(ev) => { ev.dataTransfer.effectAllowed = "copy"; ev.dataTransfer.setData("text/plain", t.title); onDragTemplate(t); }} onDragEnd={() => onDragTemplate(null)}>
+                <b>{t.title}</b>
+                <small>{t.worked}</small>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="sx-card">
+        <header className="sx-card-head"><div><h2>Residents’ ideas</h2></div></header>
+        {plan.ideas.length ? (
+          <ul className="po-tpls">
+            {plan.ideas.map((i) => (
+              <li key={i.id}>
+                <button type="button" onClick={() => onIdea(i)} draggable onDragStart={(ev) => { ev.dataTransfer.effectAllowed = "copy"; ev.dataTransfer.setData("text/plain", i.text); onDragIdea(i); }} onDragEnd={() => onDragIdea(null)}>
+                  <b>“{i.text}”</b>
+                  <small>{i.who ?? "No name"} · {i.votes} vote{i.votes === 1 ? "" : "s"}</small>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="sx-card-body sx-empty">No new ideas this week.</p>}
+      </section>
+      <section className="sx-card">
+        <header className="sx-card-head">
+          <div><h2>This month</h2></div>
+          <Help label="How attendance is counted" align="end">
+            <p>Average attendance per session over the last four weeks, from QR check-ins and attendance taken by staff.</p>
+            <p>▲▼ against the month before. More in Reports.</p>
+          </Help>
+        </header>
+        <div className="sx-card-body po-worked">
+          <h3 className="po-aside-h">Most attended</h3>
+          <ol>{plan.most.map((m) => <li key={m.title}><span>{m.title}</span><b>{m.avg}</b>{trend(m.trend)}</li>)}</ol>
+          <h3 className="po-aside-h">Least attended</h3>
+          <ol>{plan.least.map((m) => <li key={m.title}><span>{m.title}</span><b>{m.avg}</b>{trend(m.trend)}</li>)}</ol>
+        </div>
+      </section>
+    </div>
   );
 }
 
-/* ------------------------------------------------------------ one event, with everything about it */
+/* ------------------------------------------------------------ a room clash: both events side by side */
 
-function EventPanel({ e, residents, todayIso, readOnly, brand, onClose, onChange, onToast }: { e: CalEvent; residents: string[]; todayIso: string; readOnly: boolean; brand: { name: string; domain: string; phone: string }; onClose: () => void; onChange: (e: CalEvent) => void; onToast: (t: string) => void }) {
-  const { site } = useStaffCommunity();
-  const d = fromIso(e.date);
-  const [who, setWho] = useState(residents.find((r) => !e.booked?.some((b) => b.name === r)) ?? residents[0]);
-  const [taking, setTaking] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [edit, setEdit] = useState({ time: `${String(Math.floor(e.start / 60)).padStart(2, "0")}:${String(e.start % 60).padStart(2, "0")}`, room: e.room, what: "move" as "move" | "cancel", note: "" });
-  const [told, setTold] = useState<string | null>(null);
-  const past = e.date < todayIso;
-  const isToday = e.date === todayIso;
-  const full = e.cap !== undefined && (e.taken ?? 0) >= e.cap;
-  const left = e.cap ? Math.max(0, e.cap - (e.taken ?? 0)) : undefined;
-  const reqs = e.requests ?? [];
-  const setReq = (id: string, patch: Partial<ReqRow>) => onChange({ ...e, requests: reqs.map((r) => (r.id === id ? { ...r, ...patch } : r)) });
-  const bookedN = e.booked?.length ?? e.taken ?? 0;
-  const families = Math.round(bookedN * 1.3);
-
-  const book = () => {
-    if (!who) return;
-    if (full) onChange({ ...e, waiting: [...(e.waiting ?? []), who], waitlist: (e.waitlist ?? 0) + 1 });
-    else onChange({ ...e, booked: [{ name: who, via: "Signed up at the desk" }, ...(e.booked ?? [])], taken: (e.taken ?? 0) + 1 });
-    onToast(full ? `${who} is on the waitlist and gets a text if a seat opens` : `${who} is booked. A confirmation goes by text, and a reminder on the day.`);
-  };
-  const approve = (r: ReqRow) => {
-    if (full) {
-      onChange({ ...e, requests: reqs.map((x) => (x.id === r.id ? { ...x, waitlisted: true } : x)), waiting: [...(e.waiting ?? []), r.resident], waitlist: (e.waitlist ?? 0) + 1 });
-      onToast(`${first(r.resident)} is on the waitlist. ${first(r.from)} is told by text, and it confirms automatically if a seat opens.`);
-      return;
-    }
-    const next = { ...e, requests: reqs.map((x) => (x.id === r.id ? { ...x, stage: 4 as const } : x)) };
-    if (r.kind === "seat" && e.cap !== undefined) Object.assign(next, { taken: (e.taken ?? 0) + 1, booked: [{ name: r.resident, via: "Family asked, resident said yes" }, ...(e.booked ?? [])] });
-    onChange(next);
-    onToast(`Approved. ${first(r.from)} is told by text.`);
-  };
-  const saveEdit = () => {
-    if (edit.what === "cancel") {
-      onChange({ ...e, cancelled: true });
-      setTold(`Cancelled. Kinlight told the ${bookedN} people booked and their ${families} families by text, and took it off the website, the newsletter and the printed calendar.`);
-    } else {
-      const [h, m] = edit.time.split(":").map(Number);
-      const start = (h || 0) * 60 + (m || 0);
-      const dur = (e.end ?? e.start + 60) - e.start;
-      onChange({ ...e, start, end: start + dur, room: edit.room });
-      setTold(`Changed to ${fmtTime(start)}${edit.room !== e.room ? ` in ${edit.room}` : ""}. Kinlight told the ${bookedN} people booked and their ${families} families by text, and updated the website and the printed calendar.`);
-    }
-    setEditing(false);
-  };
-  const viaCount = (e.booked ?? []).reduce<Record<string, number>>((m, b) => { const k = b.via.startsWith("Invited by interest") ? "Invited by interest" : b.via; m[k] = (m[k] ?? 0) + 1; return m; }, {});
-
+function ClashReview({ a, b, rooms, bookedOf, onClose, onFix }: {
+  a: CalEvent; b?: CalEvent; rooms: string[]; bookedOf: (e: CalEvent) => number; onClose: () => void;
+  onFix: (e: CalEvent, patch: Partial<CalEvent>, line: string) => void;
+}) {
+  const hh = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const d = fromIso(a.date);
+  const side = (e: CalEvent) => <ClashSide key={e.id} e={e} rooms={rooms.filter((r) => r !== e.room && r !== "All floors")} booked={bookedOf(e)} hh={hh} onFix={onFix} />;
   return (
-    <Drawer
-      wide
-      title={e.title}
-      sub={`${dayName(d)}, ${monthName(d)} ${d.getUTCDate()} · ${fmtRange(e.start, e.end)} · ${e.room}`}
-      onClose={onClose}
-      foot={
-        <>
-          {!readOnly && !e.cancelled && <a className="sx-btn" href="#pc-edit" onClick={(ev) => { ev.preventDefault(); setEditing(true); setTold(null); window.setTimeout(() => document.getElementById("pc-edit")?.scrollIntoView({ behavior: "smooth", block: "center" }), 30); }}><Icon name="edit" /> Change or cancel</a>}
-          <a className="sx-btn sx-btn-primary" href={site("/calendar")} target="_blank" rel="noopener"><Icon name="globe" /> See it on the website</a>
-        </>
-      }
-    >
-      <p className="pt-ev-meta">
-        <Badge tone={e.kind === "public" ? "accent" : e.kind === "family" ? "info" : "good"}>{eventKindLabel[e.kind]}</Badge>
-        <span><span className="sx-dot" style={{ background: e.color }} /> {e.catLabel}{e.lantern ? " · Lantern" : ""}</span>
-        <span>{e.rule ?? "One-off"}</span>
-        {e.leader && <span>Led by {e.leader}</span>}
-        {e.idea && <Badge tone="warn">Your idea · suggested by {e.idea}</Badge>}
-        {e.approval && <Badge tone="warn">Waiting for approval</Badge>}
-        {e.cancelled && <Badge tone="bad">Cancelled</Badge>}
-      </p>
-      {told && <div className={`pc-told${e.cancelled ? " cancel" : ""}`} role="status"><b>{e.cancelled ? "Cancelled" : "Changed"}</b><span>{told}</span></div>}
-
-      <section className="pt-ev-sec">
-        <h3>Details</h3>
-        <p className="sx-note" style={{ margin: 0 }}><b>The website shows:</b> {webShows[e.kind]}</p>
-        {e.desc && <p>{e.desc}</p>}
-        {e.clash && <div className="sx-callout"><Icon name="alert" /><p>Also in {e.room} at {fmtTime(e.start)}: <b>{e.clash}</b>. Move one, or confirm they share the room.</p></div>}
-      </section>
-
-      {e.cap !== undefined && (
-        <section className="pt-ev-sec">
-          <h3>Seats <span className="sx-hint">staff only</span></h3>
-          <p className="pt-seats"><b>{e.taken ?? 0}</b> of {e.cap} booked · {left ? `${left} left` : <Badge tone="warn">Full</Badge>}{e.waitlist ? ` · ${e.waitlist} on the waitlist` : ""}</p>
-        </section>
-      )}
-
-      {!readOnly && reqs.length > 0 && (
-        <section className="pt-ev-sec">
-          <h3>Requests in progress</h3>
-          <ul className="pt-reqs">
-            {reqs.map((r) => {
-              const rf = first(r.resident);
-              const rep = r.rep ? first(r.rep.name) : "";
-              const steps = ["Family asked", r.lantern ? (r.askedRep ? `${rep} said yes` : "Asked in person") : `${rf} said yes`, r.waitlisted ? "Waitlist" : r.declined ? "Declined" : "You approve", "Family told"];
-              const stage = r.waitlisted ? 4 : r.stage;
-              return (
-                <li key={r.id}>
-                  <p><b>{r.from}</b> <span className="sx-hint">{r.relation} of {r.resident}</span> · {r.kind === "rsvp" ? `${r.party} ${r.party === 1 ? "person" : "people"}` : `a seat for ${rf}`}{r.lantern && <> · <Badge tone="info">Lantern</Badge></>}</p>
-                  <ol className="al-steps" aria-label="Progress">
-                    {steps.map((s, i) => <li key={s + i} className={i + 1 < stage || (i + 1 === stage && stage === 4) ? "done" : i + 1 === stage ? "now" : ""}>{s}</li>)}
-                  </ol>
-                  {r.stage === 2 && !r.lantern && (
-                    <p className="sx-hint">Waiting for {rf} to answer the text. <button type="button" className="sx-link pt-linkbtn" onClick={() => setReq(r.id, { stage: 3 })}>{rf} said yes in person</button></p>
-                  )}
-                  {r.stage === 2 && r.lantern && !r.askedRep && (
-                    <>
-                      <p className="sx-hint">{rf} lives in Lantern, so no text goes to {rf}. Ask in person{r.rep ? `, or ask ${r.rep.name} (${r.rep.relation.toLowerCase()}), who decides for ${rf}` : ""}.</p>
-                      <div className="pt-act">
-                        <button type="button" className="sx-btn sx-btn-sm" onClick={() => setReq(r.id, { stage: 3 })}><Icon name="check" /> {rf} said yes in person</button>
-                        {r.rep && <button type="button" className="sx-btn sx-btn-sm" onClick={() => { setReq(r.id, { askedRep: true }); onToast(`Text sent to ${r.rep!.name}. Their yes comes back here.`); }}><Icon name="sms" /> Ask {rep}</button>}
-                      </div>
-                    </>
-                  )}
-                  {r.stage === 2 && r.lantern && r.askedRep && (
-                    <p className="sx-hint">Asked {r.rep?.name} by text. <button type="button" className="sx-link pt-linkbtn" onClick={() => setReq(r.id, { stage: 3 })}>{rep} said yes</button></p>
-                  )}
-                  {r.stage === 3 && !r.declined && !r.waitlisted && (
-                    full && r.kind === "seat" ? (
-                      <>
-                        <p className="sx-hint"><b>{e.title} is full.</b> Approving would overbook it. Add {rf} to the waitlist: it confirms automatically if a seat opens, and {first(r.from)} is told either way.</p>
-                        <div className="pt-act"><button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => approve(r)}><Icon name="plus" /> Add to waitlist</button></div>
-                      </>
-                    ) : (
-                      <div className="pt-act">
-                        <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => approve(r)}><Icon name="check" /> Approve</button>
-                        <button type="button" className="sx-btn sx-btn-sm" onClick={() => setReq(r.id, { stage: 4, declined: true })}>Decline</button>
-                      </div>
-                    )
-                  )}
-                  {r.waitlisted && <p className="sx-hint">On the waitlist. Confirms automatically if a seat opens; {first(r.from)} was told.</p>}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {!readOnly && (e.booked || e.cap !== undefined) && (
-        <section className="pt-ev-sec">
-          <h3>Who’s booked ({e.booked?.length ?? 0})</h3>
-          {Object.keys(viaCount).length > 0 && <p className="sx-hint">{Object.entries(viaCount).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(" · ")}</p>}
-          <ul className="pt-booked">
-            {(e.booked ?? []).map((b, i) => <li key={b.name + i}><span>{b.name}</span><small>{b.via}</small></li>)}
-          </ul>
-          {!past && !e.cancelled && (
-            <div className="pt-desk">
-              <label>
-                <span className="sx-lbl">Book a resident who signed up in person</span>
-                <select value={who} onChange={(ev) => setWho(ev.target.value)}>
-                  {residents.map((r) => <option key={r}>{r}</option>)}
-                </select>
-              </label>
-              <button type="button" className="sx-btn sx-btn-sm" onClick={book}><Icon name="plus" /> {full ? "Add to waitlist" : "Book"}</button>
-            </div>
-          )}
-        </section>
-      )}
-
-      {!readOnly && e.waiting && e.waiting.length > 0 && (
-        <section className="pt-ev-sec">
-          <h3>Waitlist ({e.waiting.length})</h3>
-          <p className="sx-hint">If a seat opens, the next person gets a text, in this order.</p>
-          <ol className="pt-booked">{e.waiting.map((n, i) => <li key={n + i}><span>{i + 1}. {n}</span><small>{i === 0 ? "Next to be texted" : "Waiting"}</small></li>)}</ol>
-        </section>
-      )}
-
-      {!readOnly && (
-        <section className="pt-ev-sec">
-          <h3>Personal invites</h3>
-          {e.lantern ? (
-            <p>Lantern residents aren’t texted: the care team invites them in person.</p>
-          ) : e.invites ? (
-            <div className="pc-invite">
-              <p><b>Invited {e.invites.invited} who like {e.invites.interests.join(" and ").toLowerCase()} · {e.invites.yes} said yes</b></p>
-              <q>{e.invites.text}</q>
-              <span className="sx-hint">{e.invites.sentAt}. Each YES books them, after a confirmation.</span>
-            </div>
-          ) : (
-            <p className="sx-hint">No personal invites for this one: it doesn’t match residents’ interests, or it’s open to everyone.</p>
-          )}
-        </section>
-      )}
-
-      {!readOnly && (past || isToday) && (
-        <section className="pt-ev-sec">
-          <h3>Attendance</h3>
-          {e.came ? (
-            <>
-              <p><b>{e.came.n}</b> of {e.came.of} came</p>
-              <div className="pc-split">
-                <div><b>{e.came.qr}</b><span>{e.lantern ? "QR: not used in Lantern" : "Checked in by QR code"}</span></div>
-                <div><b>{e.came.staff}</b><span>{e.came.how === "tap" ? `Tapped in by ${first(e.came.by)}` : `From a photo of the paper sheet, by ${first(e.came.by)}`}</span></div>
-                <div><b>{e.came.of - e.came.n}</b><span>Booked but didn’t come</span></div>
-              </div>
-            </>
-          ) : taking ? (
-            <TakeAttendance activities={[{ id: e.id, title: e.title, when: fmtTime(e.start), place: e.room, pool: residents.slice(0, 18), expected: e.taken ?? 12 }]} />
-          ) : (
-            <button type="button" className="sx-btn sx-btn-sm" onClick={() => setTaking(true)}><Icon name="users" /> Take attendance</button>
-          )}
-        </section>
-      )}
-
-      {!readOnly && (past || isToday) && (
-        <section className="pt-ev-sec">
-          <h3>Photos from this event</h3>
-          {e.photos?.length ? (
-            <div className="pc-photos">{e.photos.map((src) => <span key={src}><Image src={src} alt="" fill sizes="100px" /></span>)}</div>
-          ) : <p className="sx-hint">No photos yet.</p>}
-          <p><Link className="sx-btn sx-btn-sm" href={`/staff/post?type=photos&event=${encodeURIComponent(e.id)}`}><Icon name="image" /> Add photos</Link></p>
-        </section>
-      )}
-
-      {!readOnly && !e.cancelled && (
-        <section className="pt-ev-sec">
-          <h3>Print</h3>
-          <div className="pc-prints">
-            <div className="pc-print">
-              <div className="pv-flyer">
-                <div className="pv-flyer-top">{brand.name}</div>
-                <span />
-                <div className="pv-flyer-t">
-                  <b>{e.title.replace(/^Bus Trip: /, "")}</b>
-                  <span>{e.rule ?? `${dayName(d)}, ${monthName(d)} ${d.getUTCDate()}`} · {fmtTime(e.start)}</span>
-                  <small>{e.kind === "public" ? `Everyone welcome · ${brand.domain}` : e.cap ? "Sign up at the front desk" : e.room}</small>
-                </div>
-                <div className="pv-flyer-foot">Questions? {brand.phone}</div>
-              </div>
-              <button type="button" className="sx-btn sx-btn-sm" onClick={() => onToast(`Large-print flyer for “${e.title}” sent to the front desk printer`)}><Icon name="printer" /> Print the flyer</button>
-            </div>
-            <div className="pc-print">
-              <div className="pc-qr-sign" aria-label={`QR check-in sign for ${e.title}`}>
-                <b>{e.title}</b>
-                <strong>Scan to check in</strong>
-                <QrBlock seed={e.id} />
-                <small>{e.lantern ? "Staff check residents in" : "Use your phone’s camera. No app, no login."}</small>
-              </div>
-              <button type="button" className="sx-btn sx-btn-sm" onClick={() => onToast(`QR check-in sign for “${e.title}” sent to the front desk printer`)}><Icon name="printer" /> Print the QR sign</button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {!readOnly && editing && (
-        <section className="pt-ev-sec" id="pc-edit">
-          <h3>Change or cancel</h3>
-          <div className="pc-edit sx-form">
-            <div className="sx-seg" role="group" aria-label="Change or cancel">
-              <button type="button" aria-pressed={edit.what === "move"} onClick={() => setEdit({ ...edit, what: "move" })}>Change it</button>
-              <button type="button" aria-pressed={edit.what === "cancel"} onClick={() => setEdit({ ...edit, what: "cancel" })}>Cancel it</button>
-            </div>
-            {edit.what === "move" ? (
-              <div className="sx-row">
-                <label>Starts<input type="time" value={edit.time} step={300} onChange={(ev) => setEdit({ ...edit, time: ev.target.value })} /></label>
-                <label>Room<input value={edit.room} onChange={(ev) => setEdit({ ...edit, room: ev.target.value })} /></label>
-              </div>
-            ) : (
-              <p className="sx-hint">It comes off the website, the newsletter and the printed calendar.</p>
-            )}
-            <p className="sx-hint">{bookedN ? `Kinlight tells the ${bookedN} people booked and their families by text, automatically.` : "Nobody is booked yet, so there’s nobody to tell."}{e.rule ? " This changes this date only." : ""}</p>
-            <div className="pt-act">
-              <button type="button" className={`sx-btn sx-btn-sm ${edit.what === "cancel" ? "sx-btn-terra" : "sx-btn-primary"}`} onClick={saveEdit}><Icon name="check" /> {edit.what === "cancel" ? "Cancel the event" : "Save the change"}</button>
-              <button type="button" className="sx-btn sx-btn-sm" onClick={() => setEditing(false)}>Keep it as it is</button>
-            </div>
-          </div>
-        </section>
-      )}
+    <Drawer wide title="Room clash" sub={`${a.room} · ${dayName(d)}, ${monthName(d).slice(0, 3)} ${d.getUTCDate()} · ${fmtTime(a.start)}`} onClose={onClose}>
+      <p className="sx-hint">Two events are booked in the same room at the same time. Move one, or give it another room; whoever’s booked is told.</p>
+      <div className="pc-clash">{side(a)}{b && side(b)}</div>
     </Drawer>
+  );
+}
+
+function ClashSide({ e, rooms, booked, hh, onFix }: { e: CalEvent; rooms: string[]; booked: number; hh: (m: number) => string; onFix: (e: CalEvent, patch: Partial<CalEvent>, line: string) => void }) {
+  const [room, setRoom] = useState(rooms[0] ?? "");
+  const [time, setTime] = useState(hh(e.end ?? e.start + 60));
+  const tell = booked ? ` Told the ${booked} booked.` : "";
+  return (
+    <section className="sx-card sx-card-body pc-clash-side">
+      <h3>{e.title}</h3>
+      <p className="sx-hint">{fmtTime(e.start)}–{fmtTime(e.end ?? e.start + 60)} · {e.room} · {booked ? `${booked} booked` : "nobody booked yet"}{e.rule ? ` · ${e.rule}` : ""}</p>
+      <div className="sx-form pc-clash-f">
+        <label>Change room
+          <select value={room} onChange={(x) => setRoom(x.target.value)}>{rooms.map((r) => <option key={r}>{r}</option>)}</select>
+        </label>
+        <button type="button" className="sx-btn sx-btn-sm sx-btn-primary" disabled={!room} onClick={() => onFix(e, { room }, `${e.title} is now in ${room}.${tell}`)}><Icon name="check" /> Change room</button>
+      </div>
+      <div className="sx-form pc-clash-f">
+        <label>Move to
+          <input type="time" step={300} value={time} onChange={(x) => setTime(x.target.value)} />
+        </label>
+        <button type="button" className="sx-btn sx-btn-sm" onClick={() => { const [h, m] = time.split(":").map(Number); const st = (h || 0) * 60 + (m || 0); const dur = (e.end ?? e.start + 60) - e.start; onFix(e, { start: st, end: st + dur }, `${e.title} moved to ${fmtTime(st)}.${tell}`); }}><Icon name="clock" /> Move</button>
+      </div>
+    </section>
   );
 }

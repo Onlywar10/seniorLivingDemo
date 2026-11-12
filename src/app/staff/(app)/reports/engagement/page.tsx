@@ -3,6 +3,7 @@ import Link from "next/link";
 import "@/app/staff/reports.css";
 import { Icon } from "@/components/Icon";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
+import { Help } from "@/components/staff/portal/Help";
 import { NotYours } from "@/components/staff/portal/NotYours";
 import { mayOpen } from "@/components/staff/portal/ReportsNav";
 import { ComingLater, NotThisReport } from "@/components/staff/portal/ReportsParts";
@@ -44,27 +45,29 @@ export default async function EngagementPage() {
 
   return (
     <>
-      <PageHead title="Engagement" sub={`Who came to what at ${s.brand.name} in the last four weeks, how they checked in, and the residents staff visited one to one. Counted from attendance, QR check-ins and visit notes; nobody fills in a spreadsheet.`} />
+      <PageHead title="Engagement" sub={`${s.brand.name}, the last four weeks`}>
+        <Help label="How engagement is counted" align="end"><p>Counted from attendance, QR check-ins and the visit notes staff log in People. Nobody fills in a spreadsheet.</p><p>A resident is reached if they came to an activity or had a 1:1 visit.</p></Help>
+      </PageHead>
       <ReportTabs access={access} />
 
       <div className="sx-kpis">
-        <Kpi label="Residents reached" value={<>{e.reached}<small> / {e.residents}</small></>} delta={pctChange(e.reached, e.reachedPrev)} note={`${reachedPct}% came to an activity or had a visit`} />
-        <Kpi label="Activity visits" value={fmt(e.visits)} delta={pctChange(e.visits, e.visitsPrev)} note={`${e.sessions} activities with attendance taken`} />
+        <Kpi label="Residents reached" value={<>{e.reached}<small> / {e.residents}</small></>} delta={pctChange(e.reached, e.reachedPrev)} note={`${reachedPct}% of residents`} />
+        <Kpi label="Activity visits" value={fmt(e.visits)} delta={pctChange(e.visits, e.visitsPrev)} note={`${e.sessions} activities`} />
         <Kpi label="Checked in by QR" value={`${e.checkIns.qrPct}%`} note={`${fmt(e.checkIns.qr)} by QR, ${fmt(e.checkIns.staff)} by staff`} />
-        <Kpi label="1:1 visits" value={e.oneToOne.length} note={`with ${e.oneToOneResidents} residents who don’t join groups`} />
+        <Kpi label="1:1 visits" value={e.oneToOne.length} note={`with ${e.oneToOneResidents} residents`} />
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="Most attended" sub={`Average a session, ${m.month}. Use it to plan next month.`}>
+        <Card title="Most attended" sub={`Average a session, ${m.month}`}>
           <Attendance rows={e.worked.most} max={max} />
         </Card>
-        <Card title="Least attended" sub="Activities that ran at least twice. Worth a new time, a new room, or a rest.">
+        <Card title="Least attended" sub="Ran at least twice" action={<Help label="About least attended" align="end"><p>Worth a new time, a new room, or a rest.</p></Help>}>
           <Attendance rows={e.worked.least} max={max} />
         </Card>
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="QR versus staff check-ins" sub="A resident with a phone scans the sign at the activity; staff tap everyone else in.">
+        <Card title="QR versus staff check-ins" action={<Help label="About check-ins" align="end"><p>A resident with a phone scans the sign at the activity; staff tap everyone else in.</p><p>Each scan counts under the phone number we already know: no login. Lantern residents are always checked in by staff.</p></Help>}>
           <div className="rp-split" role="img" aria-label={`${e.checkIns.qrPct}% by QR, ${100 - e.checkIns.qrPct}% by staff`}>
             <i style={{ width: `${e.checkIns.qrPct}%` }} />
           </div>
@@ -72,13 +75,12 @@ export default async function EngagementPage() {
             <li><i style={{ background: "var(--green-deep)" }} />By QR · {fmt(e.checkIns.qr)}</li>
             <li><i style={{ background: "#cdbfa5" }} />By staff · {fmt(e.checkIns.staff)}</li>
           </ul>
-          <p className="sx-hint rp-p">Lantern residents are always checked in by staff. Each QR scan counts under the phone number we already know: no login.</p>
         </Card>
-        <Card title="1:1 visits" sub="Logged by staff in People. Private: never sent to families.">
+        <Card title="1:1 visits" sub="Logged in People" action={<span className="rp-acts"><Badge tone="neutral">Staff only</Badge><Help label="About 1:1 visits" align="end"><p>Private: never sent to families.</p></Help></span>}>
           <ul className="sx-list rp-visits">
             {e.oneToOne.slice(0, 6).map((v, i) => (
               <li key={v.resident + i}>
-                <b>{v.resident}</b>{v.lantern && <> <Badge tone="info">Lantern</Badge></>}
+                <b>{v.resident}</b>{v.lantern && <span className="sx-hint"> · Lantern</span>}
                 <small>{v.date} · {v.by} · {v.note}</small>
               </li>
             ))}
@@ -87,19 +89,19 @@ export default async function EngagementPage() {
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="We haven’t seen lately" sub="No activities in two weeks. Staff send a warm invite or drop by; families are never told automatically." action={<Link href="/staff/people" className="sx-btn sx-btn-sm">People <Icon name="arrow" /></Link>}>
+        <Card title="We haven’t seen lately" sub="No activities in two weeks" action={<span className="rp-acts"><Help label="About we haven’t seen lately" align="end"><p>Staff send a warm invite or drop by. Families are never told automatically: someone who stops coming out may be unwell or grieving, and a person should notice.</p></Help><Link href="/staff/people" className="sx-btn sx-btn-sm">People <Icon name="arrow" /></Link></span>}>
           {e.unseen.length ? (
             <ul className="sx-list">
               {e.unseen.map((u) => (
                 <li key={u.name}>
                   <b>{u.name}</b> <span className="sx-hint">· {u.days} days · last came to {u.lastActivity}</span>
-                  <small className="rp-block">{u.visits ? `${u.visits} ${u.visits === 1 ? "visit" : "visits"} logged` : "No visit logged yet"}{u.next ? ` · ${u.next.title}, ${u.next.when}, matches their interests` : ""}</small>
+                  <small className="rp-block">{u.visits ? `${u.visits} ${u.visits === 1 ? "visit" : "visits"} logged` : "No visit logged yet"}{u.next ? ` · next match: ${u.next.title}, ${u.next.when}` : ""}</small>
                 </li>
               ))}
             </ul>
           ) : <p className="sx-hint">Everyone has been out in the last two weeks.</p>}
         </Card>
-        <Card title="Personal invites" sub="Texts to residents when an event matches their interests">
+        <Card title="Personal invites" sub="Last 30 days" action={<Help label="About personal invites" align="end"><p>A text to a resident when an event matches their interests: “Bridge Club tonight at 7. Want a seat? Reply YES.”</p></Help>}>
           <div className="rp-big">
             <span><b>{fmt(e.invites.sent)}</b><small>invites sent</small></span>
             <span><b>{fmt(e.invites.yes)}</b><small>said yes</small></span>
@@ -109,7 +111,8 @@ export default async function EngagementPage() {
       </div>
 
       <ComingLater when="Coming in Beta" title="Engagement scores and alerts">
-        A score for each resident and for {s.brand.name}, and an alert when someone shows signs of pulling back. For now, “we haven’t seen lately” lists residents for staff to check on in person.
+        <p>A score for each resident and for {s.brand.name}, and an alert when someone shows signs of pulling back.</p>
+        <p>For now, “we haven’t seen lately” lists residents for staff to check on in person.</p>
       </ComingLater>
     </>
   );

@@ -10,7 +10,14 @@ import { useT } from "@/i18n/client";
 import type { T } from "@/i18n/translate";
 import { Icon } from "@/components/Icon";
 
-export interface MenuDay { date: string; label: string; long: string; menus: DayMenu[] }
+/** A restaurant on one day, the way its kitchen plans: the cycle's meals, the board's slots, how to book. */
+export interface VenueShape {
+  line?: string;
+  meals?: { label: string; time: string; items: { course: string; name: string; desc?: string; tags?: Tag[] }[] }[];
+  slots?: { label: string; period?: string; name: string; desc?: string; tags?: Tag[] }[];
+  book?: string;
+}
+export interface MenuDay { date: string; label: string; long: string; menus: DayMenu[]; shape: Record<string, VenueShape> }
 
 const TAGS: Tag[] = ["GF", "VG", "DF"];
 function Tags({ tags, t }: { tags?: Tag[]; t: T }) {
@@ -37,7 +44,7 @@ function DishRow({ d, t }: { d: Dish; t: T }) {
 }
 
 /** Today’s menus for all three restaurants, with a day picker and dietary filter. */
-export function MenuBoard({ days, extra, todayIso, nowMin }: { days: MenuDay[]; extra?: MenuDay; todayIso: string; nowMin: number }) {
+export function MenuBoard({ days, extra, todayIso, nowMin, phone }: { days: MenuDay[]; extra?: MenuDay; todayIso: string; nowMin: number; phone: string }) {
   const { t } = useT();
   const c = useCommunity();
   const { venues } = c;
@@ -111,6 +118,7 @@ export function MenuBoard({ days, extra, todayIso, nowMin }: { days: MenuDay[]; 
           }
           const label = m.venue === copy.bar ? "At the bar today" : holiday ? "Holiday menu" : "Chef’s special";
           const ph = copy.venuePhotos[m.venue];
+          const shape = day.shape?.[m.venue];
           return (
             <article key={m.venue} className={`din-venue din-venue-${m.venue}${holiday ? " is-holiday" : ""}`} aria-labelledby={`din-v-${m.venue}`}>
               <div className="din-venue-side">
@@ -126,35 +134,89 @@ export function MenuBoard({ days, extra, todayIso, nowMin }: { days: MenuDay[]; 
               </div>
 
               <div className="din-venue-menu">
-                <div className="din-feature">
-                  <div className="din-special">
-                    <p className="din-special-label"><Icon name="star" /> {t(label)}</p>
-                    <p className="din-special-name">{t(m.special.name)} <Tags tags={m.special.tags} t={t} /></p>
-                    {m.special.desc && <p className="din-special-desc">{t(m.special.desc)}</p>}
-                  </div>
-                  {!holiday && (
+                {holiday ? (
+                  <>
+                    <div className="din-feature">
+                      <div className="din-special">
+                        <p className="din-special-label"><Icon name="star" /> {t(label)}</p>
+                        <p className="din-special-name">{t(m.special.name)} <Tags tags={m.special.tags} t={t} /></p>
+                        {m.special.desc && <p className="din-special-desc">{t(m.special.desc)}</p>}
+                      </div>
+                    </div>
+                    <div className="din-sections">
+                      {m.sections.map((s) => {
+                        const items = s.items.filter(fits);
+                        return (
+                          <section key={s.title} className="din-section">
+                            <h4>{t(s.title)}{s.note && <span className="din-note">{t(s.note)}</span>}</h4>
+                            {items.length ? <ul>{items.map((d) => <DishRow key={d.name} d={d} t={t} />)}</ul> : <p className="din-none">{t("Ask your server — the kitchen is happy to adapt many dishes.")}</p>}
+                          </section>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : shape?.meals?.length ? (
+                  <>
+                    {shape.line && <p className="din-cycle">{t(shape.line)}</p>}
+                    <div className="din-meals">
+                      {shape.meals.map((ml) => (
+                        <section key={ml.label} className="din-section">
+                          <h4>{t(ml.label)}<span className="din-note">{t(ml.time)}</span></h4>
+                          <ul>
+                            {ml.items.filter(fits).map((d) => (
+                              <li key={d.course + d.name} className="din-dish">
+                                <div className="din-dish-top"><span className="din-dish-name"><small className="din-course">{t(d.course)}</small>{t(d.name)}</span><Tags tags={d.tags} t={t} /></div>
+                                {d.desc && <p className="din-dish-desc">{t(d.desc)}</p>}
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      ))}
+                    </div>
+                  </>
+                ) : shape?.slots?.length ? (
+                  <ul className="din-slots">
+                    {shape.slots.filter(fits).map((x) => (
+                      <li key={x.label}>
+                        <small>{t(x.label)}{x.period ? ` · ${t(x.period)}` : ""}</small>
+                        <b>{t(x.name)} <Tags tags={x.tags} t={t} /></b>
+                        {x.desc && <span>{t(x.desc)}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="din-feature">
+                    <div className="din-special">
+                      <p className="din-special-label"><Icon name="star" /> {t(label)}</p>
+                      <p className="din-special-name">{t(m.special.name)} <Tags tags={m.special.tags} t={t} /></p>
+                      {m.special.desc && <p className="din-special-desc">{t(m.special.desc)}</p>}
+                    </div>
                     <div className="din-soup">
                       <p className="din-special-label"><Icon name="coffee" />{t(" Soup of the day")}</p>
                       <p className="din-soup-name">{t(m.soup.name)} <Tags tags={m.soup.tags} t={t} /></p>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                <div className="din-sections">
-                  {m.sections.map((s) => {
-                    const items = s.items.filter(fits);
-                    return (
-                      <section key={s.title} className="din-section">
-                        <h4>{t(s.title)}{s.note && <span className="din-note">{t(s.note)}</span>}</h4>
-                        {items.length ? (
-                          <ul>{items.map((d) => <DishRow key={d.name} d={d} t={t} />)}</ul>
-                        ) : (
-                          <p className="din-none">{t("Ask your server — the kitchen is happy to adapt many dishes.")}</p>
-                        )}
-                      </section>
-                    );
-                  })}
-                </div>
+                {!holiday && (
+                  <details className="din-always">
+                    <summary>{t("Always available: ask your server")} <small>{t(`${m.sections.reduce((n, x) => n + x.items.length, 0)} dishes, every day`)}</small></summary>
+                    <div className="din-sections">
+                      {m.sections.map((s) => {
+                        const items = s.items.filter(fits);
+                        return (
+                          <section key={s.title} className="din-section">
+                            <h4>{t(s.title)}{s.note && <span className="din-note">{t(s.note)}</span>}</h4>
+                            {items.length ? <ul>{items.map((d) => <DishRow key={d.name} d={d} t={t} />)}</ul> : <p className="din-none">{t("Ask your server — the kitchen is happy to adapt many dishes.")}</p>}
+                          </section>
+                        );
+                      })}
+                    </div>
+                  </details>
+                )}
+                {!holiday && shape?.book && (
+                  <p className="din-book"><Icon name="sms" /> <span>{t(shape.book === "Walk in any time" ? `Walk in any time. Bringing a guest? Text ${v.name} at` : `${shape.book}: text ${v.name} at`)} <a href={`sms:${phone.replace(/\D/g, "")}`}>{phone}</a>{shape.book === "Walk in any time" ? "." : t(", or reply to your Sunday email.")}</span></p>
+                )}
               </div>
             </article>
           );
@@ -162,7 +224,7 @@ export function MenuBoard({ days, extra, todayIso, nowMin }: { days: MenuDay[]; 
       </div>
 
       <div className="din-foot">
-        <p className="din-ask"><Icon name="info" />{t(" Ask your server about our daily special — and let us know about any allergies. The kitchen is happy to help.")}</p>
+        <p className="din-ask"><Icon name="info" />{t(" Something else from the always-available menu is there every day: just ask your server. Let us know about any allergies; the kitchen is happy to help.")}</p>
         <ul className="din-legend" aria-label={t("Dietary key")}>
           {TAGS.map((tag) => (
             <li key={tag}><span className={`tag tag-${tag}`} aria-hidden="true">{tag}</span> {t(tagLabels[tag])}</li>

@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function NewsPage() {
   const { t } = await getT();
   const c = await getCommunity();
-  const { site, publishedStories, authorOf } = c;
+  const { publishedStories, authorOf } = c;
   const all = publishedStories(iso(today()));
   const [lead, ...rest] = all;
   const cards = rest.map((s) => ({ slug: s.slug, title: s.title, dek: s.dek, kind: s.kind, date: s.date, dateLabel: storyDate(s.date), photo: s.photo, alt: s.alt, author: authorOf(s) }));
@@ -48,9 +48,9 @@ export default async function NewsPage() {
                 <em>{t(infoCopy[c.slug].newsPlace)}</em>
               </h1>
             </div>
-            <a className="link-arrow" href={site.facebook} target="_blank" rel="noreferrer">
-              <Icon name="facebook" /> {t("More photos on Facebook")}
-            </a>
+            <Link className="link-arrow" href="/photos">
+              <Icon name="image" /> {t("All photo albums")}
+            </Link>
           </div>
           <Link href={`/news/${lead.slug}`} className="nw-lead card">
             <div className="nw-lead-photo">

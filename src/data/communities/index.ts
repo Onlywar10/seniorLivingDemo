@@ -1,6 +1,6 @@
 // Every Wrenhaven community's content, by URL slug. Pages read the current one through
 // getCommunity() (Server Components, src/lib/community-server.ts) or useCommunity() (Client Components, src/lib/community.tsx).
-import { toPublic, type Award, type CalEvent, type DayMenu, type FaqGroup, type FaqItem, type Living, type LivingKey, type Plan, type Space, type Steward, type Story, type TeamMember, type Testimonial, type Venue } from "@/data/shared";
+import { toPublic, type Award, type CalEvent, type DayMenu, type Dish, type FaqGroup, type FaqItem, type Living, type LivingKey, type MenuPlan, type Plan, type Space, type Steward, type Story, type TeamMember, type Testimonial, type Venue } from "@/data/shared";
 import * as abSite from "./alder-bend/site";
 import * as abCalendar from "./alder-bend/calendar";
 import * as abMenus from "./alder-bend/menus";
@@ -13,6 +13,8 @@ import * as kpInfo from "./kestrel-point/info";
 import * as kpArticles from "./kestrel-point/articles";
 
 import { communitySlugs, isCommunity, type CommunitySlug } from "@/lib/sites";
+import { iso } from "@/lib/clock";
+import { demoTrip } from "./demoTrip";
 
 export { communitySlugs, isCommunity, type CommunitySlug };
 
@@ -60,6 +62,10 @@ export interface Community {
   venueOrder: string[];
   menuFor(venue: string, date: Date): DayMenu;
   allMenus: (date: Date) => DayMenu[];
+  /** How the kitchen plans each restaurant (staff Menus). Communities without one get a plan read from their menus. */
+  menuPlan?: MenuPlan;
+  /** A restaurant's daily items for a date (chef's special, the coffee bar's board), keyed by the plan's slot keys. */
+  slotsFor?: (venue: string, date: Date) => Record<string, Dish>;
   // ----- info.ts
   phones: { label: string; number: string; note: string }[];
   emails: { label: string; address: string }[];
@@ -80,6 +86,18 @@ export interface Community {
 
 type Calendar = { eventsOn: Community["eventsOn"]; eventsBetween: Community["eventsBetween"] };
 
+/** The sample off-campus trip (see ./demoTrip), added on its day. */
+const withTrip = (cal: Calendar): Calendar => {
+  const add = (date: Date, events: CalEvent[]) => {
+    const trip = demoTrip();
+    return iso(date) === trip.date && !events.some((e) => e.id === trip.id) ? [...events, trip].sort((a, b) => a.start - b.start) : events;
+  };
+  return {
+    eventsOn: (d, t) => add(d, cal.eventsOn(d, t)),
+    eventsBetween: (s, n, t) => cal.eventsBetween(s, n, t).map((x) => ({ date: x.date, events: add(x.date, x.events) })),
+  };
+};
+
 /** The public site reads redacted events; the staff system reads them in full. */
 const split = (cal: Calendar) => ({
   eventsOn: (d: Date, t?: string) => cal.eventsOn(d, t).map(toPublic),
@@ -88,8 +106,10 @@ const split = (cal: Calendar) => ({
   staffEventsBetween: cal.eventsBetween,
 });
 
-const bundle = (slug: CommunitySlug, site: object, calendar: Calendar, menus: object, info: object, articles: object) =>
-  ({ slug, ...site, ...calendar, ...split(calendar), ...menus, ...info, ...articles }) as unknown;
+const bundle = (slug: CommunitySlug, site: object, calendar0: Calendar, menus: object, info: object, articles: object) => {
+  const calendar = withTrip({ eventsOn: calendar0.eventsOn, eventsBetween: calendar0.eventsBetween });
+  return { slug, ...site, ...calendar0, ...calendar, ...split(calendar), ...menus, ...info, ...articles } as unknown;
+};
 
 export const communities: Record<CommunitySlug, Community> = {
   "alder-bend": bundle("alder-bend", abSite, abCalendar, abMenus, abInfo, abArticles) as Community,

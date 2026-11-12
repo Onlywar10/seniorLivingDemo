@@ -229,9 +229,9 @@ const named = (text: string, p: Person | null) =>
 const lunchOnUs = () => /lunch .*on us/i.test(faq("How do I schedule a tour"));
 
 /** How to sign up for resident activities and outings: never on the website. */
-const SIGNUP_EN = "Residents: sign up with the activities team. Families: ask for a seat from your weekly message.";
-const SIGNUP_ES = "Residentes: inscríbanse con el equipo de actividades. Familias: pidan un lugar desde su mensaje semanal.";
-const SIGNUP_ZH = "住户请向活动团队报名；家属请通过每周消息中的链接为家人预留位置。";
+const SIGNUP_EN = "Residents: reply YES to the invite text, or sign up with the activities team. Families: reply to your text to ask for a seat; we check with your resident first.";
+const SIGNUP_ES = "Residentes: respondan SÍ al mensaje de invitación o inscríbanse con el equipo de actividades. Familias: respondan a su mensaje de texto para pedir un lugar; primero lo consultamos con su residente.";
+const SIGNUP_ZH = "住户：回复邀请短信“YES”，或向活动团队报名。家属：回复短信即可为家人申请座位；我们会先征得住户同意。";
 
 const evLine = (e: CalEvent, l: Lang, withDay = false): Line => {
   const room = l === "zh" && e.room ? tr(e.room) : e.room;

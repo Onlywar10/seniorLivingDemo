@@ -9,7 +9,7 @@ import { Icon } from "./Icon";
 
 const cols = [
   { title: "Living Options", links: [["Independent Living", "/living/independent-living"], ["Assisted Living Services", "/living/assisted-living"], ["Lantern Memory Care", "/living/lantern-memory-care"], ["Floor Plans & Pricing", "/floor-plans"], ["Care Assessment", "/care-assessment"], ["Cost Comparison", "/cost-comparison"]] },
-  { title: "Life Here", links: [["Activity Calendar", "/calendar"], ["Dining & Menus", "/dining"], ["Events & Adventures", "/events-adventures"], ["Fitness", "/fitness"], ["Amazing Spaces", "/spaces"], ["Stay Connected", "/stay-connected"]] },
+  { title: "Life Here", links: [["Activity Calendar", "/calendar"], ["Dining & Menus", "/dining"], ["Events & Adventures", "/events-adventures"], ["Fitness", "/fitness"], ["Amazing Spaces", "/spaces"], ["Clubs & Groups", "/clubs"], ["Photo Albums", "/photos"], ["For Families", "/stay-connected"]] },
   { title: "About", links: [["Our Team", "/team"], ["Purpose & Values", "/about"], ["All Are Welcome", "/all-are-welcome"], ["News", "/news"], ["Senior Living Guides", "/guides"], ["FAQs", "/faq"], ["Careers", "/careers"], ["Info & Directions", "/contact"]] },
 ];
 

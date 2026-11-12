@@ -4,7 +4,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Icon } from "../../Icon";
 
-export function Drawer({ title, sub, onClose, children, foot, wide = false }: { title: string; sub?: ReactNode; onClose: () => void; children: ReactNode; foot?: ReactNode; wide?: boolean }) {
+export function Drawer({ title, sub, onClose, children, foot, wide = false, action }: { title: string; sub?: ReactNode; onClose: () => void; children: ReactNode; foot?: ReactNode; wide?: boolean; /** A button beside the close button (Edit). */ action?: ReactNode }) {
   useEffect(() => {
     const k = (ev: KeyboardEvent) => ev.key === "Escape" && onClose();
     window.addEventListener("keydown", k);
@@ -18,9 +18,12 @@ export function Drawer({ title, sub, onClose, children, foot, wide = false }: { 
             <h2>{title}</h2>
             {sub && <p>{sub}</p>}
           </div>
-          <button type="button" className="sx-x" onClick={onClose} aria-label="Close" autoFocus>
-            <Icon name="x" />
-          </button>
+          <span className="sx-drawer-a">
+            {action}
+            <button type="button" className="sx-x" onClick={onClose} aria-label="Close" autoFocus>
+              <Icon name="x" />
+            </button>
+          </span>
         </div>
         <div className="sx-drawer-b">{children}</div>
         {foot && <div className="sx-drawer-f">{foot}</div>}

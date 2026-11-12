@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/app/staff/reports.css";
 import { Icon } from "@/components/Icon";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
+import { Help } from "@/components/staff/portal/Help";
 import { NotYours } from "@/components/staff/portal/NotYours";
 import { mayOpen } from "@/components/staff/portal/ReportsNav";
 import { NotThisReport } from "@/components/staff/portal/ReportsParts";
@@ -15,7 +16,7 @@ import { getStaffCommunity } from "@/data/staff/server";
 
 export const metadata: Metadata = { title: "Families" };
 
-const concernTone: Record<ConcernStatus, "good" | "warn" | "bad"> = { Open: "bad", "In progress": "warn", Resolved: "good" };
+const concernTone: Record<ConcernStatus, "good" | "warn" | "bad" | "neutral"> = { Open: "bad", "In progress": "warn", Resolved: "good", "Passed to the care team": "neutral" };
 
 export default async function FamiliesPage() {
   const { access } = await sectionAccess("reports");
@@ -30,18 +31,18 @@ export default async function FamiliesPage() {
 
   return (
     <>
-      <PageHead title="Families" sub={`How ${s.brand.name}’s families heard from the community in ${m.month}: who was reached, who opened and replied, the thank-yous and concerns, and which replies the AI handled on its own.`} />
+      <PageHead title="Families" sub={`${s.brand.name}, ${m.month}`} />
       <ReportTabs access={access} />
 
       <div className="sx-kpis">
         <Kpi label="Families reached" value={<>{f.reached.now}<small> / {f.families}</small></>} delta={f.reached.prev ? pctChange(f.reached.now, f.reached.prev) : undefined} note="opened at least one message this month" />
         <Kpi label="Opening" value={`${f.openRate.now}%`} delta={f.openRate.prev ? f.openRate.now - f.openRate.prev : undefined} deltaSuffix=" pts" note="of messages sent were opened" />
         <Kpi label="Replies" value={fmt(f.sends.replied)} note={`to ${f.sends.count} sends, ${fmt(f.sends.sent)} messages`} />
-        <Kpi label="Concerns" value={<>{f.concernsResolved}<small> of {f.concernsOpened} resolved</small></>} note={`${f.thankYous.length} thank-yous passed on`} />
+        <Kpi label="Concerns resolved" value={<>{f.concernsResolved}<small> / {f.concernsOwned}</small></>} note={`${f.concernsPassed} passed to the care team`} />
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="Family concerns" sub="Opened this month and who owns each one. A concern stays open until its owner marks it resolved.">
+        <Card title="Family concerns" sub={`${f.concernsOpened} this month`} action={<Help label="About family concerns" align="end"><p>Each concern has an owner and stays open until they mark it resolved. Concerns are never answered by the AI.</p><p>Care concerns are passed to the care team straight away and recorded in the community’s own care system. Kinlight keeps only who it went to and when, so they aren’t counted as open or resolved here.</p></Help>}>
           <ul className="sx-list rp-concerns">
             {f.concerns.map((c) => (
               <li key={c.id}>
@@ -49,13 +50,19 @@ export default async function FamiliesPage() {
                   <b>{c.topic}</b>
                   <Badge tone={concernTone[c.status]}>{c.status === "Resolved" && <Icon name="check" />} {c.status}</Badge>
                 </span>
-                <span className="rp-quote">“{c.text}”</span>
-                <small className="rp-block">{c.from}, {c.relation.toLowerCase()} of {c.resident} · owner {c.ownerName} · {c.ago}</small>
+                {c.care ? (
+                  <small className="rp-block">{c.from}, {c.relation.toLowerCase()} of {c.resident} · to {c.care.team} · {c.care.at}</small>
+                ) : (
+                  <>
+                    <span className="rp-quote">“{c.text}”</span>
+                    <small className="rp-block">{c.from}, {c.relation.toLowerCase()} of {c.resident} · {c.ownerName} · {c.ago}</small>
+                  </>
+                )}
               </li>
             ))}
           </ul>
         </Card>
-        <Card title="Thank-yous" sub="Kinlight passes each one to the person it’s about">
+        <Card title="Thank-yous" sub={`${f.thankYous.length} this month`} action={<Help label="About thank-yous" align="end"><p>Kinlight passes each one to the person it’s about.</p></Help>}>
           <ul className="sx-list">
             {f.thankYous.map((t) => (
               <li key={t.id}>
@@ -67,7 +74,7 @@ export default async function FamiliesPage() {
         </Card>
       </div>
 
-      <Card title="Replies the AI handled, and the ones it passed to staff" sub="Clear answers to Kinlight’s own questions (yes, no, a number, which event) become actions after a confirmation. Open questions, concerns, and anything about care, health or billing go to a person.">
+      <Card title="Replies the AI handled" sub={m.month} action={<Help label="What the AI may handle" align="end"><p>Clear answers to Kinlight’s own questions (yes, no, a number, which event) become actions after a confirmation.</p><p>Open questions, concerns, and anything about care, health or billing go to a person. STOP is always handled without the AI.</p></Help>}>
         <div className="rp-split" role="img" aria-label={`${aiPct}% handled by the AI, ${100 - aiPct}% passed to staff`}>
           <i style={{ width: `${aiPct}%` }} />
         </div>
@@ -89,7 +96,6 @@ export default async function FamiliesPage() {
             </tbody>
           </table>
         </div>
-        <p className="sx-hint rp-p">STOP is always handled without the AI.</p>
       </Card>
     </>
   );

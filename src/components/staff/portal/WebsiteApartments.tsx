@@ -1,58 +1,75 @@
 "use client";
 
 // Website → Apartments and prices: every floor plan with what's included, its care level, starting price,
-// availability and photos. Marking one open alerts its waitlist. Price and availability changes go to the
-// administrator before they show on the website; the administrator's own changes go live straight away.
+// availability and photos. Marking one open texts its waitlist, and the row says so. Price and availability changes
+// go to the administrator before they show on the website; the administrator's own changes go live straight away.
+// The price change waiting for approval is the same request as Today's "Pricing change" card: deciding it here or
+// there clears both (useDecisions in ../store).
 // Keeps the class names the /phones clips use (.pt-plans li, its first button "Mark one open", .pt-plan-f).
 // Changes stay in this browser.
 import { useState } from "react";
 import { money } from "@/data/shared";
 import type { PlanInfo } from "@/data/staff/website";
 import { Icon } from "../../Icon";
+import { say, useDecide, useDecisions } from "../store";
 import { Badge } from "../ui";
 
 type Change = { kind: "open" | "price"; from: number };
-export interface PendingPrice { code: string; name: string; from: number; to: number; by: string; ago: string }
+export interface PendingPrice { id: string; code: string; name: string; from: number; to: number; by: string; byYou: boolean; ago: string; why: string }
 
-export function WebsiteApartments({ plans, approver, isApprover, pending: seeded }: { plans: PlanInfo[]; approver: string; isApprover: boolean; pending: PendingPrice | null }) {
+const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
+const lower = (t: string) => t.replace(/^(Today|Yesterday)/, (x) => x.toLowerCase());
+
+export function WebsiteApartments({ plans, approver, isApprover, pending }: { plans: PlanInfo[]; approver: string; isApprover: boolean; pending: PendingPrice | null }) {
   const [rows, setRows] = useState(plans);
   const [edit, setEdit] = useState<{ code: string; kind: Change["kind"] } | null>(null);
   const [price, setPrice] = useState("");
   const [waiting, setWaiting] = useState<Record<string, Change>>({});
-  const [asked, setAsked] = useState<PendingPrice | null>(seeded);
-  const [toast, setToast] = useState("");
+  const [done, setDone] = useState<Record<string, string>>({});
+  const decisions = useDecisions();
+  const decide = useDecide();
   const appr = approver.split(" ")[0];
 
-  const say = (t: string) => { setToast(t); window.setTimeout(() => setToast(""), 5000); };
-  const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
+  const decision = pending ? decisions[pending.id] : undefined;
+  const asked = pending && !decision ? pending : null;
+  // An approved price change shows on its plan, wherever it was approved.
+  const shown = rows.map((p) => (pending && decision === "approved" && p.code === pending.code && p.from === pending.from ? { ...p, from: pending.to } : p));
 
-  const apply = (p: PlanInfo, c: Change) => {
-    setRows((xs) => xs.map((x) => (x.code === p.code ? { ...x, from: c.from, available: c.kind === "open" ? x.available + 1 : x.available } : x)));
-  };
+  const setRow = (code: string, f: (p: PlanInfo) => PlanInfo) => setRows((xs) => xs.map((x) => (x.code === code ? f(x) : x)));
+  const note = (code: string, t: string | null) => setDone((d) => { const n = { ...d }; if (t) n[code] = t; else delete n[code]; return n; });
 
   const submit = (p: PlanInfo) => {
     if (!edit) return;
     const from = Number(price.replace(/\D/g, "")) || p.from;
     const c: Change = { kind: edit.kind, from };
+    const before = p;
     setEdit(null);
     if (isApprover) {
-      apply(p, c);
-      if (c.kind === "open") say(p.waiting ? `${p.code} is open from ${money(from)} a month and on the website. The ${people(p.waiting)} on its waitlist got a text and an email.` : `${p.code} is open from ${money(from)} a month and on the website.`);
-      else say(`${p.code} now starts at ${money(from)} a month on the website.`);
+      setRow(p.code, (x) => ({ ...x, from, available: c.kind === "open" ? x.available + 1 : x.available }));
+      if (c.kind === "open") {
+        // Texts can't be unsent, so there's no Undo here.
+        const t = p.waiting ? `Marked open · ${people(p.waiting)} on the waitlist ${p.waiting === 1 ? "was" : "were"} texted` : "Marked open · nobody is on its waitlist yet";
+        note(p.code, `${t}. It shows on the website from ${money(from)} a month.`);
+        say(`${p.code}: ${t}`);
+      } else {
+        note(p.code, `New price live on the website: from ${money(from)} a month.`);
+        say(`${p.code} now starts at ${money(from)} a month on the website`, () => { setRow(p.code, () => before); note(p.code, null); });
+      }
     } else {
       setWaiting((w) => ({ ...w, [p.code]: c }));
+      const undo = () => setWaiting((w) => { const n = { ...w }; delete n[p.code]; return n; });
       say(c.kind === "open"
-        ? `Sent to ${appr} to approve. When ${appr} does, ${p.code} shows as open from ${money(from)}${p.waiting ? ` and the ${people(p.waiting)} on its waitlist get a text and an email` : ""}.`
-        : `Sent to ${appr} to approve. The website keeps showing ${money(p.from)} until then.`);
+        ? `Sent to ${appr} to approve. Once approved, ${p.code} shows as open${p.waiting ? ` and the ${people(p.waiting)} on its waitlist get a text` : ""}.`
+        : `Sent to ${appr} to approve. The website shows ${money(p.from)} until then.`, undo);
     }
   };
 
-  const decide = (ok: boolean) => {
+  const decideNow = (ok: boolean) => {
     if (!asked) return;
-    const p = rows.find((x) => x.code === asked.code);
-    if (ok && p) apply(p, { kind: "price", from: asked.to });
-    say(ok ? `Approved. ${asked.code} now starts at ${money(asked.to)} a month on the website. ${asked.by.split(" ")[0]} was told.` : `Declined. ${asked.code} stays at ${money(asked.from)}. ${asked.by.split(" ")[0]} was told.`);
-    setAsked(null);
+    const who = asked.by.split(" ")[0];
+    decide(asked.id, ok ? "approved" : "declined");
+    const undo = () => decide(asked.id, null);
+    say(ok ? `Approved. ${asked.code} now starts at ${money(asked.to)} a month on the website. ${who} was told.` : `Declined. ${asked.code} stays at ${money(asked.from)}. ${who} was told.`, undo);
   };
 
   return (
@@ -61,18 +78,22 @@ export function WebsiteApartments({ plans, approver, isApprover, pending: seeded
         <div className={`ws-approve${isApprover ? "" : " mine"}`}>
           <p>
             <Icon name="clock" /> <span><b>{asked.code} · {asked.name}:</b> starting price from {money(asked.from)} to {money(asked.to)} a month.{" "}
-              {isApprover ? `${asked.by} asked ${asked.ago.toLowerCase()}.` : `You asked ${asked.ago.toLowerCase()}. Waiting for ${appr}; the website shows the old price until then.`}</span>
+              {isApprover
+                ? `${asked.by} asked ${lower(asked.ago)}.`
+                : `${asked.byYou ? "You" : asked.by} asked ${lower(asked.ago)}. Waiting for ${appr}; the website shows the old price until then.`}</span>
           </p>
+          {asked.why && <small className="ws-approve-why">{asked.why}</small>}
           {isApprover && (
             <div className="pt-act">
-              <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => decide(true)}><Icon name="check" /> Approve</button>
-              <button type="button" className="sx-btn sx-btn-sm" onClick={() => decide(false)}>Decline</button>
+              <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => decideNow(true)}><Icon name="check" /> Approve</button>
+              <button type="button" className="sx-btn sx-btn-sm" onClick={() => decideNow(false)}>Decline</button>
+              <small className="ws-approve-also">Also on Today. Deciding here clears it there.</small>
             </div>
           )}
         </div>
       )}
       <ul className="pt-plans ws-plans">
-        {rows.map((p) => {
+        {shown.map((p) => {
           const w = waiting[p.code];
           const editing = edit?.code === p.code;
           return (
@@ -95,7 +116,13 @@ export function WebsiteApartments({ plans, approver, isApprover, pending: seeded
                     <Icon name="check" /> {edit.kind === "open" ? (isApprover ? "Mark open" : "Mark open: ask to approve") : isApprover ? "Save price" : "Ask to approve"}
                   </button>
                   <button type="button" className="sx-btn sx-btn-sm" onClick={() => setEdit(null)}>Cancel</button>
-                  {!isApprover && <small className="ws-plan-why">Prices and availability go to {appr} before they show.</small>}
+                  <small className="ws-plan-why">
+                    {!isApprover
+                      ? `Approval needed: ${appr}`
+                      : edit.kind === "open"
+                        ? p.waiting ? `Shows on the website straight away and texts the ${people(p.waiting)} on its waitlist.` : "Shows on the website straight away. Nobody is on its waitlist yet."
+                        : "Shows on the website straight away."}
+                  </small>
                 </form>
               ) : w ? (
                 <span className="ws-plan-wait"><Badge tone="warn"><Icon name="clock" /> Waiting for {appr}</Badge> <small>{w.kind === "open" ? `Open from ${money(w.from)}` : `New price ${money(w.from)}`}</small></span>
@@ -105,6 +132,7 @@ export function WebsiteApartments({ plans, approver, isApprover, pending: seeded
                   <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => { setEdit({ code: p.code, kind: "price" }); setPrice(String(p.from)); }}>Change price</button>
                 </span>
               )}
+              {done[p.code] && <p className="ws-done ws-plan-done" role="status"><Icon name="check" /> {done[p.code]}</p>}
               <details className="ws-plan-d">
                 <summary>What’s included and photos</summary>
                 <ul>{p.features.map((f) => <li key={f}>{f}</li>)}</ul>
@@ -114,7 +142,6 @@ export function WebsiteApartments({ plans, approver, isApprover, pending: seeded
           );
         })}
       </ul>
-      {toast && <div className="sx-toast" role="status"><Icon name="check" /> {toast}</div>}
     </>
   );
 }

@@ -124,7 +124,7 @@ type Dated = Seed & { replaces?: string; retitle?: { from: string; to: string; d
 const dated: Record<string, Dated[]> = {
   // Late October 2026
   "2026-10-27": [{ start: t(15), end: t(16), title: "Happy Hour: Wes on Guitar", room: rooms.perch, cat: "music", replaces: "Happy Hour with Live Music" }],
-  "2026-10-28": [{ start: t(14), end: t(15), title: "Pumpkin Carving in the Courtyard", desc: "Bring your best idea — the creations go up on Facebook Friday.", room: rooms.courtyard, cat: "community", special: true }],
+  "2026-10-28": [{ start: t(14), end: t(15), title: "Pumpkin Carving in the Courtyard", desc: "Bring your best idea — the creations go into the photo album Friday.", room: rooms.courtyard, cat: "community", special: true }],
   "2026-10-29": [{ start: t(10, 30), title: "Lantern Pumpkin Painting", room: rooms.lantern, cat: "lantern", lantern: true, special: true }],
   "2026-10-30": [{ start: t(15), end: t(16), title: "Halloween Happy Hour: Costumes Encouraged", desc: "Live music, costume parade and prizes.", room: rooms.perch, cat: "music", replaces: "Happy Hour with Live Music", special: true }],
   "2026-10-31": [

@@ -23,6 +23,9 @@ export const abPeople: Record<PersonKey, StaffPerson> = {
   colleen: { name: "Colleen Ashby", initials: "CA", role: "Resident Services Director", color: "#6b5aa6" },
   opal: { name: "Opal Merriweather", initials: "OM", role: "Lead Ambassador", color: "#7a6a3a" },
   bea: { name: "Bea Okafor", initials: "BO", role: "Front Desk Concierge", color: "#8a5a7a" },
+  // Care partners: each looks after the residents of one floor (Settings → Who looks after whom).
+  kenji: { name: "Kenji Watanabe", initials: "KW", role: "Care Partner, First floor", color: "#3f7d7a" },
+  lena: { name: "Lena Hart", initials: "LH", role: "Care Partner, Second floor", color: "#7d5a3f" },
 };
 
 /** Kestrel Point's published team (src/data/communities/kestrel-point/site.ts `team`). */
@@ -40,6 +43,8 @@ export const kpPeople: Record<PersonKey, StaffPerson> = {
   ray: { name: "Ray Castillo", initials: "RC", role: "Maintenance Director", color: "#5b6b4a" },
   june: { name: "June Tolliver", initials: "JT", role: "Lead Ambassador", color: "#7a6a3a" },
   luis: { name: "Luis Ferrer", initials: "LF", role: "Front Desk Concierge", color: "#8a5a7a" },
+  sofia: { name: "Sofia Mendes", initials: "SM", role: "Care Partner, A wing", color: "#3f7d7a" },
+  darnell: { name: "Darnell Price", initials: "DP", role: "Care Partner, B wing", color: "#7d5a3f" },
 };
 
 /** Every staff person, across communities (keys are unique). */

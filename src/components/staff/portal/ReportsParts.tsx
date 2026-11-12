@@ -1,12 +1,14 @@
-// Pieces the monthly report tabs share: the evidence table (numbers only, no targets), leads by source, the
-// "coming later" note, and the message for a report tab that isn't part of someone's role.
+// Pieces the monthly report tabs share: the evidence table (numbers only, no targets) and the "?" explaining it, a
+// promise's status, leads by source, the "coming later" note, and the message for a report tab that isn't part of
+// someone's role.
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import { Badge, Card, fmt, pctChange } from "@/components/staff/ui";
-import type { EvidenceRow } from "@/data/staff/alpha";
+import type { EvidenceRow, PromiseStatus } from "@/data/staff/alpha";
 import { accessLabel, type Access } from "@/data/staff/shared";
 import { MONTHS, today } from "@/lib/clock";
+import { Help } from "./Help";
 
 export const show = (v: number, f?: string) => (f === "pct" ? `${v}%` : f === "dec" ? (v > 10 ? `${v.toFixed(1)}%` : v.toFixed(1)) : fmt(v));
 
@@ -34,7 +36,7 @@ export function EvidenceTable({ rows, month, prev }: { rows: EvidenceRow[]; mont
         <tbody>
           {rows.map((r) => (
             <tr key={r.label}>
-              <td><b>{r.label}</b>{r.note && <small>{r.note}</small>}</td>
+              <td><b>{r.label}</b></td>
               <td className="num"><b>{show(r.now, r.fmt)}</b></td>
               <td className="num">{r.prev ? show(r.prev, r.fmt) : "–"}</td>
               <td className="sx-hint rp-nowrap">{change(r.now, r.prev, r.fmt)}</td>
@@ -44,6 +46,24 @@ export function EvidenceTable({ rows, month, prev }: { rows: EvidenceRow[]; mont
       </table>
     </div>
   );
+}
+
+/** The "?" for an evidence table: why there are no targets, and how each outcome is counted. */
+export function EvidenceNotes({ rows }: { rows: EvidenceRow[] }) {
+  const notes = rows.filter((r) => r.note);
+  return (
+    <Help label="How these are counted" align="end">
+      <p>Outcomes we follow and compare, never promise, so there are no targets.</p>
+      {notes.length > 0 && <ul>{notes.map((r) => <li key={r.label}><b>{r.label}:</b> {r.note}</li>)}</ul>}
+    </Help>
+  );
+}
+
+const promiseTone: Record<PromiseStatus, "good" | "warn" | "bad" | "neutral"> = { Kept: "good", "At risk": "warn", Missed: "bad", "Not due yet": "neutral" };
+
+/** Kept is a quiet tick; anything else is a badge, so the ones that need a look stand out. */
+export function PromiseStatusMark({ status }: { status: PromiseStatus }) {
+  return status === "Kept" ? <span className="sc-status hit"><Icon name="check" /> Kept</span> : <Badge tone={promiseTone[status]}>{status}</Badge>;
 }
 
 export function LeadsBySource({ sources, prevValues, month, prev }: { sources: { label: string; value: number }[]; prevValues: number[]; month: string; prev: string }) {
@@ -73,8 +93,8 @@ export function LeadsBySource({ sources, prevValues, month, prev }: { sources: {
 /** Something on the way, said plainly with its timing. */
 export function ComingLater({ when, title, children }: { when: "Coming in Beta" | "Coming in Full House"; title: string; children: ReactNode }) {
   return (
-    <Card title={title} action={<Badge tone="neutral">{when}</Badge>} className="rp-later">
-      <div className="sx-hint rp-later-b">{children}</div>
+    <Card title={title} action={<span className="rp-later-a"><Badge tone="neutral">{when}</Badge><Help label={`About ${title.toLowerCase()}`} align="end">{children}</Help></span>} className="rp-later">
+      <span className="vh">{when}</span>
     </Card>
   );
 }

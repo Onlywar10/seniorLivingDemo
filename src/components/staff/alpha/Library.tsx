@@ -62,8 +62,8 @@ export function PrintList({ items, printer, community }: { items: PrintRow[]; pr
                 <span className="al-done good" role="status"><Icon name="download" /> PDF ready</span>
               ) : (
                 <>
-                  <button type="button" className="sx-btn sx-btn-sm sx-btn-primary" onClick={() => setDone((d) => ({ ...d, [p.id]: "print" }))}><Icon name="printer" /> Print</button>
-                  <button type="button" className="sx-btn sx-btn-sm" onClick={() => setDone((d) => ({ ...d, [p.id]: "pdf" }))}><Icon name="download" /> Download PDF</button>
+                  <button type="button" className="sx-btn sx-btn-sm" onClick={() => setDone((d) => ({ ...d, [p.id]: "print" }))}><Icon name="printer" /> Print</button>
+                  <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => setDone((d) => ({ ...d, [p.id]: "pdf" }))} aria-label={`Download ${p.title} as a PDF`}><Icon name="download" /> PDF</button>
                 </>
               )}
             </span>
@@ -95,7 +95,7 @@ export function PrintList({ items, printer, community }: { items: PrintRow[]; pr
               <small>Or scan to send it from your phone</small>
             </span>
           </div>
-          <figcaption className="sx-hint">Suggestion slip, four to a page. Drop it in the box at the front desk</figcaption>
+          <figcaption className="sx-hint">Suggestion slip, four to a page</figcaption>
         </figure>
       </div>
     </>

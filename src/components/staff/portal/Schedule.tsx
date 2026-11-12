@@ -7,6 +7,7 @@ import { Icon } from "../../Icon";
 import { TakeAttendance } from "../alpha/Attendance";
 import { Badge } from "../ui";
 import { Drawer } from "./Drawer";
+import { seatInfo } from "./seats";
 
 export function Schedule({ events }: { events: TodayEvent[] }) {
   const [open, setOpen] = useState<TodayEvent | null>(null);
@@ -27,7 +28,7 @@ export function Schedule({ events }: { events: TodayEvent[] }) {
               <small>
                 {e.place}
                 {e.kind !== "resident" ? ` · ${e.kind === "public" ? "Public" : "Family"} event` : ""}
-                {e.cap ? ` · ${e.taken ?? 0} of ${e.cap} booked` : ""}
+                {` · ${seatInfo(e).text}`}
               </small>
             </span>
             <span className="pt-sched-a">

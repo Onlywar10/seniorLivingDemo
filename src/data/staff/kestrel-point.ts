@@ -60,7 +60,7 @@ const enquirySources = [
 const enquirySourcesPrev = [16, 9, 8, 3, 5, 1, 3, 3, 2];
 
 const activity: Activity[] = [
-  { who: "grant", mins: 28, text: "posted “Halloween Happy Hour: Costumes Encouraged” to the website, 155 families and this week’s digest" },
+  { who: "grant", mins: 28, text: "posted “Harvest Happy Hour: Fun Hats Encouraged” to the website, 155 families and this week’s digest" },
   { who: "kara", mins: 85, text: "sent “Mindfulness & Mocktails with Kara” flyer for approval", tone: "wait" },
   { who: "mateo", mins: 150, text: "booked a tour for the Gill family, Monday at 11:00 am, with lunch in Meadowbrook Cafe", tone: "info" },
   { who: "julien", mins: 240, text: "published today’s menus for the Juniper Room, Meadowbrook Cafe and the Bistro" },
@@ -74,7 +74,7 @@ const activity: Activity[] = [
 /* ------------------------------------------------------------ messages */
 
 const sends: Send[] = [
-  { id: "s1", title: "Halloween Happy Hour on Friday: costumes encouraged", audience: "All families", channels: "Text + email", by: "grant", mins: 28, sent: 155, delivered: 153, opened: 112, replied: 5, lang: 27 },
+  { id: "s1", title: "Harvest Happy Hour on Friday: fun hats encouraged", audience: "All families", channels: "Text + email", by: "grant", mins: 28, sent: 155, delivered: 153, opened: 112, replied: 5, lang: 27 },
   { id: "s2", title: "Lantern Pumpkin Painting tomorrow at 10:30 am", audience: "Lantern families", channels: "Text", by: "anjali", mins: 60 * 20, sent: 20, delivered: 20, opened: 18, replied: 2, lang: 3 },
   { id: "s3", title: "Your week at Kestrel Point", audience: "All families", channels: "Email digest", by: "grant", mins: 60 * 66, sent: 143, delivered: 141, opened: 104, replied: 1, lang: 25 },
   { id: "s4", title: "Juniper Hills Orchards trip: 2 seats left", audience: "All families", channels: "Text + email", by: "callie", mins: 60 * 118, sent: 155, delivered: 154, opened: 129, replied: 7, lang: 27 },
@@ -83,7 +83,7 @@ const sends: Send[] = [
 ];
 
 const templates = [
-  { k: "event", label: "New event", text: "New on the KP calendar: {event}. Ask for a seat for your loved one from your personal link in this week’s message, or call the front desk at (916) 555-0160." },
+  { k: "event", label: "New event", text: "New on the KP calendar: {event}. Reply SEAT for a seat for your loved one, and we’ll check with them first. Or call the front desk at (916) 555-0160." },
   { k: "photos", label: "Photos are up", text: "Photos from {event} are up! See them on our website. Thank you for being part of the Kestrel Point family." },
   { k: "reminder", label: "Reminder", text: "Reminder: {event}. Families are always welcome to join us." },
   { k: "change", label: "Schedule change", text: "Schedule change: {event}. We’re sorry for any inconvenience. Questions? Call (916) 555-0160." },
@@ -93,17 +93,17 @@ const templates = [
 const threads: Thread[] = [
   {
     id: "t1", from: "Lucía Ramírez", relation: "Daughter", resident: "Elena Ramírez", apt: "B214", lang: "Spanish", unread: true, mins: 19,
-    subject: "Halloween Happy Hour",
+    subject: "Harvest Happy Hour",
     msgs: [
-      { me: true, text: "Halloween Happy Hour on Friday, 3:00–4:00 pm in the Bistro: live music, a costume parade and prizes. Costumes encouraged!", original: "Hora Feliz de Halloween el viernes, de 3:00 a 4:00 pm en el Bistro: música en vivo, desfile de disfraces y premios. ¡Los disfraces son bienvenidos!", mins: 28 },
-      { who: "Lucía", text: "Can my kids come to the happy hour with their grandma? They already have their costumes ready.", original: "¿Pueden mis hijos ir a la hora feliz con su abuela? Ya tienen sus disfraces listos.", mins: 19 },
+      { me: true, text: "Harvest Happy Hour on Friday, 3:00–4:00 pm in the Bistro: live music, a hat parade and prizes. Fun hats encouraged!", original: "Hora Feliz de la Cosecha el viernes, de 3:00 a 4:00 pm en el Bistro: música en vivo, desfile de sombreros y premios. ¡Traigan su sombrero más divertido!", mins: 28 },
+      { who: "Lucía", text: "Can my kids come to the happy hour with their grandma? They already have their hats ready.", original: "¿Pueden mis hijos ir a la hora feliz con su abuela? Ya tienen sus sombreros listos.", mins: 19 },
     ],
   },
   {
     id: "t2", from: "Greg Halvorsen", relation: "Son", resident: "Marion Halvorsen", apt: "A305", lang: "English", unread: true, mins: 70,
     subject: "Juniper Hills waitlist",
     msgs: [
-      { me: true, text: "Juniper Hills Orchards trip on Saturday at 9:30 am from the Lobby: 2 seats left. Ask for a seat for Marion from your personal link: kp.link/r/8Hm3", mins: 60 * 118 },
+      { me: true, text: "Juniper Hills Orchards trip on Saturday at 9:30 am from the Lobby: 2 seats left. Want a seat for Marion? Reply SEAT and we’ll check with Marion first.", mins: 60 * 118 },
       { who: "Greg", text: "Mom just missed out on Juniper Hills. Is she on the waitlist? She’s been talking about the apple pie all week.", mins: 70 },
     ],
   },
@@ -559,7 +559,7 @@ export const staff: StaffData = {
   composerEvent: "Veterans Day Flag Ceremony, Wed, Nov 11 at 9:30 am in the Courtyard",
   threads,
   suggestions: {
-    t1: "¡Claro que sí, Lucía! Los nietos son bienvenidos, con o sin disfraz. ¡A Elena le va a encantar!",
+    t1: "¡Claro que sí, Lucía! Los nietos son bienvenidos, con o sin sombrero. ¡A Elena le va a encantar!",
     t2: "Hi Greg! Marion is first on the waitlist. If a seat opens I’ll text you both right away.",
   },
   contacts,

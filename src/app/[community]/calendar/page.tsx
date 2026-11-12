@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Dots } from "@/components/Logo";
 import { Icon } from "@/components/Icon";
 import { CalendarApp, type CalDay, type CalView } from "@/components/calendar/CalendarApp";
-import { cats, isLantern, type CalEvent } from "@/data/shared";
+import { cats, isLantern, type CalEvent, type Cat } from "@/data/shared";
 import { calendarCopy } from "@/data/communities/copy/events";
 import { getCommunity } from "@/lib/community-server";
 import { addDays, dayName, fmtTime, fromIso, iso, longDate, monthGrid, monthLabel, nowMinutes, shortDate, sundayOf, today } from "@/lib/clock";
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** The published month. */
 const PUBLISHED = "2026-11-01";
 
-type SP = Promise<{ view?: string; date?: string; lantern?: string }>;
+type SP = Promise<{ view?: string; date?: string; lantern?: string; cat?: string }>;
 
 export default async function CalendarPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
@@ -34,6 +34,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
   const t = today();
   const todayIso = iso(t);
   const lantern = sp.view === "lantern" || sp.lantern === "1";
+  // A category to open on (?cat=trips), so pages that preview one kind of event link straight to it.
+  const cat = sp.cat && sp.cat in cats ? (sp.cat as Cat) : undefined;
   const view: CalView = sp.view === "today" || sp.view === "day" ? "today" : sp.view === "month" ? "month" : "week";
 
   // Anchor date, kept within a year either side of today.
@@ -48,6 +50,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
     q.set("view", v);
     if (d) q.set("date", iso(d));
     if (lantern) q.set("lantern", "1");
+    if (cat) q.set("cat", cat);
     return `/calendar?${q.toString()}`;
   };
 
@@ -90,6 +93,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
 
   const nowMin = nowMinutes();
   const keep = (e: CalEvent) => !lantern || isLantern(e);
+  // How many things are on today: the same count the homepage and Lifestyle show.
+  const todayCount = eventsOn(t, todayIso).filter(keep).length;
   const upNext = eventsOn(t, todayIso).filter((e) => keep(e) && (e.end ?? e.start + 60) > nowMin).slice(0, 3);
   const tomorrow = eventsOn(addDays(t, 1), todayIso).filter(keep).slice(0, 3);
 
@@ -121,6 +126,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
               <Image src={lantern ? "/img/lantern-garden.jpg" : copy.photo.src} alt={tr(lantern ? "Lantern’s private courtyard garden, with lawn and patio chairs" : copy.photo.alt)} fill sizes="(max-width: 860px) 100vw, 420px" priority />
             </div>
             <div className="cal-next-body">
+              <p className="cal-count"><b>{todayCount}</b> {tr(todayCount === 1 ? "thing on the calendar today" : "things on the calendar today")}</p>
               <h2 id="cal-next-h">{tr(upNext.length ? "Up next today" : "Tomorrow")}</h2>
               <ol>
                 {(upNext.length ? upNext : tomorrow).map((e) => (
@@ -153,6 +159,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
           <CalendarApp
             view={view}
             lantern={lantern}
+            initialCats={cat ? [cat] : []}
             todayIso={todayIso}
             nowMin={nowMin}
             label={label}
@@ -186,7 +193,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
             <div>
               <Icon name="check" />
               <h3>{tr("How sign-up works")}</h3>
-              <p>{tr("Residents sign up for activities and outings with the activities team. Families ask for a seat or RSVP through the personal link in their weekly message. Events open to the public, like an open house, take sign-ups right here: just open the event.")}</p>
+              <p>{tr("Residents reply YES to an invite or reminder text, or text the community to book. The front desk and the activities team can sign you up too. Families reply to their text or email to RSVP or ask for a seat (or tap the link in it). We check with their resident first, then confirm. Events open to the public, like an open house, take sign-ups right here: just open the event.")}</p>
             </div>
             {meeting && (
               <div>

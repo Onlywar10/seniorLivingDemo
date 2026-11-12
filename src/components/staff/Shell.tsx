@@ -7,8 +7,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState, useTransition, type ReactNode } from "react";
 import { AS_COOKIE, accessLabel, accessOf, sectionsFor, type Section, type StaffRole } from "@/data/staff/shared";
 import { staffPeople } from "@/data/staff/people";
+import type { Found } from "@/data/staff/portal";
 import { Icon } from "../Icon";
+import { Search } from "./Search";
 import { CommunitySwitcher, useStaffCommunity } from "./StaffCommunity";
+import { Toaster, useNeedsCount } from "./store";
+import type { QLite } from "@/data/staff/lite";
 import { XIcon } from "./ui";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
@@ -16,6 +20,7 @@ interface Me { as: StaffRole; key: string; name: string; first: string; title: s
 
 const info: Record<Section, { href: string; label: string; icon?: IconName; x?: "shield" | "door"; hint: string }> = {
   today: { href: "/staff/today", label: "Today", icon: "sun", hint: "What needs you" },
+  messages: { href: "/staff/messages", label: "Communications", icon: "sms", hint: "Texts and emails with families" },
   post: { href: "/staff/post", label: "Post", icon: "send", hint: "Say it once, everywhere" },
   calendar: { href: "/staff/calendar", label: "Calendar", icon: "calendar", hint: "Events and sign-ups" },
   menus: { href: "/staff/menus", label: "Menus", icon: "fork", hint: "Every restaurant, every day" },
@@ -43,7 +48,9 @@ function useSignInAs() {
   };
 }
 
-export function Shell({ children, me, people, waiting }: { children: ReactNode; me: Me; people: Me[]; waiting: number }) {
+export function Shell({ children, me, people, queue = [], replies = 0, found = [] }: { children: ReactNode; me: Me; people: Me[]; queue?: QLite[]; replies?: number; found?: Found[] }) {
+  // The one number: overdue plus due today, after anything done, snoozed or handed on (the same as Today's heading).
+  const waiting = useNeedsCount(queue, me.as);
   const path = usePathname();
   const { scope, current, site } = useStaffCommunity();
   const name = current ? current.name : "Wrenhaven Senior Living";
@@ -55,7 +62,7 @@ export function Shell({ children, me, people, waiting }: { children: ReactNode; 
   const color = staffPeople[me.key]?.color ?? "var(--terra-deep)";
   const initials = staffPeople[me.key]?.initials ?? me.first[0];
   // Phone tab bar: the person's four most-used sections; everything else under "More".
-  const tabs = (["today", "post", "calendar", "menus", "people", "prospects", "website"] as Section[]).filter((s) => sections.includes(s)).slice(0, 4);
+  const tabs = (["today", "post", "messages", "calendar", "menus", "people", "prospects", "website"] as Section[]).filter((s) => sections.includes(s)).slice(0, 4);
 
   useEffect(() => {
     if (!open && !who) return;
@@ -92,8 +99,16 @@ export function Shell({ children, me, people, waiting }: { children: ReactNode; 
               <li key={s}>
                 <Link href={info[s].href} onClick={() => setOpen(false)} aria-current={on(s) ? "page" : undefined}>
                   {ico(s)}
-                  <span>{info[s].label}</span>
-                  {accessLabel[accessOf(me.as, s) ?? "full"] && <small className="pt-nav-part">{accessLabel[accessOf(me.as, s) ?? "full"]}</small>}
+                  <span className="sx-nav-t">
+                    <span>{info[s].label}</span>
+                    {accessLabel[accessOf(me.as, s) ?? "full"] && <small className="pt-nav-part">{accessLabel[accessOf(me.as, s) ?? "full"]}</small>}
+                  </span>
+                  {s === "messages" && replies > 0 && (
+                    <span className="sx-nav-badge">
+                      {replies}
+                      <span className="vh"> to reply to</span>
+                    </span>
+                  )}
                   {s === "today" && waiting > 0 && (
                     <span className="sx-nav-badge">
                       {waiting}
@@ -158,7 +173,8 @@ export function Shell({ children, me, people, waiting }: { children: ReactNode; 
             <span>{name}</span>
           </Link>
           <div className="sx-top-right">
-            {!on("today") && !on("post") && (
+            {found.length > 0 && <Search items={found} />}
+            {!on("today") && !on("post") && accessOf(me.as, "post") && (
               <Link href="/staff/post" className="sx-btn sx-btn-primary sx-top-post" aria-label="Post something">
                 <Icon name="plus" /> <span>Post</span>
               </Link>
@@ -188,6 +204,7 @@ export function Shell({ children, me, people, waiting }: { children: ReactNode; 
           <span>More</span>
         </button>
       </nav>
+      <Toaster />
       {open && <button type="button" className="sx-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setOpen(false)} />}
     </div>
   );

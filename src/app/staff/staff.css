@@ -70,9 +70,9 @@
 .ov-stats dt { font-size: 12.5px; color: var(--sx-ink-3); }
 .ov-stats dd { margin: 0; font-size: 22px; font-weight: 600; color: var(--sx-ink); line-height: 1.15; }
 .ov-stats dd small { font-size: 12.5px; font-weight: 500; color: var(--sx-ink-3); }
-.sx-nav { flex: 1; display: grid; gap: 8px; align-content: start; }
+.sx-nav { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; }
 .sx-nav-g { margin: 6px 10px 3px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #9eaab1; font-weight: 600; }
-.sx-nav ul { margin: 0; padding: 0; display: grid; gap: 1px; }
+.sx-nav ul { margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; }
 .sx-nav a { display: flex; align-items: center; gap: 11px; padding: 8px 10px; color: #dfe4e7; min-height: 40px; border-radius: 8px; font-size: 14.5px; font-weight: 500; }
 .sx-nav a:hover { background: var(--sx-side-2); color: #fff; }
 .sx-nav a[aria-current="page"] { background: var(--sx-side-2); color: #fff; font-weight: 600; box-shadow: inset 3px 0 0 var(--terra); }

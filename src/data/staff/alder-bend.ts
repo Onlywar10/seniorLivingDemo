@@ -55,7 +55,7 @@ const enquirySources = [
 const enquirySourcesPrev = [13, 8, 8, 3, 4, 1, 4, 2, 2];
 
 const activity: Activity[] = [
-  { who: "nora", mins: 34, text: "posted “Halloween Happy Hour: Costumes Encouraged” to the website, 186 families and this week’s digest" },
+  { who: "nora", mins: 34, text: "posted “Harvest Happy Hour: Fun Hats Encouraged” to the website, 186 families and this week’s digest" },
   { who: "devin", mins: 96, text: "sent “Healthy Happy Hour with Devin & Priya!” flyer for approval", tone: "wait" },
   { who: "priya", mins: 140, text: "booked a tour for the Andersons, Friday at 10:00 am, with lunch in the Juniper Room", tone: "info" },
   { who: "rafael", mins: 230, text: "published today’s menus for the Juniper Room, Millpond Café and The Perch" },
@@ -69,7 +69,7 @@ const activity: Activity[] = [
 /* ------------------------------------------------------------ messages */
 
 const sends: Send[] = [
-  { id: "s1", title: "Halloween Happy Hour on Friday: costumes encouraged", audience: "All families", channels: "Text + email", by: "nora", mins: 34, sent: 186, delivered: 183, opened: 129, replied: 6, lang: 28 },
+  { id: "s1", title: "Harvest Happy Hour on Friday: fun hats encouraged", audience: "All families", channels: "Text + email", by: "nora", mins: 34, sent: 186, delivered: 183, opened: 129, replied: 6, lang: 28 },
   { id: "s2", title: "Lantern Pumpkin Painting tomorrow at 10:30 am", audience: "Lantern families", channels: "Text", by: "maribel", mins: 60 * 19, sent: 21, delivered: 21, opened: 20, replied: 3, lang: 2 },
   { id: "s3", title: "Your week at Alder Bend", audience: "All families", channels: "Email digest", by: "nora", mins: 60 * 67, sent: 171, delivered: 169, opened: 131, replied: 2, lang: 26 },
   { id: "s4", title: "Juniper Hills apple orchards trip: 3 seats left", audience: "All families", channels: "Text + email", by: "nora", mins: 60 * 120, sent: 186, delivered: 184, opened: 158, replied: 9, lang: 28 },
@@ -79,7 +79,7 @@ const sends: Send[] = [
 
 
 const templates = [
-  { k: "event", label: "New event", text: "New on the AB calendar: {event}. Ask for a seat for your loved one from your personal link in this week’s message, or call the front desk at (916) 555-0140." },
+  { k: "event", label: "New event", text: "New on the AB calendar: {event}. Reply SEAT for a seat for your loved one, and we’ll check with them first. Or call the front desk at (916) 555-0140." },
   { k: "photos", label: "Photos are up", text: "Photos from {event} are up! See them on our website. Thank you for being part of the AB family." },
   { k: "reminder", label: "Reminder", text: "Reminder: {event}. Families are always welcome to join us." },
   { k: "change", label: "Schedule change", text: "Schedule change: {event}. We’re sorry for any inconvenience. Questions? Call (916) 555-0140." },
@@ -89,17 +89,17 @@ const templates = [
 const threads: Thread[] = [
   {
     id: "t1", from: "María Hernández", relation: "Daughter", resident: "Rosa Hernández", apt: "2214", lang: "Spanish", unread: true, mins: 22,
-    subject: "Halloween Happy Hour",
+    subject: "Harvest Happy Hour",
     msgs: [
-      { me: true, text: "Halloween Happy Hour on Friday, 3:00–4:00 pm in The Perch: live music, a costume parade and prizes. Costumes encouraged!", original: "Hora Feliz de Halloween el viernes, de 3:00 a 4:00 pm en The Perch: música en vivo, desfile de disfraces y premios. ¡Los disfraces son bienvenidos!", mins: 34 },
-      { who: "María", text: "Can I come with my mom to the happy hour on Friday? Do I need a costume too? She wants to dress up as Frida Kahlo, ha ha.", original: "¿Puedo acompañar a mi mamá a la hora feliz del viernes? ¿Yo también necesito disfraz? Ella quiere vestirse de Frida Kahlo, jaja.", mins: 22 },
+      { me: true, text: "Harvest Happy Hour on Friday, 3:00–4:00 pm in The Perch: live music, a hat parade and prizes. Fun hats encouraged!", original: "Hora Feliz de la Cosecha el viernes, de 3:00 a 4:00 pm en The Perch: música en vivo, desfile de sombreros y premios. ¡Traigan su sombrero más divertido!", mins: 34 },
+      { who: "María", text: "Can I come with my mom to the happy hour on Friday? Do I need a hat too? She wants to wear her big flower crown, ha ha.", original: "¿Puedo acompañar a mi mamá a la hora feliz del viernes? ¿Yo también necesito sombrero? Ella quiere ponerse su corona de flores grande, jaja.", mins: 22 },
     ],
   },
   {
     id: "t2", from: "Tom Whitaker", relation: "Son", resident: "Dorothy Whitaker", apt: "1108", lang: "English", unread: true, mins: 75,
     subject: "Orchard trip waitlist",
     msgs: [
-      { me: true, text: "Juniper Hills apple orchards trip on Saturday at 9:30 am from the Lobby: 3 seats left. Ask for a seat for Dorothy from your personal link: ab.link/r/4Tw9", mins: 60 * 120 },
+      { me: true, text: "Juniper Hills apple orchards trip on Saturday at 9:30 am from the Lobby: 3 seats left. Want a seat for Dorothy? Reply SEAT and we’ll check with Dorothy first.", mins: 60 * 120 },
       { who: "Tom", text: "Mom says she’s on the waitlist for the orchard trip. Any chance a seat opens up? She’s been talking about the cider donuts all week.", mins: 75 },
     ],
   },
@@ -550,7 +550,7 @@ export const staff: StaffData = {
   composerEvent: "Bus Trip to the Veterans Day Parade, Wed, Nov 11 at 7:30 am from the Lobby",
   threads,
   suggestions: {
-    t1: "¡Claro que sí, María! Las familias son bienvenidas y el disfraz es opcional. ¡Nos encantará ver a Rosa como Frida!",
+    t1: "¡Claro que sí, María! Las familias son bienvenidas y el sombrero es opcional. ¡Nos encantará ver a Rosa con su corona de flores!",
     t2: "Hi Tom! Dorothy is first on the waitlist for the orchard trip. If a seat opens I’ll text you both right away. The trip is free; lunch at the orchard is about $15.",
   },
   contacts,

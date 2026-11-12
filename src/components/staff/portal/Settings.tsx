@@ -1,18 +1,21 @@
 "use client";
 
 // Settings, for administrators: the team with the preset roles (adjustable per person), invites and removals, the
-// approval rules, and the community details everything else reads. Changes stay in this browser.
-import { useState } from "react";
+// approval rules, the community details everything else reads, and exporting all the community’s data. Changes stay
+// in this browser.
+import { useState, type ReactNode } from "react";
+import { ACTIVITY_CATEGORIES } from "@/data/shared";
 import { Icon } from "../../Icon";
 import { Avatar, Badge } from "../ui";
+import { Help } from "./Help";
 import { SECTIONS, STAFF_ROLES, accessFor, accessLabel, presetOf, type Access, type Preset, type Section } from "@/data/staff/shared";
 
 export type { Preset };
 export interface TeamMember { key: string; name: string; title: string; preset: Preset; invited: boolean; adjusted?: string }
 
-const PRESETS: Preset[] = ["Poster", "Approver", "Kitchen", "Sales", "Administrator"];
+const PRESETS: Preset[] = ["Poster", "Approver", "Kitchen", "Sales", "Administrator", "Caregiver"];
 const sectionName: Record<Section, string> = {
-  today: "Today", post: "Post", calendar: "Calendar", menus: "Menus", newsletter: "Newsletter", website: "Website",
+  today: "Today", messages: "Communications", post: "Post", calendar: "Calendar", menus: "Menus", newsletter: "Newsletter", website: "Website",
   people: "People", feedback: "Feedback", prospects: "Prospects", reports: "Reports", settings: "Settings",
 };
 /** What each preset may open: the Roles table (the same rules the menu uses). */
@@ -25,8 +28,20 @@ const presetHelp: Record<Preset, string> = {
   Kitchen: "Menus and the dining page",
   Sales: "Prospects, apartments and prices, announcements, the prospect numbers",
   Administrator: "The executive director: everything, including Reports and Settings",
+  "Lantern lead": "The Lantern team lead: Lantern residents and families, the Lantern calendar, asking in person",
+  Caregiver: "Care partners, with “Who looks after whom” on: Today and People, for their own residents only. Nothing clinical",
 };
 const an = (p: Preset) => (/^[AEIOU]/.test(p) ? "an" : "a");
+
+/** The five preset roles, behind the Team card’s "?". */
+export function PresetHelp() {
+  return (
+    <Help label="The preset roles" align="end">
+      <ul>{PRESETS.map((p) => <li key={p}><b>{p}:</b> {presetHelp[p]}</li>)}</ul>
+      <p>Adjust one person if they need more or less.</p>
+    </Help>
+  );
+}
 
 export function Team({ people, community }: { people: TeamMember[]; community: string }) {
   const [rows, setRows] = useState(people.map((p) => ({ ...p, can: { ...presetAccess[p.preset] }, removed: false })));
@@ -40,9 +55,6 @@ export function Team({ people, community }: { people: TeamMember[]; community: s
   const differs = (r: Row) => SECTIONS.some((s) => !!r.can[s] !== !!presetAccess[r.preset][s]);
   return (
     <>
-      <ul className="pt-presets">
-        {PRESETS.map((p) => <li key={p}><b>{p}</b><small>{presetHelp[p]}</small></li>)}
-      </ul>
       <ul className="pt-team">
         {rows.filter((r) => !r.removed).map((r) => {
           const custom = differs(r) || !!r.adjusted;
@@ -104,7 +116,10 @@ export function Team({ people, community }: { people: TeamMember[]; community: s
   );
 }
 
-export function ApprovalRules({ rules, people }: { rules: { what: string; who: string; note?: string }[]; people: { key: string; name: string; role: string }[] }) {
+export function ApprovalRules({ rules, people }: { rules: { what: string; who: string; note?: string }[]; people: { key: string; name: string; role: string; approves?: boolean }[] }) {
+  // People whose role can approve come first; everyone else is further down.
+  const can = people.filter((p) => p.approves);
+  const rest = people.filter((p) => !p.approves);
   const [who, setWho] = useState(rules.map((r) => r.who));
   const [saved, setSaved] = useState(false);
   return (
@@ -112,11 +127,12 @@ export function ApprovalRules({ rules, people }: { rules: { what: string; who: s
       <ul>
         {rules.map((r, i) => (
           <li key={r.what}>
-            <span><b>{r.what}</b>{r.note && <small className="st-note">{r.note}</small>}</span>
+            <span><b>{r.what}</b></span>
             <label>
               <span className="vh">Who approves: {r.what}</span>
               <select value={who[i]} onChange={(e) => { setWho((w) => w.map((x, j) => (j === i ? e.target.value : x))); setSaved(false); }}>
-                {people.map((p) => <option key={p.key} value={p.name}>{p.name} · {p.role}</option>)}
+                <optgroup label="Can approve">{can.map((p) => <option key={p.key} value={p.name}>{p.name} · {p.role}</option>)}</optgroup>
+                <optgroup label="Give approval to someone else">{rest.map((p) => <option key={p.key} value={p.name}>{p.name} · {p.role}</option>)}</optgroup>
                 <option value="No approval needed">No approval needed</option>
               </select>
             </label>
@@ -125,7 +141,6 @@ export function ApprovalRules({ rules, people }: { rules: { what: string; who: s
       </ul>
       <div className="pt-act">
         {saved ? <span className="al-done good" role="status"><Icon name="check" /> Saved</span> : <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => setSaved(true)}>Save the rules</button>}
-        <span className="sx-hint">Everything else goes out as soon as it’s posted. Emergencies and closures always skip approval.</span>
       </div>
     </div>
   );
@@ -165,7 +180,7 @@ export function CommunityDetails({ facts }: { facts: CommunityFacts }) {
           </li>
         ))}
       </ul>
-      <h3 className="st-h">Care areas</h3>
+      <h3 className="st-h">Care levels</h3>
       <ul className="st-chips">
         {f.care.map((c) => <li key={c.name}>{c.name}{c.note && <small> · {c.note}</small>}</li>)}
       </ul>
@@ -180,11 +195,111 @@ export function CommunityDetails({ facts }: { facts: CommunityFacts }) {
             <button type="button" className="sx-btn sx-btn-sm" onClick={() => { setF(facts); setEdit(false); }}>Cancel</button>
           </>
         ) : saved ? (
-          <span className="al-done good" role="status"><Icon name="check" /> Saved. The website, texts, flyers and AI answers use it from now on.</span>
+          <span className="al-done good" role="status"><Icon name="check" /> Saved everywhere</span>
         ) : (
           <button type="button" className="sx-btn sx-btn-sm" onClick={() => setEdit(true)}><Icon name="edit" /> Change phone or hours</button>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ export all your data */
+
+const EXPORT_PARTS = ["Residents", "Families", "Events", "Attendance", "Photos", "Messages", "Menus", "Pages"] as const;
+
+/** One download with everything: a CSV for each kind of record, with the photos, in one ZIP. */
+export function ExportData({ community }: { community: string }) {
+  const [format, setFormat] = useState<"zip" | "csv">("zip");
+  const [state, setState] = useState<"idle" | "busy" | "ready">("idle");
+  const file = `${community.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${format === "zip" ? "export" : "export-csv"}.zip`;
+  return (
+    <div className="st-export">
+      <ul className="st-chips" aria-label="Included">
+        {EXPORT_PARTS.map((p) => <li key={p}>{p}</li>)}
+      </ul>
+      <div className="sx-seg" role="group" aria-label="Format">
+        <button type="button" aria-pressed={format === "zip"} onClick={() => { setFormat("zip"); setState("idle"); }}>ZIP with photos</button>
+        <button type="button" aria-pressed={format === "csv"} onClick={() => { setFormat("csv"); setState("idle"); }}>CSV files only</button>
+      </div>
+      <div className="pt-act">
+        {state === "ready" ? (
+          <>
+            <span className="al-done good" role="status"><Icon name="check" /> Your export is ready</span>
+            <button type="button" className="sx-btn sx-btn-sm"><Icon name="download" /> {file}</button>
+          </>
+        ) : (
+          <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" disabled={state === "busy"} onClick={() => { setState("busy"); window.setTimeout(() => setState("ready"), 1200); }}>
+            <Icon name="download" /> {state === "busy" ? "Preparing…" : "Export everything"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ tabs, so the page isn't one long scroll */
+
+export function SettingsTabs({ tabs }: { tabs: { k: string; label: string; node: ReactNode }[] }) {
+  const [k, setK] = useState(tabs[0].k);
+  return (
+    <>
+      <nav className="rs-tabs st-tabs" aria-label="Settings">
+        {tabs.map((t) => <button key={t.k} type="button" aria-current={k === t.k ? "page" : undefined} onClick={() => setK(t.k)}>{t.label}</button>)}
+      </nav>
+      {tabs.map((t) => <div key={t.k} hidden={k !== t.k} className="st-panel">{t.node}</div>)}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------ floors and areas, and activity categories: set once */
+
+/** The community's floors, wings and neighbourhoods. Events, announcements and "Who looks after whom" all use them. */
+export function AreaList({ areas }: { areas: { name: string; note: string }[] }) {
+  const [list, setList] = useState(areas);
+  const [name, setName] = useState("");
+  const [toast, setToast] = useState("");
+  const say = (t: string) => { setToast(t); window.setTimeout(() => setToast(""), 2600); };
+  return (
+    <div className="st-list">
+      <ul>
+        {list.map((a) => (
+          <li key={a.name}>
+            <span><b>{a.name}</b><small>{a.note}</small></span>
+            <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => { setList((x) => x.filter((y) => y !== a)); say(`${a.name} removed. Events for it now say “All residents”.`); }}>Remove</button>
+          </li>
+        ))}
+      </ul>
+      <form className="st-add" onSubmit={(e) => { e.preventDefault(); if (!name.trim()) return; setList((x) => [...x, { name: name.trim(), note: "Added just now" }]); setName(""); say("Added. It’s now in the event form, announcements and Who looks after whom."); }}>
+        <label><span className="vh">New floor or area</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fourth floor, East wing…" /></label>
+        <button type="submit" className="sx-btn sx-btn-sm" disabled={!name.trim()}><Icon name="plus" /> Add</button>
+      </form>
+      {toast && <div className="sx-toast" role="status"><Icon name="check" /> {toast}</div>}
+    </div>
+  );
+}
+
+/** The kinds of activity, used in the event form, the activity sheet and Reports. */
+export function ActivityCategories() {
+  const [list, setList] = useState<string[]>([...ACTIVITY_CATEGORIES]);
+  const [name, setName] = useState("");
+  const [toast, setToast] = useState("");
+  const say = (t: string) => { setToast(t); window.setTimeout(() => setToast(""), 2600); };
+  return (
+    <div className="st-list">
+      <ul className="st-cats">
+        {list.map((c) => (
+          <li key={c}>
+            <span>{c}</span>
+            <button type="button" className="sx-x" aria-label={`Remove ${c}`} onClick={() => { setList((x) => x.filter((y) => y !== c)); say(`${c} removed. Its activities keep their history in Reports.`); }}><Icon name="x" /></button>
+          </li>
+        ))}
+      </ul>
+      <form className="st-add" onSubmit={(e) => { e.preventDefault(); const n = name.trim(); if (!n || list.includes(n)) return; setList((x) => [...x, n]); setName(""); say(`${n} added to the event form and Reports.`); }}>
+        <label><span className="vh">New category</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Intergenerational, Spiritual care…" /></label>
+        <button type="submit" className="sx-btn sx-btn-sm" disabled={!name.trim()}><Icon name="plus" /> Add</button>
+      </form>
+      {toast && <div className="sx-toast" role="status"><Icon name="check" /> {toast}</div>}
     </div>
   );
 }

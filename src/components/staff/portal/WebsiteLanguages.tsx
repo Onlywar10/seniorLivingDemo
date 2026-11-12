@@ -16,11 +16,11 @@ export function WebsiteLanguages({ langs, canChange }: { langs: SiteLanguage[]; 
       {langs.map((l) => (
         <li key={l.lang}>
           <div className="ws-lang-h">
-            <span><b>{l.lang}</b><small>{l.families} {l.families === 1 ? "family reads" : "families read"} in {l.lang} · {review[l.lang] ? "a person checks new pages first" : "publishes automatically"}</small></span>
+            <span><b>{l.lang}</b><small>{l.families} {l.families === 1 ? "family" : "families"} · {review[l.lang] ? "checked first" : "automatic"}</small></span>
             {canChange && (
               <label className="sx-switch">
                 <input type="checkbox" checked={!!review[l.lang]} onChange={(e) => setReview((r) => ({ ...r, [l.lang]: e.target.checked }))} />
-                Check before it publishes
+                Check first
               </label>
             )}
           </div>

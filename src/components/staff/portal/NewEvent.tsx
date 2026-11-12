@@ -1,324 +1,576 @@
 "use client";
 
-// One way to create an event: Post's "New event" and Calendar's "+ Add" both open this form. Staff give the title, day
-// and time, one-off or repeating, who it's for, seats if limited, the room and matching interests; Kinlight writes the
-// description from those facts only, and then shows everything it did: the website calendar, the printed calendar, a
-// flyer, personal invites to residents with matching interests, reminders, the newsletter and Google for public events.
-// Room clashes are flagged. Saved in this browser only.
+// One way to create or change an event, in three tabs:
+// 1. Event: what it is. Start from a past event or a template, then the title, who it's for (residents, families or
+//    public; all residents or any mix of floors and care areas), who leads it, room and seats, matching interests
+//    (which also set its colour on the calendar), photos wanted, the newsletter, price, the description Kinlight
+//    writes from those facts, and what residents will do with the time (Kinlight drafts the steps; staff can change them).
+//    "Keep as a template" saves it to schedule again later; a template is not a repeat.
+// 2. Time: when. The day and time, and whether it repeats (weekly on chosen days, every two weeks, monthly, with an end
+//    date): every date it will be on is listed.
+// 3. Preview: what everyone will see. The website calendar, the newsletter (if staff add it), the texts, and a
+//    resident's week page.
+// Post, Calendar's "+ Add" and Edit (from Calendar and Today, which open Post) all use this form. Editing one date of a
+// repeating event asks whether the change is for that date only or for every date. Saved in this browser only.
 import Link from "next/link";
 import { useState } from "react";
-import { eventKindLabel, type Cat, type EventKind } from "@/data/shared";
+import { categoryOf, cats, type ActivityCategory, type Cat, type EventKind } from "@/data/shared";
+import type { CalEvent } from "@/data/staff/calEvents";
 import type { Interest } from "@/data/staff/engage";
+import type { PreviewSetup } from "@/data/staff/pool";
 import type { Busy, IdeaPrefill, NewEventSetup } from "@/data/staff/post";
-import { addDays, dayName, fmtRange, fmtTime, fromIso, iso, monthName, shortDate } from "@/lib/clock";
+import { addDays, dayName, dayShort, fmtRange, fmtTime, fromIso, iso, monthName, shortDate } from "@/lib/clock";
+import { interestsFromTitle } from "@/lib/eventInterests";
+import { draftPlan, type PlanStep } from "@/lib/eventPlan";
+import { OFF_CAMPUS, placesText, type Place } from "@/lib/places";
 import { Icon } from "../../Icon";
-import { Phone, SmsThread } from "../../phone/Phone";
+import { useEventChanges, useEventWriter, type SavedTemplate } from "../eventStore";
 import { useStaffCommunity } from "../StaffCommunity";
+import { useSetLeader } from "../store";
+import { EventPreview, type Draft } from "./EventPreview";
+import { OffCampus } from "./OffCampus";
+import { Auto, Help } from "./Help";
 
-export interface EventPrefill { title?: string; date?: string; time?: string; minutes?: number; kind?: EventKind; cap?: number; repeat?: boolean; room?: string; cat?: Cat; interests?: Interest[] }
+export { interestsFromTitle };
+
+export interface EventPrefill { title?: string; date?: string; time?: string; minutes?: number; kind?: EventKind; cap?: number; repeat?: boolean; room?: string; cat?: Cat; interests?: Interest[]; photos?: number; leader?: string; lantern?: boolean; desc?: string; cost?: string; areas?: string[]; plan?: PlanStep[]; stops?: Place[] }
+
+/** How an event repeats. */
+export type RepeatKind = "none" | "weekly" | "biweekly" | "monthly";
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const ORD = ["1st", "2nd", "3rd", "4th", "last"];
+/** "Every Tuesday and Thursday", "Every 2 weeks on Tuesday", "Monthly, 2nd Tuesday", with an end date if set. */
+export function ruleText(k: RepeatKind, days: number[], d: Date, until?: string): string | undefined {
+  if (k === "none") return undefined;
+  const names = days.slice().sort().map((x) => dayName(addDays(d, x - d.getUTCDay())));
+  const list = names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  const nth = Math.min(4, Math.floor((d.getUTCDate() - 1) / 7));
+  const base = k === "weekly" ? `Every ${list}` : k === "biweekly" ? `Every 2 weeks on ${list}` : `Monthly, ${ORD[nth]} ${dayName(d)}`;
+  return until ? `${base}, until ${shortDate(fromIso(until))}` : base;
+}
+
+/** Every date a repeating event falls on, from its first date up to `last` (inclusive). */
+export function seriesDates(first: string, pat: { k: RepeatKind; days: number[]; until?: string }, last: string): string[] {
+  const end = pat.until && pat.until < last ? pat.until : last;
+  const d0 = fromIso(first);
+  if (pat.k === "none") return [first];
+  const out: string[] = [];
+  if (pat.k === "monthly") {
+    const nth = Math.floor((d0.getUTCDate() - 1) / 7);
+    for (let m = 0; m < 24; m++) {
+      const one = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + m, 1));
+      const x = addDays(one, ((d0.getUTCDay() - one.getUTCDay() + 7) % 7) + nth * 7);
+      if (x.getUTCMonth() !== one.getUTCMonth()) continue;
+      if (iso(x) > end) break;
+      out.push(iso(x));
+    }
+    return out;
+  }
+  const sun = addDays(d0, -d0.getUTCDay());
+  for (let w = 0; ; w += pat.k === "biweekly" ? 2 : 1) {
+    const wk = addDays(sun, w * 7);
+    if (iso(wk) > end) break;
+    for (const day of [...pat.days].sort()) { const x = iso(addDays(wk, day)); if (x >= first && x <= end) out.push(x); }
+  }
+  return out;
+}
+
+/** Starting points, for events that have a usual shape. */
+const TEMPLATES: (EventPrefill & { label: string })[] = [
+  { label: "Bus trip", title: "Bus Trip: ", kind: "resident", cap: 12, minutes: 180, time: "09:30", interests: ["Outings"], photos: 6 },
+  { label: "Exercise class", title: "", kind: "resident", minutes: 45, time: "10:00", interests: ["Fitness"], photos: 0 },
+  { label: "Happy hour", title: "Happy Hour", kind: "resident", minutes: 90, time: "16:00", interests: ["Music"], photos: 4 },
+  { label: "Talk or class", title: "", kind: "resident", minutes: 60, time: "14:00", interests: ["Learning"], photos: 0 },
+  { label: "Family party", title: "", kind: "family", minutes: 120, time: "12:00", interests: [], photos: 8 },
+  { label: "Open house", title: "", kind: "public", minutes: 120, time: "13:00", interests: [], photos: 8 },
+];
 export interface SavedEvent {
   id: string; title: string; date: string; start: number; end: number; room: string; kind: EventKind; cat: Cat;
   cap?: number; repeat: boolean; lantern: boolean; interests: Interest[]; desc: string; cost?: string;
+  /** "Every Tuesday and Thursday", "Monthly, 2nd Tuesday"; undefined for a one-off. */
+  rule?: string;
+  pattern: { k: RepeatKind; days: number[]; until?: string };
+  category: ActivityCategory;
+  /** All residents, or the floors and care areas it's for. */
+  areas: string[];
+  leader?: string;
+  /** How many photos staff would like from it (0: none). */
+  photos: number;
   /** The resident whose idea it was. */
   idea?: string;
   /** Waiting for the approver (it has a price). */
   approval: boolean;
+  /** In the coming newsletter. */
+  newsletter: boolean;
+  /** Kept as a template, to schedule again later. */
+  template: boolean;
+  /** What happens during it, step by step. */
+  plan: PlanStep[];
+  /** Off campus: where the bus goes, in order. */
+  stops?: Place[];
 }
+
+/** One date of a saved event, as the calendar has it. */
+export function savedToCal(s: SavedEvent, date: string, id = s.id): CalEvent {
+  return {
+    id, date, kind: s.kind, start: s.start, end: s.end, title: s.title, room: s.room, cat: s.cat, color: cats[s.cat].color, catLabel: cats[s.cat].label,
+    cap: s.cap, taken: s.cap ? 0 : undefined, booked: s.cap ? [] : undefined, lantern: s.lantern, rule: s.rule, desc: s.desc, cost: s.cost,
+    interests: s.interests, isNew: true, idea: s.idea, approval: s.approval || undefined, wanted: s.photos || undefined, newsletter: s.newsletter || undefined, plan: s.plan, stops: s.stops,
+  };
+}
+/** What describes an event, for a change to it (not its date or repeat). */
+const describe = (s: SavedEvent): Partial<CalEvent> => ({
+  title: s.title, start: s.start, end: s.end, room: s.room, kind: s.kind, cat: s.cat, color: cats[s.cat].color, catLabel: cats[s.cat].label,
+  cap: s.cap, lantern: s.lantern, desc: s.desc, cost: s.cost, interests: s.interests, wanted: s.photos || undefined, approval: s.approval || undefined, newsletter: s.newsletter || undefined, plan: s.plan, stops: s.stops,
+});
 
 const toMin = (s: string) => { const [h, m] = s.split(":").map(Number); return (h || 0) * 60 + (m || 0); };
 const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const first = (n = "") => n.split(" ")[0];
 const andList = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 const shortTime = (m: number) => fmtTime(m).replace(":00", "");
-
-/** The interests an event matches, from its title (the same rules Kinlight uses on the calendar). */
-export function interestsFromTitle(title: string): Interest[] {
-  const t = title.toLowerCase();
-  const out: Interest[] = [];
-  if (/yoga|fit|stretch|balance|walk|tai chi|exercise|dance/.test(t)) out.push("Fitness");
-  if (/bridge|bingo|cards|mahjong|poker|canasta|trivia|game/.test(t)) out.push("Cards and games");
-  if (/music|concert|choir|sing|piano|jazz|band|hymn/.test(t)) out.push("Music");
-  if (/trip|tour|bus|outing|lights|museum|shopping/.test(t)) out.push("Outings");
-  if (/paint|craft|knit|art|pumpkin|wreath|clay|card making/.test(t)) out.push("Crafts");
-  if (/garden|flower|plant|orchard/.test(t)) out.push("Gardening");
-  if (/cook|bak|chef|tasting|wine|tea|fish fry|breakfast/.test(t)) out.push("Cooking");
-  if (/lecture|talk|class|book|history|learn|lesson|video call/.test(t)) out.push("Learning");
-  if (/movie|film|cine|matinee/.test(t)) out.push("Movies");
-  if (/faith|mass|church|worship|bible|rosary|chapel/.test(t)) out.push("Faith");
-  return out.filter((x, i, a) => a.indexOf(x) === i).slice(0, 2);
-}
+const kindName: Record<EventKind, string> = { resident: "Residents", family: "Families", public: "Public" };
 const catOf = (ints: Interest[], lantern: boolean): Cat => {
   if (lantern) return "lantern";
   const m: Partial<Record<Interest, Cat>> = { Fitness: "fitness", Faith: "faith", "Cards and games": "clubs", Outings: "trips", Music: "music", Movies: "movies" };
   return ints.map((i) => m[i]).find(Boolean) ?? "community";
 };
 
-/** The newsletter goes out on Sundays at 5 pm with the week ahead. */
-function newsletterFor(dateIso: string, todayIso: string) {
-  const t = fromIso(todayIso);
-  const next = addDays(t, (7 - t.getUTCDay()) % 7 || 7);
+/** The newsletter goes out on Sundays at 5 pm with the week it starts. */
+function newsletterFor(dateIso: string, todayIso: string, on: boolean) {
   const d = fromIso(dateIso);
-  if (d <= next) return { ok: false, line: `Too soon for Sunday’s newsletter (${shortDate(next)}): residents and families hear by text instead, and it’s in the newsletter’s look back at the week.` };
-  const sun = addDays(d, -(d.getUTCDay() || 7));
-  return { ok: true, line: `In the newsletter on Sunday, ${shortDate(sun)}, under the week ahead.` };
-}
-
-export interface Effect { icon: "globe" | "printer" | "doc" | "sms" | "bell" | "mail" | "pin" | "heart" | "clock" | "users"; title: string; detail: string; wait?: boolean }
-
-/** Everything Kinlight does with a new event, in plain words. */
-function effectsOf(o: { title: string; date: string; start: number; kind: EventKind; repeat: boolean; lantern: boolean; cap?: number; interests: Interest[]; invited: string[]; sample: string; idea?: IdeaPrefill; approval: boolean; setup: NewEventSetup }): Effect[] {
-  const { setup } = o;
-  const d = fromIso(o.date);
-  const out: Effect[] = [];
-  if (o.approval) out.push({ icon: "clock", title: `Waits for ${setup.approver.first}`, detail: `It has a price, so ${setup.approver.first} approves it first (one tap from a text). Everything below happens the moment it’s approved.`, wait: true });
-  out.push({
-    icon: "globe", title: "Website calendar",
-    detail: o.kind === "resident" ? "Name, day, time and description only. Seats and the room stay with staff." : o.kind === "family" ? "Name, day, time, place and description. Families RSVP by replying to their text." : "Full details and a sign-up form. Each sign-up reaches sales as an inquiry.",
-  });
-  out.push({ icon: "printer", title: "Printed calendar", detail: `Added to the large-print ${monthName(d)} calendar${o.repeat ? `, every ${dayName(d)}` : ""}.` });
-  out.push({ icon: "doc", title: "Flyer", detail: "A large-print flyer, ready to print at the front desk." });
-  if (o.lantern) out.push({ icon: "users", title: "Lantern residents", detail: "Not texted. The care team invites them in person." });
-  else if (o.invited.length) out.push({ icon: "sms", title: `Personal invites to ${o.invited.length} residents`, detail: `Residents who like ${andList(o.interests.map((i) => i.toLowerCase()))}, ${sendWhen(o.date, setup.todayIso)}. “${o.sample}”` });
-  else out.push({ icon: "sms", title: "Personal invites", detail: o.interests.length ? "No resident has chosen these interests yet, so nobody gets a personal invite." : "Pick an interest above to invite the residents who chose it." });
-  if (o.kind === "family") out.push({ icon: "sms", title: `Invite to ${setup.families} families`, detail: "They reply with how many are coming; each resident says yes first, then the approver confirms." });
-  out.push({ icon: "bell", title: "Reminders", detail: `Everyone who books gets a reminder at ${fmtTime(Math.max(8 * 60 + 30, o.start - 60))} on the day${o.cap ? `; if the ${o.cap} seats fill, a waitlist starts and the next person is texted when a seat opens` : ""}.` });
-  const nl = newsletterFor(o.date, setup.todayIso);
-  out.push({ icon: "mail", title: "Newsletter", detail: nl.line });
-  if (o.kind === "public") out.push({ icon: "pin", title: "Google", detail: "Posted to the Google Business Profile, on Search and Maps until the day." });
-  if (o.idea) out.push({ icon: "heart", title: o.idea.who ? `${first(o.idea.who)} is told` : "From a resident’s idea", detail: o.idea.who ? `We’ll tell ${o.idea.who}: “Your idea made the calendar!”` : "There’s no name on the slip, so there’s nobody to tell. It’s marked as a resident idea." });
-  return out;
+  const sun = addDays(d, -d.getUTCDay());
+  if (iso(sun) < todayIso) return "Too late for its week’s newsletter: people hear by text instead.";
+  return on ? `In the newsletter on Sunday, ${shortDate(sun)}.` : "Not in the newsletter (you can add it in Preview).";
 }
 function sendWhen(dateIso: string, todayIso: string) {
   const days = Math.round((fromIso(dateIso).getTime() - fromIso(todayIso).getTime()) / 86400000);
   if (days <= 1) return "sent now";
-  const d = addDays(fromIso(dateIso), -2);
-  return `sent ${dayName(d)} at 8:30 am`;
+  return `sent ${dayName(addDays(fromIso(dateIso), -2))} at 8:30 am`;
 }
 
-export function NewEvent({ setup, prefill = {}, idea, inDrawer = false, extraBusy = [], onSaved, onAnother }: { setup: NewEventSetup; prefill?: EventPrefill; idea?: IdeaPrefill; inDrawer?: boolean; extraBusy?: Busy[]; onSaved?: (e: SavedEvent) => void; onAnother?: () => void }) {
+/** Everything Kinlight does with a new event, one short line each. */
+function effectsOf(o: { date: string; kind: EventKind; repeat: boolean; lantern: boolean; cap?: number; interests: Interest[]; invited: number; photos: number; idea?: IdeaPrefill; approval: boolean; newsletter: boolean; template: boolean; setup: NewEventSetup }): string[] {
+  const d = fromIso(o.date);
+  const out: string[] = [];
+  if (o.approval) out.push(`Waits for ${o.setup.approver.first} to approve it (it has a price). Then:`);
+  out.push(o.kind === "resident" ? "Website calendar: name, day, time and description only." : o.kind === "family" ? "Website calendar, with RSVP by replying to the text." : "Website calendar with a sign-up form; each sign-up reaches sales.");
+  out.push(`Large-print ${monthName(d)} calendar${o.repeat ? `, every ${dayName(d)}` : ""}, and a flyer for the front desk.`);
+  if (!o.lantern) out.push("On every resident’s week page (the link in Sunday’s text), picked out for those whose interests match.");
+  if (o.lantern) out.push("Lantern residents are invited in person by the care team.");
+  else if (o.invited) out.push(`Personal invites to ${o.invited} residents who like ${andList(o.interests.map((i) => i.toLowerCase()))}, ${sendWhen(o.date, o.setup.todayIso)}, and a reminder the day before if they haven’t answered.`);
+  if (o.kind === "family") out.push(`A text to ${o.setup.families} families; each resident says yes first.`);
+  out.push(`Reminders on the day${o.cap ? `; a waitlist if the ${o.cap} seats fill` : ""}.`);
+  out.push(newsletterFor(o.date, o.setup.todayIso, o.newsletter));
+  if (o.kind === "public") out.push("Google Business Profile, on Search and Maps.");
+  if (o.photos) out.push("Asks the leader for photos when it ends.");
+  if (o.idea?.who) out.push(`${first(o.idea.who)} hears “your idea made the calendar”.`);
+  if (o.template) out.push("Kept as a template, to schedule again later.");
+  return out;
+}
+
+/** Editing an event that exists: the same form, filled in, saved over it. */
+export interface Editing { id: string; title: string; date: string; orig?: string; start: number; room: string; desc?: string; cost?: string; lantern?: boolean; rule?: string; newsletter?: boolean }
+
+type Tab = "event" | "time" | "preview";
+
+export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [], onSaved, onAnother, editing, onCancel, preview, keepLocal = false, back }: {
+  setup: NewEventSetup; prefill?: EventPrefill; idea?: IdeaPrefill; inDrawer?: boolean; extraBusy?: Busy[]; onSaved?: (e: SavedEvent) => void; onAnother?: () => void; editing?: Editing; onCancel?: () => void;
+  /** The weeks ahead's events and the newsletter's name, for the Preview tab. */
+  preview?: PreviewSetup;
+  /** Don't put it on the calendar (an import's details, confirmed later). */
+  keepLocal?: boolean;
+  /** Where to go back to after an edit: Calendar or Today. */
+  back?: { href: string; label: string };
+}) {
   const { site } = useStaffCommunity();
+  const writer = useEventWriter();
+  const setLeader = useSetLeader();
+  const { templates: mineTpls } = useEventChanges();
   const tomorrow = iso(addDays(fromIso(setup.todayIso), 1));
-  const initTitle = prefill.title ?? idea?.title ?? "";
+  // Post opens with a sample event, so the numbers below are real; Calendar's "+ Add" and ideas start from their own.
+  const p: EventPrefill = prefill ?? (idea ? {} : { ...setup.sample });
+  const [tab, setTab] = useState<Tab>("event");
   const [f, setF] = useState({
-    title: initTitle, date: prefill.date ?? tomorrow, time: prefill.time ?? "14:00", end: hhmm(toMin(prefill.time ?? "14:00") + (prefill.minutes ?? 60)),
-    room: prefill.room ?? setup.rooms.find((r) => /club|activity|living/i.test(r)) ?? setup.rooms[0], cap: prefill.cap ? String(prefill.cap) : "", cost: "",
+    title: p.title ?? idea?.title ?? "", date: p.date ?? tomorrow, time: p.time ?? "14:00", end: hhmm(toMin(p.time ?? "14:00") + (p.minutes ?? 60)),
+    room: p.room ?? setup.rooms.find((r) => /club|activity|living/i.test(r)) ?? setup.rooms[0], cap: p.cap ? String(p.cap) : "", cost: editing?.cost ?? p.cost ?? "",
   });
-  const [kind, setKind] = useState<EventKind>(prefill.kind ?? "resident");
-  const [repeat, setRepeat] = useState(!!prefill.repeat);
-  const [lantern, setLantern] = useState(false);
-  const [ints, setInts] = useState<Interest[] | null>(prefill.interests ?? null);
-  const [desc, setDesc] = useState<string | null>(null);
+  const [kind, setKind] = useState<EventKind>(p.kind ?? "resident");
+  const d0 = fromIso(p.date ?? tomorrow);
+  const [initPat] = useState(() => ({ rk: (p.repeat ? "weekly" : "none") as RepeatKind, days: [d0.getUTCDay()] }));
+  const [rk, setRk] = useState<RepeatKind>(initPat.rk);
+  const [days, setDays] = useState<number[]>(initPat.days);
+  const [until, setUntil] = useState("");
+  const repeat = rk !== "none";
+  const [areas, setAreas] = useState<string[]>(p.areas ?? (editing?.lantern || p.lantern ? setup.areas.filter((a) => /lantern/i.test(a)) : []));
+  const lantern = areas.length > 0 && areas.every((a) => /lantern/i.test(a));
+  const [leader, setLeaderSel] = useState(p.leader ?? (editing ? "" : setup.me));
+  const [startKey, setStartKey] = useState("");
+  const [ints, setInts] = useState<Interest[] | null>(p.interests ?? null);
+  const [desc, setDesc] = useState<string | null>(editing?.desc ?? p.desc ?? null);
   const [share, setShare] = useState(false);
-  const [saved, setSaved] = useState<SavedEvent | null>(null);
+  const [wantPhotos, setWantPhotos] = useState(p.photos !== undefined ? p.photos > 0 : true);
+  const [planSel, setPlan] = useState<PlanStep[] | null>(p.plan?.length ? p.plan : null);
+  const [stops, setStops] = useState<Place[]>(p.stops ?? []);
+  const [news, setNews] = useState(editing?.newsletter ?? (p.kind ?? "resident") !== "resident");
+  const [keepTpl, setKeepTpl] = useState(false);
+  const [askScope, setAskScope] = useState(false);
+  const [saved, setSaved] = useState<(SavedEvent & { scope?: "one" | "all" }) | null>(null);
+
+  /** Fill the form from a past event or a template; the day stays as chosen. */
+  const apply = (x: EventPrefill, key: string) => {
+    setStartKey(key);
+    const t0 = x.time ?? f.time;
+    setF({ ...f, title: x.title ?? "", date: x.date ?? f.date, time: t0, end: hhmm(toMin(t0) + (x.minutes ?? 60)), room: x.room ?? f.room, cap: x.cap ? String(x.cap) : "", cost: x.cost ?? "" });
+    setKind(x.kind ?? "resident");
+    setRk(x.repeat ? "weekly" : "none");
+    if (x.date) setDays([fromIso(x.date).getUTCDay()]);
+    setInts(x.interests?.length ? x.interests : null);
+    setWantPhotos((x.photos ?? 0) > 0);
+    setDesc(x.desc ?? null);
+    setAreas(x.areas ?? []);
+    if (x.leader !== undefined) setLeaderSel(x.leader);
+    setNews((x.kind ?? "resident") !== "resident");
+    setPlan(x.plan?.length ? x.plan : null);
+    setStops(x.stops ?? []);
+  };
+  const fromTpl = (t: SavedTemplate): EventPrefill => ({ title: t.title, kind: t.kind, time: t.time, minutes: t.minutes, room: t.room, cap: t.cap, interests: t.interests, photos: t.photos, desc: t.desc, cost: t.cost, areas: t.areas, leader: t.leader });
 
   const start = toMin(f.time), end = Math.max(toMin(f.end), start + 15);
   const d = fromIso(f.date || tomorrow);
   const interests = ints ?? interestsFromTitle(f.title);
+  const category = categoryOf({ cat: catOf(interests, lantern), title: f.title });
+  const pattern = { k: rk, days: days.length ? days : [d.getUTCDay()], until: until || undefined };
+  const rule = ruleText(rk, pattern.days, d, until || undefined);
+  const areaText = areas.length ? andList(areas) : "All residents";
   const cap = Number(f.cap) || undefined;
+  const photos = wantPhotos ? p.photos || 6 : 0;
   const set = (k: keyof typeof f) => (ev: { target: { value: string } }) => setF({ ...f, [k]: ev.target.value });
   const toggleInt = (i: Interest) => setInts(interests.includes(i) ? interests.filter((x) => x !== i) : [...interests, i]);
+  // The dates it's on: a repeat with no end date is shown for the next eight weeks.
+  const horizon = until || iso(addDays(d, 7 * 8));
+  const known = seriesDates(f.date || tomorrow, pattern, horizon);
+  const lastSave = until || iso(addDays(fromIso(setup.todayIso), 7 * 12));
 
   // Room clashes: the same room at an overlapping time, on that day (or on any later week, if it repeats).
-  const clash = setup.shared.includes(f.room) ? undefined
-    : [...setup.busy, ...extraBusy].find((b) => b.room === f.room && start < b.end && end > b.start && (b.date === f.date || (repeat && b.date > f.date && fromIso(b.date).getUTCDay() === d.getUTCDay())));
+  const offCampus = f.room === OFF_CAMPUS;
+  const clash = setup.shared.includes(f.room) || offCampus ? undefined
+    : [...setup.busy, ...extraBusy].filter((b) => !(editing && b.title === editing.title && b.room === editing.room && b.start === editing.start)).find((b) => b.room === f.room && start < b.end && end > b.start && (b.date === f.date || (repeat && b.date > f.date && fromIso(b.date).getUTCDay() === d.getUTCDay())));
 
   // What Kinlight writes, from the facts entered and nothing else.
-  const when = repeat ? `every ${dayName(d)} at ${fmtTime(start)}` : `${dayName(d)}, ${monthName(d)} ${d.getUTCDate()}, at ${fmtTime(start)}`;
-  const place = f.room === "All floors" ? "on every floor" : `in the ${f.room.replace(/^The /, "")}`;
+  const when = repeat && rule ? `${rule.replace(/, until .*$/, "").replace(/^Every/, "every").replace(/^Monthly,/, "monthly on the")} at ${fmtTime(start)}` : `${dayName(d)}, ${monthName(d)} ${d.getUTCDate()}, at ${fmtTime(start)}`;
+  const place = offCampus ? (stops.length ? `at ${placesText(stops)}` : "off campus") : f.room === "All floors" ? "on every floor" : `in the ${f.room.replace(/^The /, "")}`;
+  const tripLine = offCampus && stops.length ? ` A trip to ${placesText(stops)}; the bus leaves from the lobby.` : "";
   const likes = andList(interests.map((i) => i.toLowerCase()));
   const written = !f.title ? "" :
-    kind === "resident" ? `${f.title}, ${when}.${likes ? ` For residents who enjoy ${likes}.` : ""}${cap ? " Sign up at the front desk, or reply YES to your invite." : ""}${f.cost ? ` Cost: ${f.cost}.` : ""}` :
-    kind === "family" ? `${f.title}, ${when}, ${place}. Families are welcome: reply to your text or email with how many are coming.${f.cost ? ` Cost: ${f.cost}.` : ""}` :
+    kind === "resident" ? `${f.title}, ${when}.${tripLine}${likes ? ` For residents who enjoy ${likes}.` : ""}${cap ? " Tap I’ll go on your week page, sign up at the front desk, or reply YES to your invite." : ""}${f.cost ? ` Cost: ${f.cost}.` : ""}` :
+    kind === "family" ? `${f.title}, ${when}, ${place}. Families are welcome: reply to your text with how many are coming.${f.cost ? ` Cost: ${f.cost}.` : ""}` :
     `${f.title} at ${setup.brand.name}, ${when}, ${place}. Open to everyone: sign up on this page.${f.cost ? ` Cost: ${f.cost}.` : ""}`;
   const text = desc ?? written;
+  // What residents will do with the time: Kinlight's draft until staff change a step.
+  const plan = planSel ?? draftPlan({ title: f.title || "The activity", cat: catOf(interests, lantern), start, end, room: offCampus ? undefined : f.room, stops: offCampus ? stops : undefined });
+  const setStep = (i: number, patch: Partial<PlanStep>) => setPlan(plan.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const newsSun = addDays(d, -d.getUTCDay());
+  const newsTooLate = iso(newsSun) < setup.todayIso;
 
   const invited = lantern ? [] : setup.invitees.filter((r) => r.interests.some((x) => interests.includes(x))).map((r) => r.name);
   const isToday = f.date === setup.todayIso;
   const short = f.title.replace(/^Bus Trip: /, "") || "Your event";
   const sampleWhen = repeat ? `every ${dayName(d)}` : isToday ? (start >= 17 * 60 ? "tonight" : "today") : dayName(d);
-  const sample = `${short} ${sampleWhen} at ${shortTime(start)}, ${first(invited[0] ?? "Dorothy")}. ${cap ? "Want a seat?" : "Want to come?"} Reply YES.`;
+  const sample = `${first(invited[0] ?? "Dorothy")}, ${short.split(":")[0]} is ${sampleWhen} at ${shortTime(start)}. ${cap ? "Want a seat?" : "Want to come?"} Reply YES.`;
   const approval = !!f.cost.trim() && !setup.isApprover;
-  const effects = effectsOf({ title: f.title, date: f.date, start, kind, repeat, lantern, cap, interests, invited, sample, idea, approval, setup });
+  const effects = effectsOf({ date: f.date, kind, repeat, lantern, cap, interests, invited: invited.length, photos, idea, approval, newsletter: news, template: keepTpl, setup });
   const blocked = !!clash && !share;
+  const patternTouched = rk !== initPat.rk || until !== "" || pattern.days.join() !== initPat.days.join();
+  const repeating = !!editing?.rule;
 
-  const save = () => {
-    if (!f.title || blocked) return;
-    const e: SavedEvent = { id: `new-${f.date}-${start}-${f.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, title: f.title, date: f.date, start, end, room: f.room, kind, cat: catOf(interests, lantern), cap, repeat, lantern, interests, desc: text, cost: f.cost || undefined, idea: idea?.who ?? (idea ? "a resident" : undefined), approval };
-    setSaved(e);
-    onSaved?.(e);
+  const build = (): SavedEvent => ({
+    id: editing?.id ?? `new-${f.date}-${start}-${f.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, title: f.title, date: f.date, start, end, room: f.room, kind, cat: catOf(interests, lantern), cap, repeat, lantern, interests, desc: text, cost: f.cost || undefined, photos,
+    idea: idea?.who ?? (idea ? "a resident" : undefined), approval, rule, pattern, category, areas, leader: leader || undefined, newsletter: news && !newsTooLate, template: keepTpl, plan, stops: offCampus ? stops : undefined,
+  });
+
+  /** Save it: new events go on the calendar (every date, if it repeats); a change goes to one date or every date. */
+  const commit = (scope: "one" | "all") => {
+    const s = build();
+    if (!keepLocal) {
+      if (editing) {
+        const target = { id: editing.id, date: editing.date, orig: editing.orig };
+        if (scope === "all" && (patternTouched || !repeating)) {
+          writer.reshape(target, seriesDates(s.date, pattern, lastSave).map((date) => savedToCal(s, date, editing.id)));
+        } else if (scope === "all") {
+          const shift = Math.round((fromIso(s.date).getTime() - fromIso(editing.date).getTime()) / 864e5);
+          writer.series(target, { ...describe(s), rule: shift ? ruleText(rk, pattern.days.map((x) => (x + shift + 7) % 7), d) : editing.rule }, shift || undefined);
+        } else {
+          writer.one(target, { ...describe(s), date: s.date });
+        }
+        if (s.leader !== (prefill?.leader || undefined)) setLeader(editing.id, s.leader ?? null);
+      } else {
+        writer.add(seriesDates(s.date, pattern, lastSave).map((date) => savedToCal(s, date)));
+        if (s.leader) setLeader(s.id, s.leader);
+      }
+      if (keepTpl) writer.keepTemplate({ k: s.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"), label: s.title, title: s.title, kind, time: f.time, minutes: end - start, room: f.room, cap, interests, photos, desc: text, cost: f.cost || undefined, areas, leader: leader || undefined });
+    }
+    setAskScope(false);
+    setSaved({ ...s, scope: editing ? scope : undefined });
+    onSaved?.(s);
     if (!inDrawer) window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const submit = () => {
+    if (!f.title) { setTab("event"); return; }
+    if (offCampus && !stops.length) { setTab("event"); window.setTimeout(() => document.querySelector<HTMLInputElement>(".oc-search input")?.focus(), 50); return; }
+    if (blocked) { setTab("time"); return; }
+    if (editing && (repeating || patternTouched)) { setAskScope(true); return; }
+    commit("one");
   };
 
   if (saved) {
     const sd = fromIso(saved.date);
+    const editLine = saved.scope === "all" ? `Every date from ${dayShort(sd)} on` : editing ? `Only ${dayShort(sd)}` : null;
     return (
-      <div className={inDrawer ? "went po-done" : "sx-card sx-card-body went pt-went po-done"}>
-        <div className="went-head">
+      <div className={`po-done${inDrawer ? "" : " sx-card sx-card-body"}`} role="status">
+        <div className="po-done-h">
           <Icon name={saved.approval ? "clock" : "check"} />
           <div>
-            <h2>{saved.approval ? `Sent to ${setup.approver.first}` : `${saved.title} is on the calendar`}</h2>
-            <p className="pt-went-line">{dayName(sd)}, {monthName(sd)} {sd.getUTCDate()} · {fmtRange(saved.start, saved.end)} · {saved.room}{saved.repeat ? ` · every ${dayName(sd)}` : ""}. Here’s what Kinlight did.</p>
+            <h2>{saved.approval ? `Sent to ${setup.approver.first}` : editing ? `${saved.title} is saved` : `${saved.title} is on the calendar`}</h2>
+            <p>{dayName(sd)}, {monthName(sd)} {sd.getUTCDate()} · {fmtRange(saved.start, saved.end)} · {saved.room} · {areaText}{saved.rule ? ` · ${saved.rule}` : ""}{saved.leader ? ` · led by ${saved.leader === setup.me ? "you" : saved.leader}` : ""}</p>
+            {editLine && <p className="po-done-scope"><Icon name="layers" /> {editLine}. The website, newsletter, week pages and invites are updated, and everyone booked is told if the day, time or room changed.</p>}
           </div>
         </div>
-        <ul className="went-list">
-          {effects.map((x) => (
-            <li key={x.title} className={x.wait ? "wait" : undefined}><Icon name={x.icon} /><b>{x.title}</b><span>{x.detail}</span></li>
-          ))}
-        </ul>
+        {!editing && !saved.lantern && invited.length > 0 && <p className="po-done-stat"><b>{invited.length}</b> residents invited by text</p>}
+        {!editing && saved.repeat && <p className="po-done-stat"><b>{seriesDates(saved.date, saved.pattern, lastSave).length}</b> dates on the calendar · {saved.rule}</p>}
+        {saved.template && <p className="po-done-stat"><Icon name="star" /> Kept as a template</p>}
+        {!editing && <Auto summary="Everything Kinlight did"><ul>{effects.map((x) => <li key={x}>{x}</li>)}</ul></Auto>}
         <div className="pt-act">
-          {!saved.approval && <Link className="sx-btn sx-btn-primary" href={site("/calendar")} target="_blank"><Icon name="globe" /> See it on the website</Link>}
-          {!inDrawer && <Link className="sx-btn" href="/staff/calendar"><Icon name="calendar" /> Open the calendar</Link>}
-          {onAnother && <button type="button" className="sx-btn" onClick={onAnother}><Icon name="plus" /> Add another</button>}
+          {back && <Link className="sx-btn sx-btn-primary" href={back.href}><Icon name="left" /> {back.label}</Link>}
+          {!saved.approval && <Link className={`sx-btn${back ? "" : " sx-btn-primary"}`} href={site("/calendar")} target="_blank"><Icon name="globe" /> See it on the website</Link>}
+          {!inDrawer && !back && <Link className="sx-btn" href="/staff/calendar">Open the calendar</Link>}
+          {onAnother && !editing && <button type="button" className="sx-btn" onClick={onAnother}>Add another</button>}
         </div>
       </div>
     );
   }
 
-  const form = (
-    <form className={`sx-form pt-form po-evform${inDrawer ? "" : " sx-card sx-card-body"}`} onSubmit={(ev) => { ev.preventDefault(); save(); }} aria-label="New event">
+  const tabs: [Tab, string, string][] = [
+    ["event", "Event", f.title || "What it is"],
+    ["time", "Time", repeat && rule ? rule : `${dayShort(d)} · ${fmtTime(start)}`],
+    ["preview", "Preview", "What everyone sees"],
+  ];
+  const next: Partial<Record<Tab, Tab>> = { event: "time", time: "preview" };
+  const prev: Partial<Record<Tab, Tab>> = { time: "event", preview: "time" };
+  const go = (t: Tab) => { setTab(t); if (!inDrawer) document.getElementById("po-tabs")?.scrollIntoView({ behavior: "smooth", block: "nearest" }); };
+
+  const eventTab = (
+    <>
       {idea && (
-        <div className="sx-callout info po-idea">
-          <Icon name="heart" />
-          <p><b>A resident’s idea:</b> “{idea.text}”{idea.who ? ` from ${idea.who}` : ""}. {idea.who ? <>We’ll tell {first(idea.who)}: <i>your idea made the calendar</i>.</> : "No name on the slip."}</p>
+        <p className="po-idea"><Icon name="heart" /> <span>“{idea.text}” <small>{idea.who ? `${idea.who}’s idea` : "A resident’s idea"}</small></span></p>
+      )}
+      {!editing && !idea && (
+        <div className="po-start">
+          <label>
+            <span className="sx-lbl"><Icon name="layers" /> Copy a past event</span>
+            <select value={startKey.startsWith("past:") ? startKey : ""} onChange={(ev) => { const x = setup.past.find((y) => `past:${y.title}` === ev.target.value); if (x) apply({ ...x, repeat: true }, ev.target.value); }}>
+              <option value="">Choose one</option>
+              {setup.past.map((x) => <option key={x.title} value={`past:${x.title}`}>{x.label}</option>)}
+            </select>
+          </label>
+          <div>
+            <span className="sx-lbl">Or start from a template</span>
+            <div className="sx-chips" role="group" aria-label="Templates">
+              {mineTpls.map((t) => <button key={t.k} type="button" className="po-mytpl" aria-pressed={startKey === `mine:${t.k}`} onClick={() => apply(fromTpl(t), `mine:${t.k}`)}><Icon name="star" />{t.label}</button>)}
+              {TEMPLATES.map((x) => <button key={x.label} type="button" aria-pressed={startKey === `tpl:${x.label}`} onClick={() => apply(x, `tpl:${x.label}`)}>{x.label}</button>)}
+            </div>
+          </div>
         </div>
       )}
       <label>
         Title
-        <input value={f.title} onChange={set("title")} required placeholder="Bridge Club" autoComplete="off" />
+        <input value={f.title} onChange={set("title")} placeholder="Bridge Club" autoComplete="off" />
       </label>
+      <div className="po-pair">
+        <div className="sx-seg po-seg" role="group" aria-label="Who it’s for">
+          {(["resident", "family", "public"] as const).map((k) => (
+            <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}>{kindName[k]}</button>
+          ))}
+        </div>
+        <Help label="Who sees it" align="end">
+          <p><b>Residents:</b> the website shows name, day, time and description only. Residents tap I’ll go on their week page, reply YES or sign up at the desk; families can ask for a seat.</p>
+          <p><b>Families:</b> families reply to the text with how many are coming; the resident says yes first.</p>
+          <p><b>Public:</b> anyone can sign up on the website, and each sign-up is a lead for sales.</p>
+        </Help>
+      </div>
+      <fieldset className="po-field">
+        <legend className="sx-lbl">Which residents</legend>
+        <div className="sx-chips" role="group" aria-label="Which residents">
+          <button type="button" aria-pressed={!areas.length} onClick={() => setAreas([])}>All residents</button>
+          {setup.areas.map((a) => <button key={a} type="button" aria-pressed={areas.includes(a)} onClick={() => setAreas((x) => (x.includes(a) ? x.filter((y) => y !== a) : [...x, a]))}>{a}</button>)}
+        </div>
+      </fieldset>
+      <div className="sx-row">
+        <label>Led by<select value={leader} onChange={(ev) => setLeaderSel(ev.target.value)}><option value="">Nobody yet</option>{setup.staff.map((n) => <option key={n} value={n}>{n === setup.me ? `${n} (you)` : n}</option>)}</select></label>
+        <label>Room<select value={f.room} onChange={set("room")}>{setup.rooms.map((r) => <option key={r}>{r}</option>)}<option value={OFF_CAMPUS}>Off campus (a trip)</option></select></label>
+      </div>
+      {offCampus && <OffCampus stops={stops} onChange={(x) => { setStops(x); if (!planSel) setPlan(null); }} from={setup.brand.name} minutes={end - start} />}
+      <div className="sx-row">
+        <label>Seats<input type="number" min={0} inputMode="numeric" value={f.cap} onChange={set("cap")} placeholder="No limit" /></label>
+      </div>
+      <fieldset className="po-field">
+        <legend className="sx-lbl">Interests</legend>
+        <div className="sx-chips po-ints" role="group" aria-label="Matching interests">
+          {setup.interests.map((i) => <button key={i} type="button" aria-pressed={interests.includes(i)} onClick={() => toggleInt(i)}>{interests.includes(i) && <Icon name="check" />}{i}</button>)}
+        </div>
+        <div className="po-invited">
+          {lantern ? "Lantern: invited in person" : <><b>{invited.length}</b> residents invited, and it’s picked out on their week page</>}
+          <Help label="How invites work">
+            <p>Each resident who chose one of these interests gets a personal text: “{sample}”</p>
+            <p>It’s also picked out for them on their week page, the link in Sunday’s text. A YES or “I’ll go” books them. Lantern residents aren’t texted; the care team asks in person.</p>
+            {!ints && f.title && <p>Suggested from the title; tap to change.</p>}
+          </Help>
+        </div>
+      </fieldset>
+      <div className="po-pair po-opts">
+        <label className="sx-check"><input type="checkbox" checked={wantPhotos} onChange={(ev) => setWantPhotos(ev.target.checked)} /> Photos wanted</label>
+        <label className={`sx-check${newsTooLate ? " po-off" : ""}`} title={newsTooLate ? "That week’s newsletter has already gone out" : undefined}>
+          <input type="checkbox" checked={news && !newsTooLate} disabled={newsTooLate} onChange={(ev) => setNews(ev.target.checked)} /> Include in the newsletter
+          <span className="sx-hint">{newsTooLate ? "(too late for that week’s issue)" : `(Sunday, ${shortDate(newsSun)})`}</span>
+        </label>
+      </div>
+      <label>
+        <span className="po-lbl">Price <span className="sx-hint">optional</span>{!setup.isApprover && <span className="po-tag">Approval needed</span>}</span>
+        <input value={f.cost} onChange={set("cost")} placeholder="Free" inputMode="decimal" />
+      </label>
+      <label className="po-written">
+        <span className="po-lbl">Description</span>
+        <textarea aria-label="Description" rows={3} value={text} onChange={(ev) => setDesc(ev.target.value)} placeholder="Written once there’s a title." />
+      </label>
+      <fieldset className="po-field po-plan">
+        <legend className="sx-lbl">What they’ll do <span className="sx-hint">{planSel ? "your plan" : "Kinlight’s draft, from the title and times"}</span></legend>
+        <ol>
+          {plan.map((x, i) => (
+            <li key={i}>
+              <input type="time" aria-label={`Step ${i + 1} time`} value={hhmm(x.at)} step={300} onChange={(ev) => setStep(i, { at: toMin(ev.target.value) })} />
+              <input aria-label={`Step ${i + 1}`} value={x.what} onChange={(ev) => setStep(i, { what: ev.target.value })} />
+              <button type="button" className="sx-x" aria-label={`Remove step ${i + 1}`} onClick={() => setPlan(plan.filter((_, j) => j !== i))}><Icon name="x" /></button>
+            </li>
+          ))}
+        </ol>
+        <div className="po-plan-act">
+          <button type="button" className="sx-link" onClick={() => setPlan([...plan, { at: plan.length ? Math.min(end, plan[plan.length - 1].at + 15) : start, what: "" }])}><Icon name="plus" /> Add a step</button>
+          {planSel && <button type="button" className="sx-link" onClick={() => setPlan(null)}>Use Kinlight’s draft</button>}
+        </div>
+        <p className="sx-hint">Residents see this when they open the activity on their week page.</p>
+      </fieldset>
+      {!keepLocal && (
+        <label className="sx-check po-keep">
+          <input type="checkbox" checked={keepTpl} onChange={(ev) => setKeepTpl(ev.target.checked)} />
+          <span>
+            <b>Keep as a template</b>
+            <small>For something you’ll run again. It saves the event’s details (not its dates) under “Start from a template”, so next time you only pick a time.</small>
+          </span>
+        </label>
+      )}
+    </>
+  );
+
+  const timeTab = (
+    <>
       <div className="sx-row3 po-when">
-        <label>Day<input type="date" value={f.date} min={setup.todayIso} onChange={set("date")} required /></label>
+        <label>Day<input type="date" value={f.date} min={editing && editing.date < setup.todayIso ? editing.date : setup.todayIso} onChange={set("date")} required /></label>
         <label>Starts<input type="time" value={f.time} onChange={(ev) => { const s0 = toMin(ev.target.value); setF({ ...f, time: ev.target.value, end: hhmm(s0 + Math.max(15, end - start)) }); }} step={300} required /></label>
         <label>Ends<input type="time" value={f.end} onChange={set("end")} step={300} /></label>
       </div>
-      <fieldset className="po-field">
+      <fieldset className="po-field po-repeat">
         <legend className="sx-lbl">Repeats</legend>
         <div className="sx-seg" role="group" aria-label="Repeats">
-          <button type="button" aria-pressed={!repeat} onClick={() => setRepeat(false)}>One-off</button>
-          <button type="button" aria-pressed={repeat} onClick={() => setRepeat(true)}>Every {dayName(d)}</button>
-        </div>
-      </fieldset>
-      <fieldset className="po-field">
-        <legend className="sx-lbl">Who is it for?</legend>
-        <div className="sx-seg po-seg" role="group" aria-label="Who it’s for">
-          {(["resident", "family", "public"] as const).map((k) => (
-            <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}>{k === "resident" ? "Residents" : k === "family" ? "Families" : "Public"}</button>
+          {([["none", "One-off"], ["weekly", "Weekly"], ["biweekly", "Every 2 weeks"], ["monthly", "Monthly"]] as const).map(([k, l]) => (
+            <button key={k} type="button" aria-pressed={rk === k} onClick={() => { setRk(k); if (!days.includes(d.getUTCDay())) setDays([d.getUTCDay()]); }}>{l}</button>
           ))}
         </div>
-        <p className="sx-hint">
-          {eventKindLabel[kind]}. {kind === "resident" ? "Residents reply YES or sign up with you; families can ask for a seat." : kind === "family" ? "Families reply with how many are coming; the resident says yes first, then it’s approved." : "Anyone can sign up on the website, and each sign-up is a lead for sales."}
-        </p>
+        {(rk === "weekly" || rk === "biweekly") && (
+          <div className="sx-chips po-days" role="group" aria-label="On these days">
+            {WD.map((w, i) => <button key={w} type="button" aria-pressed={days.includes(i)} onClick={() => setDays((x) => (x.includes(i) ? (x.length > 1 ? x.filter((y) => y !== i) : x) : [...x, i]))}>{w}</button>)}
+          </div>
+        )}
+        {repeat && (
+          <div className="po-until">
+            <span className="sx-hint">{rule}</span>
+            <label>Ends <input type="date" value={until} min={f.date} onChange={(ev) => setUntil(ev.target.value)} aria-label="End date" /></label>
+            {until && <button type="button" className="sx-link" onClick={() => setUntil("")}>No end date</button>}
+          </div>
+        )}
       </fieldset>
-      <div className="sx-row">
-        <label>Room<select value={f.room} onChange={set("room")}>{setup.rooms.map((r) => <option key={r}>{r}</option>)}</select></label>
-        <label>Seats, if limited<input type="number" min={0} inputMode="numeric" value={f.cap} onChange={set("cap")} placeholder="No limit" /></label>
+      <div className="po-dates">
+        <p className="sx-lbl">{repeat ? (until ? `The ${known.length} dates it’s on` : `The next ${known.length} dates`) : "The date it’s on"}</p>
+        <ul>
+          {known.slice(0, 12).map((x) => <li key={x}>{dayShort(fromIso(x))}</li>)}
+          {known.length > 12 && <li className="po-dates-more">and {known.length - 12} more</li>}
+        </ul>
+        {repeat && !until && <p className="sx-hint">It keeps going until you set an end date. Each date is the same event: change one later and you’ll be asked whether it’s that date or every date.</p>}
       </div>
       {clash ? (
         <div className="sx-callout" role="alert">
           <Icon name="alert" />
           <p>
-            <b>Room clash:</b> {clash.title} is in {f.room} {clash.date === f.date ? "" : `on ${dayName(fromIso(clash.date))}s `}{fmtRange(clash.start, clash.end)}. Choose another room or time
-            {share ? ", or keep it: you said they share the room." : <>, or <button type="button" className="sx-link pt-linkbtn" onClick={() => setShare(true)}>they can share the room</button>.</>}
+            <b>Room clash:</b> {clash.title}, {clash.date === f.date ? "" : `${dayName(fromIso(clash.date))}s `}{fmtRange(clash.start, clash.end)}, in {f.room}.{" "}
+            {share ? "They’ll share the room." : <><button type="button" className="sx-link pt-linkbtn" onClick={() => setShare(true)}>They can share</button>, or change the room on the Event tab.</>}
           </p>
         </div>
       ) : (
-        <p className="sx-hint po-free"><Icon name="check" /> {f.room} is free {fmtRange(start, end)}{repeat ? ` every ${dayName(d)}` : ""}.</p>
+        <p className="po-free"><Icon name="check" /> {offCampus ? (stops.length ? `Off campus: ${placesText(stops)}` : "Off campus: add where it’s going on the Event tab") : `${f.room} is free`}</p>
       )}
-      <label className="sx-check"><input type="checkbox" checked={lantern} onChange={(ev) => setLantern(ev.target.checked)} /> A Lantern (memory care) activity</label>
-      <fieldset className="po-field">
-        <legend className="sx-lbl">Matching interests <span className="sx-hint">{ints ? "chosen by you" : f.title ? "suggested from the title" : "suggested once there’s a title"}</span></legend>
-        <div className="sx-chips po-ints" role="group" aria-label="Matching interests">
-          {setup.interests.map((i) => <button key={i} type="button" aria-pressed={interests.includes(i)} onClick={() => toggleInt(i)}>{interests.includes(i) && <Icon name="check" />}{i}</button>)}
-        </div>
-        <p className="sx-hint">{lantern ? "Lantern residents are invited in person, not by text." : `${invited.length} residents chose ${interests.length ? andList(interests.map((i) => i.toLowerCase())) : "these"}: each gets a personal invite by text.`}</p>
-      </fieldset>
-      <label>
-        <span>Price, if any <span className="sx-hint">{setup.isApprover ? "you approve your own" : `${setup.approver.first} approves anything with a price`}</span></span>
-        <input value={f.cost} onChange={set("cost")} placeholder="Free" inputMode="decimal" />
-      </label>
-      <div className="po-written">
-        <div className="po-written-h">
-          <span className="po-ai"><Icon name="sparkle" /> {desc === null ? "Kinlight wrote this description" : "Changed by you"}</span>
-          {desc !== null && <button type="button" className="sx-link pt-linkbtn" onClick={() => setDesc(null)}>Write it again</button>}
-        </div>
-        <textarea aria-label="Description" rows={3} value={text} onChange={(ev) => setDesc(ev.target.value)} placeholder="Kinlight writes this once there’s a title." />
-        <p className="sx-hint">Only from what you entered: nothing added. {kind === "resident" ? "The room and seats are left out: the website never shows them for resident activities." : ""}</p>
+    </>
+  );
+
+  const draft: Draft = { id: editing?.id ?? "draft", title: f.title, date: f.date || tomorrow, start, end, room: f.room, kind, cat: catOf(interests, lantern), desc: text, cap, interests, lantern, rule, dates: known, approval, plan, stops: offCampus ? stops : undefined };
+  const previewTab = <EventPreview draft={draft} setup={setup} preview={preview} newsletter={news} setNewsletter={setNews} invited={invited} />;
+
+  const sd = fromIso(editing?.date ?? f.date);
+  return (
+    <form className={`sx-form pt-form po-evform${inDrawer ? "" : " sx-card sx-card-body"}`} onSubmit={(ev) => { ev.preventDefault(); submit(); }} aria-label={editing ? "Edit event" : "New event"}>
+      <div className="po-tabs" id="po-tabs" role="tablist" aria-label="Steps">
+        {tabs.map(([k, label, hint], i) => (
+          <button key={k} type="button" role="tab" id={`po-tab-${k}`} aria-controls={`po-panel-${k}`} aria-selected={tab === k} onClick={() => setTab(k)}>
+            <span className="po-tab-n" aria-hidden="true">{i + 1}</span>
+            <span className="po-tab-t"><b>{label}</b><small>{hint}</small></span>
+          </button>
+        ))}
       </div>
-      {inDrawer && <AutoList effects={effects} />}
-      <div className="pt-submit">
-        <p>{approval ? <>Goes to <b>{setup.approver.first}</b> first, because it has a price.</> : blocked ? "Fix the room clash first." : "Publishes straight away. Everything below happens automatically."}</p>
-        <button type="submit" className="sx-btn sx-btn-lg sx-btn-primary" disabled={!f.title || blocked}>
-          <Icon name={approval ? "send" : "check"} /> {approval ? `Send to ${setup.approver.first}` : "Add the event"}
-        </button>
+      <div className="po-panel" role="tabpanel" id={`po-panel-${tab}`} aria-labelledby={`po-tab-${tab}`}>
+        {tab === "event" ? eventTab : tab === "time" ? timeTab : previewTab}
       </div>
+
+      {askScope && editing ? (
+        <div className="po-scope" role="alertdialog" aria-labelledby="po-scope-h">
+          <h3 id="po-scope-h"><Icon name="layers" /> Change every {f.title || editing.title}, or just this one?</h3>
+          <p>{repeating ? <>This is one date of an event that repeats ({editing.rule}).</> : <>You made it repeat.</>} Where should these changes go?</p>
+          <div className="po-scope-opts">
+            {repeating && !patternTouched && (
+              <button type="button" className="sx-btn sx-btn-lg" onClick={() => commit("one")}>
+                <b>Only {dayShort(sd)}</b><small>The other dates stay as they are.</small>
+              </button>
+            )}
+            <button type="button" className="sx-btn sx-btn-lg sx-btn-primary" onClick={() => commit("all")}>
+              <b>Every date from {dayShort(sd)} on</b><small>{patternTouched ? `Its dates become: ${rule ?? "one-off"}.` : "Earlier dates stay as they were."}</small>
+            </button>
+          </div>
+          <button type="button" className="sx-link" onClick={() => setAskScope(false)}>Go back to the form</button>
+        </div>
+      ) : (
+        <div className="pt-submit po-foot">
+          <Auto summary={approval ? `Goes to ${setup.approver.first} first` : "Then Kinlight does the rest"}><ul>{effects.map((x) => <li key={x}>{x}</li>)}</ul></Auto>
+          <div className="po-foot-btns">
+            {prev[tab] && <button type="button" className="sx-btn sx-btn-lg" onClick={() => go(prev[tab]!)}><Icon name="left" /> Back</button>}
+            {editing && onCancel && tab === "event" && <button type="button" className="sx-btn sx-btn-lg" onClick={onCancel}>Cancel</button>}
+            {next[tab] && <button type="button" className={`sx-btn sx-btn-lg${editing ? "" : " sx-btn-primary"}`} onClick={() => go(next[tab]!)}>Next: {next[tab] === "time" ? "Time" : "Preview"} <Icon name="right" /></button>}
+            {(tab === "preview" || editing) && (
+              <button type="submit" className="sx-btn sx-btn-lg sx-btn-primary" disabled={blocked}>
+                <Icon name={approval ? "send" : "check"} /> {approval ? `Send to ${setup.approver.first}` : editing ? "Save changes" : "Add the event"}
+              </button>
+            )}
+          </div>
+          {!f.title && tab !== "event" && <p className="sx-hint po-need">Give it a title on the Event tab first.</p>}
+          {offCampus && !stops.length && <p className="sx-hint po-need">It’s off campus: add where it’s going on the Event tab.</p>}
+        </div>
+      )}
     </form>
-  );
-
-  if (inDrawer) return form;
-  return (
-    <div className="po-ev">
-      {form}
-      <section className="sx-card sx-card-body po-auto" aria-label="What Kinlight does automatically">
-        <h2 className="pt-prev-h">What Kinlight does when you add it</h2>
-        <AutoList effects={effects} />
-        <div className="prev-grid po-prevs">
-          <div className="prev prev-wide">
-            <div className="prev-h"><Icon name="globe" /> Website <span className="sx-hint">{setup.brand.domain}/calendar</span></div>
-            <div className="prev-b">
-              <div className="pv-web">
-                <div className="pv-web-day">{dayName(d)}, {monthName(d)} {d.getUTCDate()}</div>
-                <div className="pv-web-card pt-noimg">
-                  <div className="pv-web-t">
-                    <time>{fmtTime(start)}</time>
-                    <b>{f.title || "Your event"}</b>
-                    {kind !== "resident" && <span>{f.room}</span>}
-                    <span className="pv-web-desc">{text}</span>
-                    {kind === "public" && <span className="pv-web-btn">Sign up</span>}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {!lantern && invited.length > 0 && (
-            <div className="prev">
-              <div className="prev-h"><Icon name="sms" /> Personal invite</div>
-              <div className="prev-b prev-phone">
-                <Phone size="sm" time="8:30" label={`The invite on ${invited[0]}’s phone`}>
-                  <SmsThread name={setup.brand.name} sub={setup.brand.phone} initials={setup.brand.short} bubbles={[{ time: "8:30 am", text: sample }, { me: true, text: "YES" }, { time: "8:31 am", text: `You’re booked, ${first(invited[0])}. See you there!` }]} />
-                </Phone>
-                <p className="pv-meta">To {invited.length} residents who chose {andList(interests.map((i) => i.toLowerCase()))}</p>
-              </div>
-            </div>
-          )}
-          <div className="prev">
-            <div className="prev-h"><Icon name="printer" /> Flyer <span className="sx-hint">Large print</span></div>
-            <div className="prev-b">
-              <div className="pv-flyer">
-                <div className="pv-flyer-top">{setup.brand.name}</div>
-                <div className="pv-flyer-t">
-                  <b>{short}</b>
-                  <span>{repeat ? `Every ${dayName(d)}` : `${dayName(d)}, ${monthName(d)} ${d.getUTCDate()}`} · {fmtTime(start)}</span>
-                  <small>{kind === "public" ? `Everyone welcome · ${setup.brand.domain}` : cap ? "Sign up at the front desk" : f.room}</small>
-                </div>
-                <div className="pv-flyer-foot">Questions? {setup.brand.phone}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function AutoList({ effects }: { effects: Effect[] }) {
-  return (
-    <ul className="po-autolist" aria-label="What happens automatically">
-      {effects.map((x) => (
-        <li key={x.title} className={x.wait ? "wait" : undefined}>
-          <Icon name={x.icon} />
-          <span><b>{x.title}</b> {x.detail}</span>
-        </li>
-      ))}
-    </ul>
   );
 }

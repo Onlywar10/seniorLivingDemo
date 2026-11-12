@@ -6,7 +6,8 @@ import "@/components/brand/brand.css";
 import { pillars } from "@/data/wrenhaven";
 import { lifestyleCopy } from "@/data/communities/copy/lifestyle";
 import { getCommunity } from "@/lib/community-server";
-import { today } from "@/lib/clock";
+import { addDays, fmtTime, iso, nowMinutes, today } from "@/lib/clock";
+import { cats } from "@/data/shared";
 import { PageHero } from "@/components/PageHero";
 import { Icon } from "@/components/Icon";
 import { TourBand } from "@/components/brand/TourBand";
@@ -23,7 +24,15 @@ export default async function Lifestyle() {
   const { t } = await getT();
   const c = await getCommunity();
   const { deeper, tiles, hero } = lifestyleCopy[c.slug];
-  const n = c.eventsOn(today()).length;
+  const d = today();
+  // The same count as the Calendar and the homepage, and a short look at what's next (Calendar has the rest).
+  const todays = c.eventsOn(d, iso(d));
+  const n = todays.length;
+  const now = nowMinutes();
+  const next = [
+    ...todays.filter((e) => (e.end ?? e.start + 60) > now).map((e) => ({ e, when: "Today" })),
+    ...c.eventsOn(addDays(d, 1), iso(d)).map((e) => ({ e, when: "Tomorrow" })),
+  ].slice(0, 4);
   return (
     <>
       <PageHero
@@ -47,6 +56,25 @@ export default async function Lifestyle() {
           </Link>
         </div>
       </PageHero>
+
+      <section className="sec-tight tone-white" aria-labelledby="ls-on-h">
+        <div className="wrap ls-on">
+          <h2 id="ls-on-h" className="ls-on-h">
+            <Icon name="calendar" /> {t("What’s on")}
+          </h2>
+          <ul className="ls-on-l">
+            {next.map(({ e, when }) => (
+              <li key={e.id} style={{ "--cat": cats[e.cat].color } as React.CSSProperties}>
+                <small>{t(when)} · {t(fmtTime(e.start))}</small>
+                <b>{t(e.title)}</b>
+              </li>
+            ))}
+          </ul>
+          <Link className="link-arrow" href="/calendar">
+            {t("See the full calendar")} <Icon name="arrow" />
+          </Link>
+        </div>
+      </section>
 
       <section className="sec tone-cream" id="live" aria-labelledby="br-live-h">
         <div className="wrap">

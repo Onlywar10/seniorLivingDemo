@@ -1,0 +1,13 @@
+/* Floating "Book a tour" button for the alternative community homepages (phones only). */
+.alt-pill { display: none; }
+@media (max-width: 760px) {
+  .alt-pill {
+    position: fixed; left: 16px; bottom: 20px; z-index: 65;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px;
+    border-radius: 999px; background: var(--terra-deep); color: #fff; font-weight: 700; font-size: 0.98rem; text-decoration: none;
+    box-shadow: 0 14px 30px -12px rgba(120, 30, 30, 0.6);
+    transform: translateY(140%); opacity: 0; pointer-events: none; transition: transform 0.3s var(--ease), opacity 0.3s;
+  }
+  .alt-pill.is-on { transform: none; opacity: 1; pointer-events: auto; }
+  .alt-pill:hover { color: #fff; background: #9e2d2f; }
+}

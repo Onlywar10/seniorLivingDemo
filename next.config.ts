@@ -6,7 +6,6 @@ const staffMoves: [string, string][] = [
   ["dashboard", "today"],
   ["alerts", "today"],
   ["approvals", "today"],
-  ["messages", "today"],
   ["publish", "post"],
   ["photo-post", "post?type=photo"],
   ["calendar/menus", "menus"],

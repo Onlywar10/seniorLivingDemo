@@ -5,6 +5,7 @@ import { mayOpen } from "@/components/staff/portal/ReportsNav";
 import { NotThisReport } from "@/components/staff/portal/ReportsParts";
 import { sectionAccess } from "@/data/staff/access";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
+import { Help } from "@/components/staff/portal/Help";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
@@ -52,7 +53,8 @@ export default async function SurveysPage() {
 
   return (
     <>
-      <PageHead title="Surveys" sub={`What families, staff and residents at ${s.brand.name} say, before go-live and now. Results go on the monthly scorecard as evidence.`}>
+      <PageHead title="Surveys" sub={`${s.brand.name}, before go-live and now`}>
+        <Help label="Where results go" align="end"><p>The family survey (“I know what’s happening”, “I feel part of the community”) and the staff pulse go on the monthly scorecard as evidence: before go-live against day 90, and in the day-90 results report.</p></Help>
         <Link href="/staff/reports" className="sx-btn"><Icon name="chart" /> Monthly scorecard</Link>
       </PageHead>
       <ReportTabs access={access} />
@@ -60,16 +62,16 @@ export default async function SurveysPage() {
         <Kpi label="Family survey response" value={`${famRate}%`} note={`${family.answered} of ${family.sent} families`} />
         <Kpi label="Would recommend (0–10)" value={nps ? nps.now.toFixed(1) : "–"} delta={nps ? Number((nps.now - nps.before).toFixed(1)) : undefined} deltaSuffix="" note="since before go-live" />
         <Kpi label="Staff pulse response" value={`${staffRate}%`} note={`${staff.answered} of ${staff.sent} staff`} />
-        <Kpi label="Residents surveyed" value={resident.answered} note="read aloud, one to one" />
+        <Kpi label="Residents surveyed" value={resident.answered} note="one to one" />
       </div>
 
       <div className="sx-grid g-21">
-        <Card title={family.title} sub={family.when} action={<Badge tone="info">Scorecard evidence</Badge>}>
+        <Card title={family.title} sub={family.when} action={<Badge tone="info">On the scorecard</Badge>}>
           <ul className="sv-qs">
             {family.qs.map((q) => <BeforeNow key={q.q} q={q} />)}
           </ul>
         </Card>
-        <Card title="What families wrote" sub="Translated into English; the original is kept">
+        <Card title="What families wrote" sub="In English" action={<Help label="About translations" align="end"><p>Translated into English; the original is kept underneath.</p></Help>}>
           <ul className="sx-list">
             {family.comments.map((c) => (
               <li key={c.text}>
@@ -83,7 +85,7 @@ export default async function SurveysPage() {
       </div>
 
       <div className="sx-grid g-2">
-        <Card title={staff.title} sub={staff.when} action={<Badge tone="info">Scorecard evidence</Badge>}>
+        <Card title={staff.title} sub={staff.when} action={<Badge tone="info">On the scorecard</Badge>}>
           <div className="sx-table-wrap">
             <table className="sx-table">
               <thead><tr><th>Question (1–5)</th>{staff.months.map((m) => <th key={m} className="num">{m}</th>)}</tr></thead>
@@ -106,18 +108,11 @@ export default async function SurveysPage() {
             {staff.comments.map((c) => <li key={c} className="sx-hint">“{c}”</li>)}
           </ul>
         </Card>
-        <Card title={resident.title} sub={`${resident.answered} residents · staff read each question aloud and note the answer`}>
+        <Card title={resident.title} sub={`${resident.answered} residents`} action={<Help label="How residents are asked" align="end"><p>Printed, or staff read each question aloud and note the answer.</p></Help>}>
           <ul className="sv-qs">
             {resident.qs.map((q) => <BeforeNow key={q.q} q={q} />)}
           </ul>
         </Card>
-      </div>
-
-      <div className="sx-callout info">
-        <Icon name="info" />
-        <p>
-          <b>Where results go.</b> The family survey (“I know what’s happening”, “I feel part of the community”) and the staff pulse are reported on the monthly scorecard as evidence, before go-live against day 90, and in the day-90 results report.
-        </p>
       </div>
     </>
   );

@@ -2,11 +2,16 @@
 
 // Feedback → Family concerns: each one has an owner and a status (Open, In progress, Resolved) and stays open until
 // someone marks it resolved. Never answered by the AI: a person always replies. Reassign, add a note, or mark it
-// resolved once the family has been told. Changes stay in this browser.
+// resolved once the family has been told. Care concerns are not held here: they were passed straight to the care team
+// to be recorded in the community's own care system, so Kinlight shows only where each went and when (no notes, no
+// "resolved"). Changes stay in this browser.
 import { useState } from "react";
 import type { Concern, ConcernStatus } from "@/data/staff/engage";
 import { Icon } from "../../Icon";
+import { FamilyLink, ResidentLink } from "../ResidentLink";
+import { say, useConcernPatches, usePatchConcern } from "../store";
 import { Badge } from "../ui";
+import { Help } from "./Help";
 
 export interface Owner { key: string; name: string; label: string }
 
@@ -14,16 +19,21 @@ const first = (n = "") => n.split(" ")[0];
 const tone = (s: ConcernStatus) => (s === "Resolved" ? "good" : s === "In progress" ? "info" : "warn");
 
 export function FeedbackConcerns({ items, owners, me }: { items: Concern[]; owners: Owner[]; me: string }) {
-  const [rows, setRows] = useState(items);
+  // Shared with Today: a concern resolved there is resolved here, and the other way round.
+  const patches = useConcernPatches();
+  const patch = usePatchConcern();
+  const rows = items.filter((c) => !c.care).map((c) => ({ ...c, ...patches[c.id] }));
+  const care = items.filter((c) => c.care);
   const [act, setAct] = useState<{ id: string; kind: "note" | "owner" | "resolve" } | null>(null);
   const [val, setVal] = useState("");
   const [filter, setFilter] = useState<"open" | "all">("open");
 
-  const upd = (id: string, f: (c: Concern) => Partial<Concern>) => setRows((xs) => xs.map((x) => (x.id === id ? { ...x, ...f(x) } : x)));
+  const upd = (id: string, f: (c: Concern) => Partial<Concern>) => { const c = rows.find((x) => x.id === id); if (c) patch(id, f(c)); };
   const done = () => { setAct(null); setVal(""); };
 
   const submit = (c: Concern) => {
     if (!act) return;
+    say(act.kind === "note" ? "Note added." : act.kind === "owner" ? "Reassigned. They got an alert." : "Resolved. Updated on Today too.");
     if (act.kind === "note" && val.trim()) upd(c.id, (x) => ({ log: [...x.log, `${first(me)}: ${val.trim()}`], status: x.status === "Open" ? "In progress" : x.status }));
     if (act.kind === "owner" && val) {
       const o = owners.find((x) => x.key === val);
@@ -54,10 +64,11 @@ export function FeedbackConcerns({ items, owners, me }: { items: Concern[]; owne
               <span className="pt-ago">{c.ago}</span>
             </div>
             <p className="pt-quote">“{c.text}”</p>
-            <p className="fb-c-from">{c.from}, {c.relation.toLowerCase()} of {c.resident} · {c.how}</p>
+            <p className="fb-c-from"><FamilyLink name={c.from} resident={c.resident} bold={false} />, {c.relation.toLowerCase()} of <ResidentLink name={c.resident} bold={false} /></p>
             <div className="pt-facts">
-              <span><Icon name="users" /> Owner: {c.ownerName}</span>
-              <span className="warn"><Icon name="lock" /> Never answered by the AI</span>
+              <span><Icon name="users" /> {c.ownerName}</span>
+              <span><Icon name="lock" /> Never answered by AI</span>
+              <span>{c.how === "Marked as a concern by staff" ? "Marked by staff" : "Spotted by AI"}</span>
             </div>
             <ol className="fb-log" aria-label="What’s happened">
               {c.log.map((l, i) => <li key={i}>{l}</li>)}
@@ -75,7 +86,7 @@ export function FeedbackConcerns({ items, owners, me }: { items: Concern[]; owne
                 ) : (
                   <label>
                     {act.kind === "note" ? "Note (staff only)" : `How was ${first(c.from)} told? (optional)`}
-                    <textarea rows={2} value={val} onChange={(e) => setVal(e.target.value)} placeholder={act.kind === "note" ? "Called back; checking with the night team" : "Called and explained what we changed"} required={act.kind === "note"} />
+                    <textarea rows={2} value={val} onChange={(e) => setVal(e.target.value)} placeholder={act.kind === "note" ? "Called back; checking the statement" : "Called and explained what we changed"} required={act.kind === "note"} />
                   </label>
                 )}
                 <div className="pt-act">
@@ -88,13 +99,42 @@ export function FeedbackConcerns({ items, owners, me }: { items: Concern[]; owne
             ) : (
               <div className="pt-act">
                 <button type="button" className="sx-btn sx-btn-primary sx-btn-sm" onClick={() => { setAct({ id: c.id, kind: "resolve" }); setVal(""); }}><Icon name="check" /> Mark resolved</button>
-                <button type="button" className="sx-btn sx-btn-sm" onClick={() => { setAct({ id: c.id, kind: "note" }); setVal(""); }}><Icon name="edit" /> Add a note</button>
-                <button type="button" className="sx-btn sx-btn-sm" onClick={() => { setAct({ id: c.id, kind: "owner" }); setVal(""); }}><Icon name="users" /> Reassign</button>
+                <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => { setAct({ id: c.id, kind: "note" }); setVal(""); }}><Icon name="edit" /> Note</button>
+                <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => { setAct({ id: c.id, kind: "owner" }); setVal(""); }}><Icon name="users" /> Reassign</button>
               </div>
             ))}
           </li>
         ))}
       </ul>
+
+      {care.length > 0 && (
+        <section className="fb-care" aria-labelledby="fb-care-h">
+          <h3 id="fb-care-h">
+            Passed to the care team
+            <Help label="Why care concerns aren’t kept here">
+              <p>Care and safety concerns aren’t held in Kinlight. Each one is passed straight to the care team, to be recorded in the community’s own care system.</p>
+              <p>Kinlight shows only that it was routed, to whom and when. It keeps no care record, notes or outcome here, and never answers them with AI.</p>
+            </Help>
+          </h3>
+          <ul className="fb-concerns">
+            {care.map((c) => (
+              <li key={c.id} className="fb-concern s-care">
+                <div className="fb-c-h">
+                  <span className="pt-tag k-ask">{c.topic}</span>
+                  <Badge tone="info"><Icon name="send" /> Passed to the care team</Badge>
+                  <span className="pt-ago">{c.ago}</span>
+                </div>
+                <p className="pt-quote">“{c.text}”</p>
+                <p className="fb-c-from"><FamilyLink name={c.from} resident={c.resident} bold={false} />, {c.relation.toLowerCase()} of <ResidentLink name={c.resident} bold={false} /></p>
+                <div className="pt-facts">
+                  <span><Icon name="users" /> To {c.care!.team}, {c.care!.at.replace(/^./, (x) => x.toLowerCase())}</span>
+                  <span><Icon name="doc" /> Recorded in {c.care!.system}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   );
 }

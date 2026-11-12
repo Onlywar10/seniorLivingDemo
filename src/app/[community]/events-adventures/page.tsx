@@ -23,7 +23,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function EventsAdventures() {
   const { t } = await getT();
   const c = await getCommunity();
-  const { site } = c;
   const copy = eventsCopy[c.slug];
   const d = today();
   // Events & Adventures stories first, topped up with other community news.
@@ -61,8 +60,8 @@ export default async function EventsAdventures() {
           <Link className="btn" href="#trips">
             {t("Upcoming trips")}
           </Link>
-          <Link className="btn btn-ghost" href="/calendar">
-            {t("Activity calendar")}
+          <Link className="btn btn-ghost" href="/calendar?view=month&cat=trips">
+            {t("Trips on the calendar")}
           </Link>
         </div>
       </PageHero>
@@ -128,10 +127,10 @@ export default async function EventsAdventures() {
               <h2 id="br-trips-h">
                 {t("Upcoming ")}<em>{t("trips & outings")}</em>
               </h2>
-              <p>{t(first ? `Residents: sign up with ${first} and the activities team. Families: ask for a seat from your weekly message.` : "Residents: sign up with the activities team. Families: ask for a seat from your weekly message.")}</p>
+              <p>{t(first ? `Residents: reply YES to the invite text, or sign up with ${first} and the activities team. Families: reply to your text to ask for a seat; we check with your resident first.` : "Residents: reply YES to the invite text, or sign up with the activities team. Families: reply to your text to ask for a seat; we check with your resident first.")}</p>
             </div>
-            <Link className="btn btn-green" href="/calendar">
-              <Icon name="calendar" /> {t("Full calendar")}
+            <Link className="btn btn-green" href="/calendar?view=month&cat=trips">
+              <Icon name="calendar" /> {t("All trips on the calendar")}
             </Link>
           </div>
           <ul className="br-trips">
@@ -171,11 +170,11 @@ export default async function EventsAdventures() {
                 {t("Our pumpkin carvers ")}<em>{t("never disappoint.")}</em>
               </h2>
               <p className="muted" style={{ marginTop: 14 }}>
-                {t("Each October the courtyard turns into a carving workshop, and the finished pumpkins go up on our Facebook page for family and friends to see. Leave a comment for your favorite.")}
+                {t("Each October the courtyard turns into a carving workshop, and the finished pumpkins go into this year’s photo album for family and friends to see.")}
               </p>
-              <a className="btn btn-green" href={site.facebook} target="_blank" rel="noreferrer">
-                <Icon name="facebook" /> {t("See them on Facebook")}
-              </a>
+              <Link className="btn btn-green" href="/photos">
+                <Icon name="image" /> {t("See the photos")}
+              </Link>
             </div>
           </div>
         </div>
@@ -190,6 +189,11 @@ export default async function EventsAdventures() {
             </h2>
           </div>
           <Gallery items={copy.gallery} />
+          <p style={{ marginTop: 20 }}>
+            <Link className="link-arrow" href="/photos">
+              {t("All photo albums")} <Icon name="arrow" />
+            </Link>
+          </p>
         </div>
       </section>
 
