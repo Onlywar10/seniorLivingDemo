@@ -103,7 +103,7 @@ export function TfCta({ t, href, title, lede, photo = "/img/friends-walking.jpg"
           </h2>
           <p>{t(lede ?? "Visit Alder Bend in Fairhollow or Kestrel Point in Rivermead. Every tour is personal, at a time that suits you.")}</p>
           <div className="btn-row">
-            <a className="btn btn-light" href={href("/communities")}>
+            <a className="btn btn-light" href={href("/communities#find")}>
               {t("Find a community")}
             </a>
             <a className="btn btn-outline-light" href={href("/contact")}>

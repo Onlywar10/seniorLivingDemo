@@ -298,3 +298,54 @@
 
 html[lang="zh-Hans"] :is(.tf-big, .tf-purpose blockquote, .tf-origin blockquote) { font-style: normal; }
 .tf-mini-sand div { background: var(--sand); }
+
+/* ---------- Home: the hero's one line, the map, and what every community offers ---------- */
+.tf-hero-note { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 0.95rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-3); }
+.tf-hero .btn .icon { width: 18px; height: 18px; }
+
+.cm { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: clamp(20px, 3vw, 36px); align-items: start; scroll-margin-top: calc(var(--header-h, 72px) + 16px); }
+@media (max-width: 960px) { .cm { grid-template-columns: 1fr; } }
+.cm-map { margin: 0; background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: clamp(10px, 2vw, 20px); }
+.cm-map svg { display: block; width: 100%; height: auto; }
+.cm-us { fill: var(--sand-2); stroke: #fff; stroke-width: 2; stroke-linejoin: round; }
+.cm-ca { fill: var(--green-tint); stroke: var(--green); stroke-width: 1.5; stroke-linejoin: round; }
+.cm-cluster { fill: var(--terra-deep); stroke: #fff; stroke-width: 2.5; }
+.cm-leader { stroke: var(--terra-deep); stroke-width: 2; stroke-dasharray: 5 4; }
+.cm-lens { fill: #fff; stroke: var(--terra-deep); stroke-width: 3; filter: drop-shadow(0 6px 16px rgb(0 0 0 / 0.14)); }
+.cm-lens-t { font: 700 17px var(--font-body), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--ink-3); }
+.cm-pin { cursor: pointer; }
+.cm-pin circle { fill: var(--green-deep); stroke: #fff; stroke-width: 3; transition: r 0.15s, fill 0.15s; }
+.cm-pin text { font: 700 19px var(--font-body), sans-serif; fill: #fff; pointer-events: none; }
+.cm-pin .cm-pin-name { fill: var(--green-ink); font-size: 22px; text-anchor: start; paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+.cm-pin.is-coming circle { fill: #fff; stroke: var(--terra-deep); stroke-width: 3; }
+.cm-pin.is-coming text:not(.cm-pin-name) { fill: var(--terra-deep); }
+.cm-pin:hover circle, .cm-pin:focus-visible circle { r: 23; fill: var(--terra-deep); }
+.cm-pin.is-coming:hover circle, .cm-pin.is-coming:focus-visible circle { fill: var(--terra-tint); }
+.cm-pin:focus-visible { outline: none; }
+.cm-pin:focus-visible .cm-pin-name { text-decoration: underline; }
+.cm-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 12px 6px 2px; font-size: 0.95rem; }
+.cm-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.cm-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--green-deep); }
+.cm-dot.is-coming { background: #fff; box-shadow: inset 0 0 0 3px var(--terra-deep); }
+
+.cm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cm-card { display: grid; gap: 10px; padding: 14px; background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); }
+.cm-card.is-coming { background: transparent; box-shadow: inset 0 0 0 1.5px var(--rule); }
+.cm-card-main { display: flex; gap: 14px; align-items: center; color: inherit; text-decoration: none; }
+.cm-card-main:hover b { text-decoration: underline; }
+.cm-card-ph { position: relative; flex: none; width: 92px; height: 72px; border-radius: 12px; overflow: hidden; }
+.cm-card-ph img { object-fit: cover; }
+.cm-card-t { display: grid; gap: 2px; min-width: 0; position: relative; padding-left: 36px; }
+.cm-card-t b { font-family: var(--font-display), serif; font-weight: 400; font-size: 1.35rem; color: var(--green-ink); line-height: 1.15; }
+.cm-card-t small { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-size: 0.92rem; }
+.cm-card-t small .icon { width: 14px; height: 14px; }
+.cm-n { position: absolute; left: 0; top: 2px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--green-deep); color: #fff; font-weight: 700; font-size: 0.85rem; }
+.cm-card.is-coming .cm-n { background: #fff; color: var(--terra-deep); box-shadow: inset 0 0 0 2px var(--terra-deep); }
+.cm-card-act { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.tf-offers-h { text-align: center; margin: 0 0 clamp(18px, 3vw, 30px); font-size: clamp(1.5rem, 2.6vw, 2rem); }
+.tf-offers-list { list-style: none; margin: 0 0 clamp(18px, 3vw, 30px); padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+@media (max-width: 860px) { .tf-offers-list { grid-template-columns: 1fr; } }
+.tf-offers-list li { display: flex; gap: 14px; align-items: flex-start; }
+.tf-offers-list h3 { margin: 4px 0 4px; font-size: 1.15rem; }
+.tf-offers-list p { margin: 0; color: var(--ink-2); }

@@ -2,27 +2,33 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getT } from "@/i18n/server";
 import { Icon } from "@/components/Icon";
-import { apartmentFeatures, comingCommunities, purpose, values, pillars } from "@/data/wrenhaven";
+import { comingCommunities } from "@/data/wrenhaven";
 import { summaries, intoCommunity, TfCta, TfHead } from "@/components/wrenhaven/parts";
+import { CommunityMap } from "@/components/wrenhaven/CommunityMap";
 import { ExampleChat } from "@/components/wrenhaven/ExampleChat";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
-    title: { absolute: t("Wrenhaven Senior Living · Home on Your Terms") },
-    description: t("Luxury senior living in Fairhollow and Rivermead, California: spacious apartments, Assisted Living Services in every apartment, Lantern Memory Care and a lifestyle that keeps you lively, independent, valued and engaged."),
+    title: { absolute: t("Wrenhaven Senior Living · Find Your Community") },
+    description: t("Wrenhaven senior living communities in Northern California, with Independent Living, Assisted Living Services and Lantern Memory Care. Find a community near you, see its menus, calendar and apartments, and book a tour."),
   };
 }
 
-const featureIcons = { kitchen: "fork", peninsula: "coffee", windows: "sun", furniture: "home", closets: "layers", laundry: "sparkle" } as const;
+// The parent site's front door. Its one job: help a family find the Wrenhaven community they want to look at.
+// Everything about daily life, apartments, care and prices lives on each community's own site.
+const offers = [
+  { icon: "home", title: "Independent Living", text: "Your own apartment, with dining, activities and the help you choose." },
+  { icon: "heart", title: "Assisted Living Services", text: "Care that comes to your apartment, so you never have to move to get it." },
+  { icon: "sparkle", title: "Lantern Memory Care", text: "A calm, secure neighborhood with its own team, garden and calendar." },
+] as const;
 
 export default async function WrenhavenHome() {
   const { t, href, lang } = await getT();
   const all = summaries();
-  const total = all.reduce((n, s) => n + s.apartments.independentAssisted + s.apartments.lantern, 0);
   return (
     <>
-      {/* ---------- Hero ---------- */}
+      {/* ---------- Hero: one job, finding a community ---------- */}
       <section className="tf-hero" aria-labelledby="tf-hero-h">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/img/brand/dots.svg" alt="" aria-hidden="true" className="tf-hero-dots" width={360} height={360} />
@@ -30,34 +36,23 @@ export default async function WrenhavenHome() {
           <div className="tf-hero-text">
             <p className="eyebrow rise">{t("Wrenhaven Senior Living")}</p>
             <h1 id="tf-hero-h" className="rise rise-2">
-              {t("Home, ")}
-              <em>{t("on your terms")}</em>
+              {t("Find your ")}
+              <em>{t("Wrenhaven community")}</em>
             </h1>
             <p className="lede rise rise-3">
-              {t("Senior living communities in Fairhollow and Rivermead, California, built around one simple idea: you decide how you live. Spacious apartment homes, help that comes to your door, and a calendar full of things worth getting up for.")}
+              {t("Independent Living, Assisted Living Services and Lantern Memory Care in Northern California. Pick a community to see its apartments, menus, calendar and prices, and to book a tour.")}
             </p>
             <div className="btn-row rise rise-4">
-              <a className="btn btn-lg" href={href("/communities")}>
-                {t("Find a community")}
+              <a className="btn btn-lg" href="#find">
+                <Icon name="pin" /> {t("Find a community")}
               </a>
-              <a className="btn btn-ghost btn-lg" href={href("/about")}>
-                {t("Why Wrenhaven")}
+              <a className="btn btn-ghost btn-lg" href={href("/contact")}>
+                {t("Talk to us")}
               </a>
             </div>
-            <dl className="tf-hero-stats rise rise-4">
-              <div>
-                <dt>{t("Communities open")}</dt>
-                <dd>{all.length}</dd>
-              </div>
-              <div>
-                <dt>{t("Apartment homes")}</dt>
-                <dd>{total}</dd>
-              </div>
-              <div>
-                <dt>{t("Opening in 2027")}</dt>
-                <dd>{comingCommunities.length}</dd>
-              </div>
-            </dl>
+            <p className="tf-hero-note rise rise-4">
+              {t(`${all.length} communities open · ${comingCommunities.length} opening in 2027`)}
+            </p>
           </div>
           <div className="tf-hero-ph rise rise-2">
             <div className="tf-ph tf-ph-big">
@@ -70,58 +65,45 @@ export default async function WrenhavenHome() {
         </div>
       </section>
 
-      {/* ---------- Communities ---------- */}
-      <section className="sec tone-cream" aria-labelledby="tf-comm-h">
+      {/* ---------- Find a community: the map ---------- */}
+      <section className="sec tone-cream" aria-labelledby="tf-find-h">
         <div className="wrap">
           <TfHead
             t={t}
-            id="tf-comm-h"
-            eyebrow="Our communities"
+            id="tf-find-h"
+            eyebrow="Find a community"
             title={
               <>
-                {t("Choose your ")}
-                <em>{t("community")}</em>
+                {t("Where ")}
+                <em>{t("we are")}</em>
               </>
             }
-            lede="Two open communities in Calder County, each with Independent Living, Assisted Living Services and Lantern Memory Care."
+            lede="Tap a community on the map to visit it. Each one has its own website, with today’s menus, this week’s calendar, apartments, prices and tours."
           />
-          <div className="tf-comm-grid">
-            {all.map((s) => (
-              <a key={s.slug} className="tf-comm-card" href={intoCommunity(lang, s.slug)}>
-                <div className="tf-comm-ph">
-                  <Image src={s.photo} alt={t(s.alt)} fill sizes="(max-width: 860px) 100vw, 50vw" />
-                  <span className="tf-comm-badge">{t(`Opened ${s.openedYear}`)}</span>
+          <CommunityMap t={t} href={href} lang={lang} />
+        </div>
+      </section>
+
+      {/* ---------- What every community offers, in one line each ---------- */}
+      <section className="sec tone-white tf-offers" aria-labelledby="tf-offers-h">
+        <div className="wrap">
+          <h2 id="tf-offers-h" className="tf-offers-h">{t("Every Wrenhaven community offers")}</h2>
+          <ul className="tf-offers-list">
+            {offers.map((o) => (
+              <li key={o.title}>
+                <span className="tf-feature-ico"><Icon name={o.icon} /></span>
+                <div>
+                  <h3>{t(o.title)}</h3>
+                  <p>{t(o.text)}</p>
                 </div>
-                <div className="tf-comm-body">
-                  <p className="tf-comm-city">
-                    <Icon name="pin" /> {s.city}, CA
-                  </p>
-                  <h3>{s.name}</h3>
-                  <p className="tf-comm-counts">
-                    {t(`${s.apartments.independentAssisted} Independent & Assisted Living apartments`)} · {t(`${s.apartments.lantern} Lantern apartments`)}
-                  </p>
-                  <ul className="tf-comm-living">
-                    {s.living.map((l) => (
-                      <li key={l}>{t(l)}</li>
-                    ))}
-                  </ul>
-                  <dl className="tf-comm-prices">
-                    <div>
-                      <dt>{t("Independent Living")}</dt>
-                      <dd>{t(`from ${s.from.independent}/mo`)}</dd>
-                    </div>
-                    <div>
-                      <dt>{t("Lantern Memory Care")}</dt>
-                      <dd>{t(`from ${s.from.lantern}/mo`)}</dd>
-                    </div>
-                  </dl>
-                  <span className="link-arrow">
-                    {t(`Visit ${s.name}`)} <Icon name="arrow" />
-                  </span>
-                </div>
-              </a>
+              </li>
             ))}
-          </div>
+          </ul>
+          <p className="center">
+            <a className="btn btn-green" href="#find">
+              <Icon name="pin" /> {t("Find a community near you")}
+            </a>
+          </p>
         </div>
       </section>
 
@@ -168,267 +150,17 @@ export default async function WrenhavenHome() {
         </div>
       </section>
 
-      {/* ---------- Apartments ---------- */}
-      <section className="sec tone-white" aria-labelledby="tf-apt-h">
-        <div className="wrap tf-split">
-          <div className="tf-split-ph">
-            <div className="tf-ph tf-ph-tall">
-              <Image src="/img/apt-kitchen.jpg" alt={t("A full-size kitchen with stainless steel appliances and a peninsula")} fill sizes="(max-width: 860px) 100vw, 45vw" />
-            </div>
-          </div>
-          <div>
-            <TfHead
-              t={t}
-              id="tf-apt-h"
-              eyebrow="Your apartment"
-              title={
-                <>
-                  {t("Room to ")}
-                  <em>{t("really live")}</em>
-                </>
-              }
-              lede="Apartments that feel like a home, not a room down the hall. Bring the dining table, the sofa and the art from your walls."
-            />
-            <ul className="tf-features">
-              {apartmentFeatures.map((f) => (
-                <li key={f.key}>
-                  <span className="tf-feature-ico">
-                    <Icon name={featureIcons[f.key]} />
-                  </span>
-                  <div>
-                    <h3>{t(f.title)}</h3>
-                    <p>{t(f.text)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Assisted Living Services ---------- */}
-      <section className="sec tone-green on-dark" aria-labelledby="tf-als-h">
-        <div className="wrap tf-split tf-split-rev">
-          <div>
-            <p className="eyebrow">{t("Assisted Living Services")}</p>
-            <h2 id="tf-als-h">
-              {t("Support that comes to ")}
-              <em className="tf-em-light">{t("your door.")}</em>
-            </h2>
-            <p className="tf-lede-dark">
-              {t("Assisted Living Services can be added in any apartment, so residents can stay at home as their needs change. The support comes to you, and you never have to move to receive it.")}
-            </p>
-            <ul className="tf-checks">
-              <li>
-                <Icon name="check" /> <span>{t("Medication management and personal care")}</span>
-              </li>
-              <li>
-                <Icon name="check" /> <span>{t("Escorts to meals, activities and appointments")}</span>
-              </li>
-              <li>
-                <Icon name="check" /> <span>{t("Coordination with your healthcare providers")}</span>
-              </li>
-              <li>
-                <Icon name="check" /> <span>{t("A team on site 24 hours, with an emergency response system in every apartment")}</span>
-              </li>
-            </ul>
-            <a className="btn btn-light" href={href("/living/assisted-living")}>
-              {t("About Assisted Living Services")}
-            </a>
-          </div>
-          <div className="tf-split-ph">
-            <div className="tf-ph">
-              <Image src="/img/care-chat.jpg" alt={t("A Care Partner chatting with a resident on her sofa")} fill sizes="(max-width: 860px) 100vw, 45vw" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Lantern ---------- */}
-      <section className="sec tone-sand" aria-labelledby="tf-lantern-h">
-        <div className="wrap tf-split">
-          <div className="tf-split-ph">
-            <div className="tf-ph">
-              <Image src="/img/lantern-garden.jpg" alt={t("Lantern’s secure garden courtyard")} fill sizes="(max-width: 860px) 100vw, 45vw" />
-            </div>
-          </div>
-          <div>
-            <TfHead
-              t={t}
-              id="tf-lantern-h"
-              eyebrow="Lantern Memory Care"
-              title={
-                <>
-                  {t("A warm light, ")}
-                  <em>{t("always on")}</em>
-                </>
-              }
-              lede="Lantern is a calm, secure neighborhood inside each community, with its own garden courtyard, its own activity team and its own Events & Adventures calendar."
-            />
-            <dl className="tf-mini-stats">
-              {all.map((s) => (
-                <div key={s.slug}>
-                  <dt>{s.name}</dt>
-                  <dd>
-                    {t(`${s.apartments.lantern} Lantern apartments`)} · {t(`from ${s.from.lantern}/mo`)}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <a className="btn btn-green" href={href("/living/lantern-memory-care")}>
-              {t("Discover Lantern Memory Care")}
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Lifestyle ---------- */}
-      <section className="sec tone-cream" aria-labelledby="tf-life-h">
-        <div className="wrap">
-          <TfHead
-            t={t}
-            center
-            id="tf-life-h"
-            eyebrow="The lifestyle"
-            title={
-              <>
-                {t("Lively, Independent, Valued ")}
-                <em>{t("and Engaged")}</em>
-              </>
-            }
-            lede="LIVE is the idea behind every Wrenhaven calendar, menu and class: four words that keep each day full."
-          />
-          <ol className="tf-live">
-            {pillars.map((y) => (
-              <li key={y.letter}>
-                <div className="tf-live-ph">
-                  <Image src={y.photo} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 960px) 50vw, 25vw" />
-                  <span className="tf-live-letter" aria-hidden="true">
-                    {y.letter}
-                  </span>
-                </div>
-                <h3>{t(y.word)}</h3>
-                <p>{t(y.text)}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="tf-life-row">
-            {[
-              { icon: "fork", title: "Chef-driven dining", text: "Three restaurants in each community, from candlelit dinners to morning coffee and happy hour.", photo: "/img/dish-plated.jpg" },
-              { icon: "bus", title: "Events & Adventures", text: "Clubs, classes, concerts and outings beyond the community.", photo: "/img/paddleboard.jpg" },
-              { icon: "dumbbell", title: "Fitness", text: "More than 25 classes a week with a full-time Fitness Director.", photo: "/img/fitness-center.jpg" },
-            ].map((x) => (
-              <div key={x.title} className="tf-life-card">
-                <div className="tf-life-ph">
-                  <Image src={x.photo} alt="" fill sizes="(max-width: 860px) 100vw, 33vw" />
-                </div>
-                <div className="tf-life-body">
-                  <Icon name={x.icon as "fork"} />
-                  <h3>{t(x.title)}</h3>
-                  <p>{t(x.text)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="center">
-            <a className="link-arrow" href={href("/lifestyle")}>
-              {t("Explore the lifestyle")} <Icon name="arrow" />
-            </a>
-          </p>
-        </div>
-      </section>
-
-      {/* ---------- Autonomy ---------- */}
-      <section className="sec tone-white tf-autonomy" aria-labelledby="tf-auto-h">
-        <div className="wrap tf-split">
-          <div>
-            <TfHead
-              t={t}
-              id="tf-auto-h"
-              eyebrow="Your life, your way"
-              title={
-                <>
-                  {t("Living with ")}
-                  <em>{t("true autonomy")}</em>
-                </>
-              }
-            />
-            <p className="tf-big">
-              {t("Your apartment, your schedule, your call. Cook at home or eat in one of our restaurants, join a trip or keep the afternoon quiet, and come and go whenever you like.")}
-            </p>
-            <p className="muted">
-              {t("No second-person fee for couples, Assisted Living Services if and when you want them, and a team that listens first. That’s what we mean by home on your terms.")}
-            </p>
-          </div>
-          <div className="tf-split-ph">
-            <div className="tf-ph">
-              <Image src="/img/coffee-woman.jpg" alt={t("A resident enjoying a coffee by the window")} fill sizes="(max-width: 860px) 100vw, 45vw" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Purpose & values ---------- */}
-      <section className="sec tone-sand" aria-labelledby="tf-val-h">
-        <div className="wrap">
-          <div className="tf-purpose">
-            <p className="eyebrow">{t("Our purpose")}</p>
-            <blockquote id="tf-val-h">{t(purpose)}</blockquote>
-          </div>
-          <ul className="tf-values">
-            {values.map((v) => (
-              <li key={v.key}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={v.icon} alt="" width={64} height={64} />
-                <h3>{t(v.name)}</h3>
-                <p>{t(v.text)}</p>
-              </li>
-            ))}
-          </ul>
-          <p className="center">
-            <a className="link-arrow" href={href("/about")}>
-              {t("About Wrenhaven")} <Icon name="arrow" />
-            </a>
-          </p>
-        </div>
-      </section>
-
-      {/* ---------- Coming 2027 ---------- */}
-      <section className="sec tone-cream" aria-labelledby="tf-coming-h">
-        <div className="wrap">
-          <TfHead
-            t={t}
-            id="tf-coming-h"
-            eyebrow="Coming 2027"
-            title={
-              <>
-                {t("Two new communities, ")}
-                <em>{t("planned for Fall 2027")}</em>
-              </>
-            }
-            lede="Join an interest list to hear first about floor plans, pricing and opening dates."
-          />
-          <div className="tf-coming-grid">
-            {comingCommunities.map((c) => (
-              <a key={c.key} className="tf-coming-card" href={href(`/communities#${c.key}`)}>
-                <span className="pill pill-terra">{t(`Planned opening ${c.planned}`)}</span>
-                <h3>{c.name}</h3>
-                <p className="tf-comm-city">
-                  <Icon name="pin" /> {c.city}, {c.state} · {t(c.crossStreets)}
-                </p>
-                <p className="muted">
-                  {c.living.map((l) => t(l)).join(" · ")} · {t(`${c.apartments} apartments`)}
-                </p>
-                <span className="link-arrow">
-                  {t("Join the interest list")} <Icon name="arrow" />
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <TfCta t={t} href={href} />
+      <TfCta
+        t={t}
+        href={href}
+        title={
+          <>
+            {t("See it ")}
+            <em>{t("for yourself.")}</em>
+          </>
+        }
+        lede={`Visit ${all.map((s) => s.name).join(" or ")}. Every tour is personal, at a time that suits you.`}
+      />
     </>
   );
 }

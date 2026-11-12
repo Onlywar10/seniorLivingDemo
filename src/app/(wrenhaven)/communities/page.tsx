@@ -6,6 +6,7 @@ import { money } from "@/data/shared";
 import { comingCommunities } from "@/data/wrenhaven";
 import { summaries, intoCommunity, TfCta, TfHero } from "@/components/wrenhaven/parts";
 import { InterestForm } from "@/components/wrenhaven/WrenhavenForms";
+import { CommunityMap } from "@/components/wrenhaven/CommunityMap";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
@@ -46,6 +47,12 @@ export default async function CommunitiesPage() {
           </a>
         </nav>
       </TfHero>
+
+      <section className="sec tone-cream" aria-label={t("Map of Wrenhaven communities in the United States")}>
+        <div className="wrap">
+          <CommunityMap t={t} href={href} lang={lang} />
+        </div>
+      </section>
 
       {all.map((s) => {
         const { site, pricing } = s.c;

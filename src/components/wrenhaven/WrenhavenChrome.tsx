@@ -96,7 +96,7 @@ export function WrenhavenHeader() {
           )}
         </nav>
         <div className="header-cta">
-          <Link className="btn btn-sm" href="/communities">
+          <Link className="btn btn-sm" href="/communities#find">
             {t("Find a community")}
           </Link>
         </div>
@@ -133,7 +133,7 @@ export function WrenhavenHeader() {
               </Link>
             )
           )}
-          <Link className="btn btn-lg" href="/communities">
+          <Link className="btn btn-lg" href="/communities#find">
             {t("Find a community")}
           </Link>
           <a className="btn btn-ghost btn-lg" href={corporate.phoneHref}>

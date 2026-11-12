@@ -19,7 +19,7 @@ const copy: Record<LivingKey, {
   independent: {
     meta: { title: "Independent Living", description: "Independent Living at Wrenhaven communities in Fairhollow and Rivermead: spacious luxury apartments with full kitchens, in-apartment washers and dryers, and no second-person fee." },
     hero: { eyebrow: "Independent Living", a: "Real apartment homes, ", em: "real independence", lede: "Spacious studio, one- and two-bedroom apartments with full kitchens, your own washer and dryer, and a lifestyle you shape yourself.", photo: "/img/apt-living.jpg", alt: "A bright apartment living room and kitchen" },
-    intro: { eyebrow: "Home on your terms", a: "Everything a home should be, ", em: "and more", text: "Wrenhaven apartments are planned like a house, not a hotel room: full-size kitchens, space for your furniture and big windows. Just outside your door are restaurants, a fitness program and a full calendar of Events & Adventures." },
+    intro: { eyebrow: "Your apartment", a: "Everything a home should be, ", em: "and more", text: "Wrenhaven apartments are planned like a house, not a hotel room: full-size kitchens, space for your furniture and big windows. Just outside your door are restaurants, a fitness program and a full calendar of Events & Adventures." },
     points: [
       "Full-sized kitchens with stainless steel appliances",
       "Solid-surface counters and a peninsula",

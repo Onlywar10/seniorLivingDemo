@@ -95,12 +95,19 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
   const [done, setDone] = useState<null | { name: string; resident: boolean }>(null);
   const doneRef = useRef<HTMLHeadingElement>(null);
   const wantsText = channel !== "email";
+  // Anything beyond community news is about one resident, so their name is needed for it.
+  const needsResident = picked.some((k) => k !== "news");
+  const resRef = useRef<HTMLInputElement>(null);
 
   const toggle = (k: string) => setPicked((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]));
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (picked.length === 0) return setErr("Choose at least one thing you’d like to receive.");
+    if (needsResident && !resident.trim()) {
+      resRef.current?.focus();
+      return setErr("Please enter your resident’s name. It’s needed for anything beyond community news.");
+    }
     if (wantsText && !sms) return setErr("To receive texts, please check the box to agree to text messages — or choose email instead.");
     const f = new FormData(e.currentTarget);
     setErr("");
@@ -270,9 +277,13 @@ export function StayConnectedForm({ preview }: { preview: PreviewItem[] }) {
             </div>
           )}
           <div className="field full">
-            <label htmlFor="sc-res">{t("Resident’s name (optional)")}</label>
-            <input id="sc-res" name="resident" value={resident} onChange={(e) => setResident(e.target.value)} aria-describedby="sc-res-note" />
-            <small id="sc-res-note" className="sc-field-note">{t("With it, our team checks with your resident before anything personal is shared. Without it, you get community news only. It’s never shown on the website.")}</small>
+            <label htmlFor="sc-res">{needsResident ? t("Resident’s name") : t("Resident’s name (optional)")}</label>
+            <input ref={resRef} id="sc-res" name="resident" value={resident} onChange={(e) => setResident(e.target.value)} required={needsResident} aria-required={needsResident} aria-describedby="sc-res-note" />
+            <small id="sc-res-note" className="sc-field-note">
+              {needsResident
+                ? t("Needed for anything beyond community news. Our team checks with your resident before anything personal is shared. It’s never shown on the website.")
+                : t("With it, our team checks with your resident before anything personal is shared. Without it, you get community news only. It’s never shown on the website.")}
+            </small>
           </div>
           {wantsText && (
             <div className="full">

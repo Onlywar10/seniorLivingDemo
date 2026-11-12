@@ -16,7 +16,7 @@ const body = Montserrat({ variable: "--font-body", subsets: ["latin"], weight: [
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
-    title: { default: t("Wrenhaven Senior Living · Home on Your Terms"), template: "%s · Wrenhaven Senior Living" },
+    title: { default: t("Wrenhaven Senior Living · Find Your Community"), template: "%s · Wrenhaven Senior Living" },
     description: t("Luxury senior living communities in Fairhollow and Rivermead, California: Independent Living, Assisted Living Services and Lantern Memory Care."),
     icons: { icon: "/img/brand/dots.png" },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false, noimageindex: true } },
