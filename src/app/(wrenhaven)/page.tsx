@@ -99,11 +99,11 @@ export default async function WrenhavenHome() {
               </li>
             ))}
           </ul>
-          <p className="center">
+          <div className="tf-offers-cta">
             <a className="btn btn-green" href="#find">
               <Icon name="pin" /> {t("Find a community near you")}
             </a>
-          </p>
+          </div>
         </div>
       </section>
 
