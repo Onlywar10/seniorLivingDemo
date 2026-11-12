@@ -189,3 +189,17 @@
 .din-theme { display: flex; gap: 8px; align-items: center; margin: 18px 0 0; font-weight: 600; color: var(--terra-deep); }
 .din-theme .icon { width: 17px; height: 17px; }
 .din-tg-how { font-weight: 600; }
+
+/* "Always available": clearly something to open, with a border, a hover and a cue */
+.din-always summary { list-style: none; justify-content: space-between; gap: 10px 16px; padding: 10px 14px; border: 1.5px solid var(--green-ink); border-radius: 12px; background: var(--paper); transition: background 0.15s, box-shadow 0.15s; }
+.din-always summary::-webkit-details-marker { display: none; }
+.din-always summary:hover { background: var(--butter-tint, #fbf3dc); box-shadow: 0 2px 10px rgb(0 0 0 / 0.08); }
+.din-always summary:focus-visible { outline: 3px solid var(--green-ink); outline-offset: 2px; }
+.din-always-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.din-always-cue { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.din-always-cue svg { width: 16px; height: 16px; transition: transform 0.15s; }
+.din-always[open] .din-always-cue svg { transform: rotate(180deg); }
+.din-always-close { display: none; }
+.din-always[open] .din-always-open { display: none; }
+.din-always[open] .din-always-close { display: inline; }
+.din-venue { scroll-margin-top: calc(var(--header-h, 72px) + 16px); }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
 import Image from "next/image";
@@ -89,7 +90,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
 
   const pub = fromIso(PUBLISHED);
   const showingPublished = view === "month" && anchor.getUTCMonth() === pub.getUTCMonth() && anchor.getUTCFullYear() === pub.getUTCFullYear();
-  const publishedHref = !showingPublished && t.getTime() < addDays(pub, 30).getTime() ? href("month", pub) : undefined;
+  // Announced only while it's next month's calendar; once the month has started, the Month tab shows it.
+  const publishedHref = !showingPublished && t.getTime() < pub.getTime() ? href("month", pub) : undefined;
 
   const nowMin = nowMinutes();
   const keep = (e: CalEvent) => !lantern || isLantern(e);
@@ -220,6 +222,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: SP 
           )}
         </div>
       </section>
+      <VisitBand />
     </>
   );
 }

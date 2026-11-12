@@ -30,7 +30,7 @@ export function withinCommunity(path: string): string {
 export function sitePath(lang: Lang, community: CommunitySlug | null, path: string): string {
   let p = path;
   if (p.startsWith("~/")) p = p.slice(1);
-  else if (community && p.startsWith("/") && !p.startsWith("//") && !communityOf(p) && !/^\/(staff|img|photos)(?=\/|$)/.test(p)) {
+  else if (community && p.startsWith("/") && !p.startsWith("//") && !communityOf(p) && !/^\/(staff|img)(?=\/|$)/.test(p)) {
     p = p === "/" ? `/${community}` : p.startsWith("/?") || p.startsWith("/#") ? `/${community}${p.slice(1)}` : `/${community}${p}`;
   }
   return localePath(lang, p);

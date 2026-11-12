@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
 import { PageHero } from "@/components/PageHero";
@@ -49,6 +50,7 @@ export default async function FaqPage() {
           <FaqSearch groups={faqGroups} />
         </div>
       </section>
+      <VisitBand />
     </>
   );
 }

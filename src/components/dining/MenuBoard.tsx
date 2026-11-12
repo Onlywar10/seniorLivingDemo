@@ -120,7 +120,7 @@ export function MenuBoard({ days, extra, todayIso, nowMin, phone }: { days: Menu
           const ph = copy.venuePhotos[m.venue];
           const shape = day.shape?.[m.venue];
           return (
-            <article key={m.venue} className={`din-venue din-venue-${m.venue}${holiday ? " is-holiday" : ""}`} aria-labelledby={`din-v-${m.venue}`}>
+            <article key={m.venue} id={`venue-${m.venue}`} className={`din-venue din-venue-${m.venue}${holiday ? " is-holiday" : ""}`} aria-labelledby={`din-v-${m.venue}`}>
               <div className="din-venue-side">
                 <div className="din-venue-photos">
                   <div className="din-ph din-ph-main"><Image src={v.photo} alt={t(ph?.alt ?? v.name)} fill sizes="(max-width: 960px) 66vw, 300px" /></div>
@@ -200,7 +200,7 @@ export function MenuBoard({ days, extra, todayIso, nowMin, phone }: { days: Menu
 
                 {!holiday && (
                   <details className="din-always">
-                    <summary>{t("Always available: ask your server")} <small>{t(`${m.sections.reduce((n, x) => n + x.items.length, 0)} dishes, every day`)}</small></summary>
+                    <summary><span className="din-always-t">{t("Always available: ask your server")} <small>{t(`${m.sections.reduce((n, x) => n + x.items.length, 0)} dishes, every day`)}</small></span><span className="din-always-cue"><span className="din-always-open">{t("See the menu")}</span><span className="din-always-close">{t("Hide the menu")}</span> <Icon name="chev" /></span></summary>
                     <div className="din-sections">
                       {m.sections.map((s) => {
                         const items = s.items.filter(fits);

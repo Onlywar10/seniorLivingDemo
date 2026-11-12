@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
@@ -174,6 +175,7 @@ export default async function About() {
       )}
 
       <TourBand />
+      <VisitBand />
     </>
   );
 }

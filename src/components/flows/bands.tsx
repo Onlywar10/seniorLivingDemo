@@ -576,7 +576,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
         {
           id: "f-mine",
           email: em.mine,
-          title: "Your parent’s week",
+          title: "Your loved one’s week",
           hook: `${mom}’s own section of the Sunday email: what ${mom} is booked on, and photos of ${mom} from last week when there are some. Only if ${mom} agrees, and ${mom} or staff can turn it off.`,
           steps: [
             { id: "f-mine-agree", scene: "reply", label: `${mom} agrees to share`, actor: "resident", when: "Or in person, if no phone", text: "Yes, that’s fine", preview: phones(momShare) },
@@ -597,7 +597,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
         {
           id: "f-joinin",
           email: em.join,
-          title: "Join your parent at an event",
+          title: "Join your loved one at an event",
           hook: `Family events come with an invitation. ${me} replies to the text to RSVP (or taps the link in it). ${mom} is asked first, by text, and ${me} hears the answer.`,
           steps: [
             { id: "f-joinin-text", scene: "reply", label: "Replies to the text", actor: "family", when: "The invitation, midweek", text: `${fam.party} of us!`, preview: phones(famRsvpText) },

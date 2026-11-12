@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
@@ -198,6 +199,7 @@ export default async function EventsAdventures() {
       </section>
 
       <TourBand photo="/img/wine-toast.jpg" title={<>{t("Come along for ")}<em>{t("the ride.")}</em></>} text="Visit, see the calendar for yourself and meet the residents who make every adventure happen." />
+      <VisitBand />
     </>
   );
 }

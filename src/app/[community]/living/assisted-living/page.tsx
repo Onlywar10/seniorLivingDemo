@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
@@ -165,6 +166,7 @@ export default async function AssistedLiving() {
       </section>
 
       <TourBand photo="/img/care-laugh.jpg" title={<>{t("Let’s talk about ")}<em>{t("what would help.")}</em></>} text={directorFirst ? `Visit, meet ${directorFirst} and the Care Partner team, and we’ll walk through an assessment together — no pressure and no obligation.` : "Visit, meet the Care Partner team, and we’ll walk through an assessment together — no pressure and no obligation."} />
+      <VisitBand />
     </>
   );
 }

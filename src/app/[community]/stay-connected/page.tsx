@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Image from "next/image";
 import Link from "@/i18n/Link";
 import { PageHero } from "@/components/PageHero";
@@ -49,9 +50,9 @@ const when = (e: CalEvent) => `${dayName(fromIso(e.date)).slice(0, 3)} ${shortDa
 
 const outcomes = [
   { icon: "mail", title: "Community news", text: "A highlight by text midweek, and the whole week by email on Sunday: what’s on, the menus and new photo albums." },
-  { icon: "heart", title: "Your parent’s week", text: "Their own section in the Sunday email: photos they’re in and the outings they’re booked on. Only if your resident chooses to share." },
+  { icon: "heart", title: "Your loved one’s week", text: "Their own section in the Sunday email: photos they’re in and the outings they’re booked on. Only if your resident chooses to share." },
   { icon: "bell", title: "Alerts", text: "Weather, closures, and changes to events you’re coming to, the same day." },
-  { icon: "users", title: "Join your parent at an event", text: "Family events come with an invitation. Reply to the text to RSVP; we check with your resident first, then confirm." },
+  { icon: "users", title: "Join your loved one at an event", text: "Family events come with an invitation. Reply to the text to RSVP; we check with your resident first, then confirm." },
 ] as const;
 
 const beta = [
@@ -132,7 +133,7 @@ export default async function StayConnectedPage() {
             </div>
             <div className="card card-pad sc-paper">
               <h3><Icon name="printer" /> {t("Prefer paper?")}</h3>
-              <p className="small">{t("The large-print calendar is at the front desk each month, and we’ll post one to you.")}</p>
+              <p className="small">{t("We can mail you our large-print activity calendar each month. Call us and we’ll add you to the list.")}</p>
               <a className="link-arrow" href={site.phoneHref}>{t("Call ")}{site.phone} <Icon name="arrow" /></a>
             </div>
             <div className="sc-side-photo">
@@ -244,6 +245,7 @@ export default async function StayConnectedPage() {
           </p>
         </div>
       </section>
+      <VisitBand />
     </>
   );
 }

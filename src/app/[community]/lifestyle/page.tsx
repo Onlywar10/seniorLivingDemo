@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
@@ -145,6 +146,7 @@ export default async function Lifestyle() {
       </section>
 
       <TourBand photo="/img/wine-toast.jpg" />
+      <VisitBand />
     </>
   );
 }

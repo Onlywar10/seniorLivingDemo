@@ -6,6 +6,7 @@ import { useCommunity } from "@/lib/community";
 import { useT } from "@/i18n/client";
 import { htmlLang } from "@/i18n/config";
 import { Icon } from "./Icon";
+import { OPEN_CHAT } from "./VisitBand";
 import { answer, callbackName, hello, starters, officeOpen, langOf, type Answer, type Lang } from "./chat/answers";
 import "./chat/chat.css";
 
@@ -73,6 +74,13 @@ export function ChatWidget() {
   }, [msgs]);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  // "Chat with us" buttons on the page open the panel (see VisitBand).
+  useEffect(() => {
+    const openIt = () => setOpen(true);
+    window.addEventListener(OPEN_CHAT, openIt);
+    return () => window.removeEventListener(OPEN_CHAT, openIt);
+  }, []);
 
   const close = useCallback(() => {
     setOpen(false);

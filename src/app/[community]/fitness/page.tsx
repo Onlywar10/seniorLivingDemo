@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Image from "next/image";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
@@ -194,6 +195,7 @@ export default async function Fitness() {
       </section>
 
       <TourBand photo="/img/trail-walk.jpg" title={<>{t("Try a class ")}<em>{t(tourCopy[c.slug].lunchOnUs ? "on us." : "when you visit.")}</em></>} text={directorFirst ? `Join ${directorFirst} for a class when you visit, then stay for lunch in one of our three restaurants.` : "Join a class when you visit, then stay for lunch in one of our three restaurants."} />
+      <VisitBand />
     </>
   );
 }

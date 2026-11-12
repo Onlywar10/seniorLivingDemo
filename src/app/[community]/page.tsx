@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "@/i18n/Link";
+import { VisitBand } from "@/components/VisitBand";
 import { getT } from "@/i18n/server";
 import "./home.css";
 import "@/components/brand/brand.css";
@@ -239,16 +240,13 @@ export default async function Home() {
               </h2>
               <p>{t(copy.diningIntro)}</p>
             </div>
-            <Link className="link-arrow" href="/dining">
-              {t("See today’s menus ")}<Icon name="arrow" />
-            </Link>
           </div>
           <div className="hm-venues">
             {c.venueOrder.map((k) => {
               const v = venues[k];
               const ph = copy.venuePhotos[k];
               return (
-                <article key={k} className="hm-venue">
+                <Link key={k} className="hm-venue hm-venue-link" href={`/dining#venue-${k}`} aria-label={t(`${v.name}: today’s menu`)}>
                   <div className="hm-venue-ph">
                     <Image src={ph?.photo ?? v.photo} alt={t(ph?.alt ?? v.name)} fill sizes="(max-width: 860px) 100vw, 33vw" />
                   </div>
@@ -259,13 +257,16 @@ export default async function Home() {
                     <p className="hm-venue-hours">
                       <Icon name="clock" /> <span>{t(`Open daily, ${v.hours}`)}</span>
                     </p>
+                    <span className="hm-venue-go">{t("Today’s menu")} <Icon name="arrow" /></span>
                   </div>
-                </article>
+                </Link>
               );
             })}
           </div>
         </div>
       </section>
+
+      <VisitBand />
 
       {/* ---------- Events & Adventures ---------- */}
       <section className="sec tone-cream" aria-labelledby="hm-ea-h">

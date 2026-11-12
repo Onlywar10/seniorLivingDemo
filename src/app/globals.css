@@ -361,3 +361,11 @@ html[lang="zh-Hans"] :is(h1, h2, h3, h4, .logo-text b) { font-family: var(--font
 html[lang="zh-Hans"] :is(h1, h2) em { font-style: normal; }
 html[lang="zh-Hans"] :is(.eyebrow, .footer h2) { letter-spacing: 0.08em; }
 html[lang="zh-Hans"] :is(p, li, dd, td) { word-break: normal; overflow-wrap: anywhere; }
+
+/* ---------- "See it for yourself": a tour or a chat, on every main page ---------- */
+.visit-band { position: relative; overflow: hidden; }
+.visit-band-inner { position: relative; display: grid; grid-template-columns: minmax(0, 1.4fr) auto; gap: 20px 40px; align-items: center; }
+.visit-band h2 { margin: 6px 0 8px; }
+.visit-band-text { margin: 0; max-width: 46ch; font-size: 1.1rem; color: #e3e8e4; }
+.visit-band .btn-row { justify-content: flex-end; }
+@media (max-width: 860px) { .visit-band-inner { grid-template-columns: 1fr; } .visit-band .btn-row { justify-content: flex-start; } }

@@ -203,3 +203,11 @@
 
 .hm-today-greet { display: grid; gap: 6px; justify-items: start; }
 .hm-today-greet p { margin: 0; }
+
+/* Each restaurant opens its own menu on the dining page */
+.hm-venue-link { color: inherit; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+.hm-venue-link:hover { box-shadow: 0 10px 28px rgb(0 0 0 / 0.14); }
+.hm-venue-link:focus-visible { outline: 3px solid var(--green-ink); outline-offset: 3px; }
+.hm-venue-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-weight: 700; color: var(--green-ink); text-decoration: underline; text-underline-offset: 3px; }
+.hm-venue-go svg { width: 16px; height: 16px; }
+.hm-venue-link:hover .hm-venue-go svg { transform: translateX(3px); }

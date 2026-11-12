@@ -143,7 +143,7 @@ export default async function WrenhavenHome() {
             />
             <ul className="tf-checks">
               <li>
-                <Icon name="check" /> <span>{t("Answers any hour, in English, Spanish or Chinese")}</span>
+                <Icon name="check" /> <span>{t("Answers in a multitude of languages")}</span>
               </li>
               <li>
                 <Icon name="check" /> <span>{t("Links to the page each answer comes from")}</span>
@@ -187,7 +187,7 @@ export default async function WrenhavenHome() {
                   <em>{t("really live")}</em>
                 </>
               }
-              lede="Apartments that feel like a house, not a room down the hall. Bring the dining table, the sofa and the art from your walls."
+              lede="Apartments that feel like a home, not a room down the hall. Bring the dining table, the sofa and the art from your walls."
             />
             <ul className="tf-features">
               {apartmentFeatures.map((f) => (

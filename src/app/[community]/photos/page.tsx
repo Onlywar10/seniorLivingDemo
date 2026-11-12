@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitBand } from "@/components/VisitBand";
 import Link from "@/i18n/Link";
 import { getT } from "@/i18n/server";
 import "@/components/brand/brand.css";
@@ -80,6 +81,7 @@ export default async function PhotosPage() {
       </section>
 
       <TourBand photo="/img/friends-laugh.jpg" title={<>{t("See it for ")}<em>{t("yourself.")}</em></>} text="Come for a tour and lunch, and meet the people in these photos." />
+      <VisitBand />
     </>
   );
 }

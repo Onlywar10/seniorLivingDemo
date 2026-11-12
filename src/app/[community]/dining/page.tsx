@@ -8,7 +8,7 @@ import { Dots } from "@/components/Logo";
 import { MenuBoard, type MenuDay, type VenueShape } from "@/components/dining/MenuBoard";
 import { menuBoard } from "@/data/staff/menus";
 import { courseLabels, cycleWeek } from "@/data/shared";
-import { LunchBooking, type BookDate } from "@/components/dining/LunchBooking";
+import { VisitBand } from "@/components/VisitBand";
 import { getCommunity } from "@/lib/community-server";
 import { diningCopy } from "@/data/communities/copy/dining";
 import { addDays, dayShort, fmtRange, fromIso, iso, longDate, nowMinutes, sundayOf, today } from "@/lib/clock";
@@ -82,23 +82,9 @@ export default async function DiningPage() {
     .flatMap((d) => eventsOn(d, todayIso))
     .filter((e) => e.cat === "music" && /happy hour/i.test(e.title));
 
-  // Lunch booking: the next 14 days (today too, while there’s still time).
-  // Labels stay in English here; LunchBooking translates them where they render.
-  const startOffset = nowMin < 12 * 60 + 30 ? 0 : 1;
-  const bookDates: BookDate[] = Array.from({ length: 14 }, (_, i) => {
-    const d = addDays(now, i + startOffset);
-    return { date: iso(d), label: i + startOffset === 0 ? `Today, ${longDate(d).split(", ")[1]}` : longDate(d) };
-  });
-  if (showTg) {
-    if (!bookDates.some((b) => b.date === THANKSGIVING)) bookDates.push({ date: THANKSGIVING, label: "Thursday, November 26 — Thanksgiving Dinner", holiday: true });
-    else bookDates.forEach((b) => { if (b.date === THANKSGIVING) { b.label += " — Thanksgiving Dinner"; b.holiday = true; } });
-  }
-
   const chef = team.find((p) => p.role === "Culinary Director");
   const host = team.find((p) => p.role === "Dining Experience Director");
   const people = [chef, host].filter((p): p is NonNullable<typeof chef> => !!p);
-  const lunchVenues = copy.lunchVenues.filter((k) => venues[k]).map((k) => ({ key: k, name: venues[k].name }));
-  const hostFirst = host && !host.unnamed ? host.name.split(" ")[0] : null;
 
   return (
     <>
@@ -111,7 +97,7 @@ export default async function DiningPage() {
         crumbs={[["Dining & Menus", "/dining"]]}
       >
         <div className="btn-row">
-          <a className="btn btn-lg" href="#lunch">{t("Join us for lunch")}</a>
+          <Link className="btn btn-lg" href="/tour">{t("Schedule a tour")}</Link>
           <a className="btn btn-ghost btn-lg" href="#menus">{t("Today’s menus")}</a>
         </div>
       </PageHero>
@@ -130,7 +116,6 @@ export default async function DiningPage() {
               <div className="btn-row">
                 <a className="btn btn-light" href={`${smsTo}?&body=${encodeURIComponent("Thanksgiving, 2 of us at the 11:30 seating")}`}><Icon name="sms" /> {t("Text to reserve")}</a>
                 <a className="btn btn-outline-light" href="#menus-thanksgiving">{t("See the Thanksgiving menu")}</a>
-                <a className="btn btn-outline-light" href="#lunch-thanksgiving">{t("Or book online")}</a>
               </div>
             </div>
             <p className="din-tg-count" aria-hidden="true"><b>{daysToTg}</b>{t(" days to go")}</p>
@@ -213,25 +198,7 @@ export default async function DiningPage() {
         </div>
       </section>
 
-      <section id="lunch" className="sec tone-sand din-lunch" aria-labelledby="din-lunch-h">
-        <span id="lunch-thanksgiving" className="din-anchor" />
-        <div className="wrap din-lunch-grid">
-          <div className="din-lunch-intro">
-            <p className="eyebrow">{t("Families & visitors")}</p>
-            <h2 id="din-lunch-h">{t("Join us ")}<em>{t("for lunch")}</em></h2>
-            <p>{t(copy.lunchLede)}</p>
-            <ul className="din-lunch-points">
-              <li><Icon name="clock" />{t(" Seatings from 11:30 am to 1:30 pm, every day")}</li>
-              <li><Icon name="pin" />{t(" Check in at the front desk in the Lobby")}</li>
-              <li><Icon name="phone" />{t(" Prefer to call? ")}<a href={site.phoneHref}>{site.phone}</a></li>
-            </ul>
-            <div className="din-lunch-ph">
-              <Image src={copy.lunchPhoto[0]} alt={t(copy.lunchPhoto[1])} fill sizes="(max-width: 860px) 100vw, 480px" />
-            </div>
-          </div>
-          <LunchBooking dates={bookDates} venues={lunchVenues} holidayVenue={tgVenueKey} holidayVenueName={tgVenue?.name} host={hostFirst} />
-        </div>
-      </section>
+      <VisitBand title="Come for a meal, stay for a tour" text="See the dining rooms, meet the team and taste the food. Book a tour, or chat with us now about dining here." />
     </>
   );
 }
