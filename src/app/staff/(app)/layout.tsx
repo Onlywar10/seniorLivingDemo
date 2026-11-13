@@ -5,7 +5,9 @@ import { StaffCommunityProvider, type StaffCommunityOption } from "@/components/
 import { communities } from "@/data/communities";
 import { lite } from "@/data/staff/lite";
 import { queueAll, searchIndex, viewer, viewers } from "@/data/staff/portal";
-import { waitingReplies } from "@/data/staff/messages";
+import { kinlightReplyProblems, waitingReplies } from "@/data/staff/messages";
+import { automationProblems } from "@/data/staff/automations";
+import { accessOf } from "@/data/staff/shared";
 import { getAlertRules, getAreaState, getStaffRole, getStaffScope } from "@/data/staff/server";
 import { communitySlugs } from "@/lib/sites";
 import "../staff.css";
@@ -36,9 +38,11 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   // Every routed card in its smallest form: the menu counts this person's (and anything handed to them) in the browser.
   const queue = scope === "all" ? [] : lite(queueAll(scope, await getAlertRules(), areas));
   const replies = scope === "all" ? 0 : waitingReplies(scope, as);
+  // Automations: the small count beside the section is this person's problems (the administrator sees all of them).
+  const autoProblems = scope === "all" || !accessOf(as, "automations") ? [] : [...automationProblems(scope), ...kinlightReplyProblems(scope)].filter((p) => as === "manager" || p.owner === as).map((p) => p.id);
   return (
     <StaffCommunityProvider scope={scope} options={options}>
-      <Shell me={me} people={people} queue={queue} replies={replies} found={scope === "all" ? [] : searchIndex(scope, as)}>
+      <Shell me={me} people={people} queue={queue} replies={replies} autoProblems={autoProblems} found={scope === "all" ? [] : searchIndex(scope, as)}>
         {children}
       </Shell>
     </StaffCommunityProvider>

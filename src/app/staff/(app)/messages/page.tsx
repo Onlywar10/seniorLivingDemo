@@ -11,7 +11,7 @@ import { getStaffCommunity } from "@/data/staff/server";
 export const metadata: Metadata = { title: "Communications" };
 
 /** Every text and email conversation with families and residents, and replying to them. */
-export default async function MessagesPage() {
+export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ open?: string }> }) {
   const { as, access } = await sectionAccess("messages");
   if (!access) return <NotYours section="Communications" />;
   const sc = await getStaffCommunity();
@@ -20,7 +20,7 @@ export default async function MessagesPage() {
   return (
     <>
       <PageHead title="Communications" sub={access === "assigned" ? "Conversations assigned to you, by text and email." : "Every conversation with families and residents, by text and email."} />
-      <Inbox convos={convos} people={people} as={as} me={viewer(sc.s.slug, as).name} />
+      <Inbox convos={convos} people={people} as={as} me={viewer(sc.s.slug, as).name} initialOpen={(await searchParams).open} />
     </>
   );
 }

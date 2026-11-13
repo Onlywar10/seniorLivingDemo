@@ -121,7 +121,7 @@ function EditEvent({ edit, setup, preview }: { edit: EditTarget; setup: NewEvent
       preview={preview}
       back={edit.back}
       editing={{ id: e.id, title: e.title, date: e.date, orig: e.orig, start: e.start, room: e.room, desc: e.desc, cost: e.cost, lantern: e.lantern, rule: e.rule, newsletter: e.newsletter }}
-      prefill={{ leader: lead ?? "", lantern: e.lantern, title: e.title, date: e.date, time: hhmm(e.start), minutes: (e.end ?? e.start + 60) - e.start, kind: e.kind, cap: e.cap, repeat: !!e.rule, room: e.room, cat: e.cat as Cat, interests: (e.interests ?? e.invites?.interests ?? []) as Interest[], photos: e.wanted ?? 0, plan: e.plan, stops: e.stops }}
+      prefill={{ leader: lead ?? "", lantern: e.lantern, title: e.title, date: e.date, time: hhmm(e.start), minutes: (e.end ?? e.start + 60) - e.start, kind: e.kind, cap: e.cap, repeat: !!e.rule, room: e.room, cat: e.cat as Cat, interests: (e.interests ?? e.invites?.interests ?? []) as Interest[], photos: !!e.wanted, plan: e.plan, stops: e.stops }}
       onCancel={() => router.push(edit.back.href)}
     />
   );

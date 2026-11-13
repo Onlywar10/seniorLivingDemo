@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ConcernStatus } from "@/data/staff/engage";
 import type { ConcernOwner, QItem, RsvpItem } from "@/data/staff/portal";
-import type { StaffRole } from "@/data/staff/shared";
+import { reportsTo, type StaffRole } from "@/data/staff/shared";
 import { GROUP_LABEL, counts, dueText, groupOf, type Group } from "@/data/staff/signals";
 import { addDays, dayShort, fmtTime, nowMinutes, today } from "@/lib/clock";
 import { Icon } from "../../Icon";
@@ -69,7 +69,9 @@ export function QueueList({ items, empty, me, owners = [], openEvent, replies = 
   // Decided anywhere (an approval on Website clears it here too); a concern resolved in Feedback leaves too.
   const decided = useDecisions();
   const isDecided = (q: QItem) => (q.kind === "ask" ? requestsOf(q).every((r) => decided[r.card]) : !!decided[q.id]);
-  const mine = items.filter((q) => onToday(q, me.as, moves) || leaving.has(q.id));
+  // Late for someone who reports to you: say so, instead of their own reason ("Requests the kitchen has to decide come to you").
+  const mine = items.filter((q) => onToday(q, me.as, moves) || leaving.has(q.id)).map((q) =>
+    q.for[0] !== me.as && reportsTo[q.for[0]] === me.as && !q.why?.startsWith("Settings") ? { ...q, why: `Overdue for ${me.names[q.for[0]]}, who reports to you` } : q);
   const live = mine.filter((q) => !(isDecided(q) && !leaving.has(q.id)) && !(q.kind === "concern" && patches[q.c.id]?.status === "Resolved"));
   const grouped = live.map((q) => ({ q, g: groupOf(q.due ?? 0, nowM) })).filter((x): x is { q: QItem; g: Group } => x.g !== null);
   const n = grouped.filter((x) => counts(x.g)).length;
@@ -393,7 +395,7 @@ function PostCard({ q, frame, act }: { q: Extract<QItem, { kind: "post" }>; fram
     <>
       {frame(
         <>{q.title}</>,
-        `${q.postKind} from ${by} · goes to ${q.channels.length} places`,
+        `${q.postKind} from ${by} · approving puts it on ${q.channels.join(", ").toLowerCase().replace(/, ([^,]*)$/, " and $1")}`,
         <><p>Resident photos, prices and special menus wait for approval. Approving publishes it: {q.channels.join(", ").toLowerCase()}.</p>{q.note && <p>{by}’s note: “{q.note}”</p>}</>,
         <div className="pt-q-body">
           {q.photo && (

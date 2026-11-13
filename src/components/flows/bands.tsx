@@ -708,9 +708,9 @@ export function buildBands(slug: CommunitySlug): Band[] {
         {
           id: "r-checkin",
           title: "Check in to an activity",
-          hook: `A QR sign at the door. ${R} scans it with the phone camera and is checked in. Staff tap in everyone else.`,
+          hook: `${R} shows a check-in card at the door and staff scan it. No phone needed. Anyone without the card is tapped in.`,
           steps: [
-            { id: "r-checkin-scan", scene: "qr", label: "Scan the sign", actor: "resident", when: `At ${x.ckEv.title}`, text: "You’re checked in", preview: phones(x.resCheckin), next: { tab: "staff", flow: "s-signups", text: "Staff see it" } },
+            { id: "r-checkin-scan", scene: "qr", label: "Show the card", actor: "resident", when: `At ${x.ckEv.title}`, text: "You’re checked in", preview: phones(x.resCheckin), next: { tab: "staff", flow: "s-signups", text: "Staff see it" } },
           ],
         },
         {
@@ -784,7 +784,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
             { id: "s-signups-yes", scene: "approve", label: "Resident said yes: confirmed", actor: "staff", via: "Staff workspace", lane: 0, when: "Family told straight away, no approval", preview: tSignupApprove, next: { tab: "family", flow: "f-joinin", text: `${me} gets the answer` } },
             { id: "s-signups-ask", scene: "talk", label: "No answer: ask in person", actor: "staff", via: "In person", lane: 1, when: "Then tap their answer", preview: tSignupAsk },
             { id: "s-signups-book", scene: "list", label: "Book residents who said YES", actor: "staff", via: "Staff workspace", when: "Or signed up at the desk", preview: tSignupBook, next: { tab: "resident", flow: "r-signup", text: `${R} gets the details` } },
-            { id: "s-signups-att", scene: "list", label: "QR check-ins, then tap the rest", actor: "staff", via: "Staff workspace", when: "Feeds Reports", preview: tAttend },
+            { id: "s-signups-att", scene: "list", label: "Scan cards, then tap the rest", actor: "staff", via: "Staff workspace", when: "Feeds Reports", preview: tAttend },
           ],
         },
         {

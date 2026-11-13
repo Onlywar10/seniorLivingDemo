@@ -13,17 +13,18 @@ import { SECTIONS, STAFF_ROLES, accessFor, accessLabel, presetOf, type Access, t
 export type { Preset };
 export interface TeamMember { key: string; name: string; title: string; preset: Preset; invited: boolean; adjusted?: string }
 
-const PRESETS: Preset[] = ["Poster", "Approver", "Kitchen", "Sales", "Administrator", "Caregiver"];
+const PRESETS: Preset[] = ["Poster", "Front desk", "Approver", "Kitchen", "Administrator", "Caregiver"];
 const sectionName: Record<Section, string> = {
-  today: "Today", messages: "Communications", post: "Post", calendar: "Calendar", menus: "Menus", newsletter: "Newsletter", website: "Website",
-  people: "People", feedback: "Feedback", prospects: "Prospects", reports: "Reports", settings: "Settings",
+  today: "Today", messages: "Communications", automations: "Automations", post: "Post", calendar: "Calendar", menus: "Menus", newsletter: "Newsletter", website: "Website",
+  people: "People", feedback: "Feedback", surveys: "Surveys", prospects: "Prospects", reports: "Reports", settings: "Settings",
 };
 /** What each preset may open: the Roles table (the same rules the menu uses). */
 const presetAccess = Object.fromEntries(
   PRESETS.map((p) => [p, accessFor[STAFF_ROLES.find((r) => presetOf[r] === p) ?? "desk"]]),
 ) as Record<Preset, Partial<Record<Section, Access>>>;
 const presetHelp: Record<Preset, string> = {
-  Poster: "Front desk, fitness and other staff: posts, their own events and pages, resident suggestions",
+  Poster: "Fitness and other staff: posts, their own events and pages, resident suggestions",
+  "Front desk": "Posts, visits and dining requests, their own pages, and Apartments: which floor plans are open, the waitlist and tours",
   Approver: "The activities director: approves posts and family requests, People, Newsletter, their reports",
   Kitchen: "Menus and the dining page",
   Sales: "Prospects, apartments and prices, announcements, the prospect numbers",

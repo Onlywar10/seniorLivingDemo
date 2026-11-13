@@ -174,7 +174,7 @@ export function MenuPreview({ v, meals, cycle, standing, daily, live, holidays, 
               <figure className="mp-phone">
                 <figcaption>A resident’s booking confirmation</figcaption>
                 <div className="mp-sms me"><p>Table for 2 at 5:30?</p></div>
-                <div className="mp-sms"><p>You’re booked: a table for 2 at 5:30 pm, {dLabel(day)}, at {name}.{dinner ? ` On the menu: ${pair(dinner) || lines(dinner, 2).join(", ")}.` : ""} We’ll text a reminder at 3 pm. Reply CANCEL to cancel.</p></div>
+                <div className="mp-sms"><p>You’re booked: a table for 2 at 5:30 pm, {dLabel(day)}, at {name}.{dinner ? ` On the menu: ${pair(dinner) || lines(dinner, 2).join(", ")}.` : ""} We’ll text a reminder 2 hours before. Reply CANCEL to cancel.</p></div>
               </figure>
             </div>
           )}

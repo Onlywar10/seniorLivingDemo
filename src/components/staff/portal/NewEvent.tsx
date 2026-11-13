@@ -33,7 +33,7 @@ import { Auto, Help } from "./Help";
 
 export { interestsFromTitle };
 
-export interface EventPrefill { title?: string; date?: string; time?: string; minutes?: number; kind?: EventKind; cap?: number; repeat?: boolean; room?: string; cat?: Cat; interests?: Interest[]; photos?: number; leader?: string; lantern?: boolean; desc?: string; cost?: string; areas?: string[]; plan?: PlanStep[]; stops?: Place[] }
+export interface EventPrefill { title?: string; date?: string; time?: string; minutes?: number; kind?: EventKind; cap?: number; repeat?: boolean; room?: string; cat?: Cat; interests?: Interest[]; photos?: boolean; leader?: string; lantern?: boolean; desc?: string; cost?: string; areas?: string[]; plan?: PlanStep[]; stops?: Place[] }
 
 /** How an event repeats. */
 export type RepeatKind = "none" | "weekly" | "biweekly" | "monthly";
@@ -77,12 +77,12 @@ export function seriesDates(first: string, pat: { k: RepeatKind; days: number[];
 
 /** Starting points, for events that have a usual shape. */
 const TEMPLATES: (EventPrefill & { label: string })[] = [
-  { label: "Bus trip", title: "Bus Trip: ", kind: "resident", cap: 12, minutes: 180, time: "09:30", interests: ["Outings"], photos: 6 },
-  { label: "Exercise class", title: "", kind: "resident", minutes: 45, time: "10:00", interests: ["Fitness"], photos: 0 },
-  { label: "Happy hour", title: "Happy Hour", kind: "resident", minutes: 90, time: "16:00", interests: ["Music"], photos: 4 },
-  { label: "Talk or class", title: "", kind: "resident", minutes: 60, time: "14:00", interests: ["Learning"], photos: 0 },
-  { label: "Family party", title: "", kind: "family", minutes: 120, time: "12:00", interests: [], photos: 8 },
-  { label: "Open house", title: "", kind: "public", minutes: 120, time: "13:00", interests: [], photos: 8 },
+  { label: "Bus trip", title: "Bus Trip: ", kind: "resident", cap: 12, minutes: 180, time: "09:30", interests: ["Outings"], photos: true },
+  { label: "Exercise class", title: "", kind: "resident", minutes: 45, time: "10:00", interests: ["Fitness"], photos: false },
+  { label: "Happy hour", title: "Happy Hour", kind: "resident", minutes: 90, time: "16:00", interests: ["Music"], photos: true },
+  { label: "Talk or class", title: "", kind: "resident", minutes: 60, time: "14:00", interests: ["Learning"], photos: false },
+  { label: "Family party", title: "", kind: "family", minutes: 120, time: "12:00", interests: [], photos: true },
+  { label: "Open house", title: "", kind: "public", minutes: 120, time: "13:00", interests: [], photos: true },
 ];
 export interface SavedEvent {
   id: string; title: string; date: string; start: number; end: number; room: string; kind: EventKind; cat: Cat;
@@ -94,8 +94,8 @@ export interface SavedEvent {
   /** All residents, or the floors and care areas it's for. */
   areas: string[];
   leader?: string;
-  /** How many photos staff would like from it (0: none). */
-  photos: number;
+  /** Whether staff would like photos from it. */
+  photos: boolean;
   /** The resident whose idea it was. */
   idea?: string;
   /** Waiting for the approver (it has a price). */
@@ -150,7 +150,7 @@ function sendWhen(dateIso: string, todayIso: string) {
 }
 
 /** Everything Kinlight does with a new event, one short line each. */
-function effectsOf(o: { date: string; kind: EventKind; repeat: boolean; lantern: boolean; cap?: number; interests: Interest[]; invited: number; photos: number; idea?: IdeaPrefill; approval: boolean; newsletter: boolean; template: boolean; setup: NewEventSetup }): string[] {
+function effectsOf(o: { date: string; kind: EventKind; repeat: boolean; lantern: boolean; cap?: number; interests: Interest[]; invited: number; photos: boolean; idea?: IdeaPrefill; approval: boolean; newsletter: boolean; template: boolean; setup: NewEventSetup }): string[] {
   const d = fromIso(o.date);
   const out: string[] = [];
   if (o.approval) out.push(`Waits for ${o.setup.approver.first} to approve it (it has a price). Then:`);
@@ -209,7 +209,7 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
   const [ints, setInts] = useState<Interest[] | null>(p.interests ?? null);
   const [desc, setDesc] = useState<string | null>(editing?.desc ?? p.desc ?? null);
   const [share, setShare] = useState(false);
-  const [wantPhotos, setWantPhotos] = useState(p.photos !== undefined ? p.photos > 0 : true);
+  const [wantPhotos, setWantPhotos] = useState(p.photos ?? true);
   const [planSel, setPlan] = useState<PlanStep[] | null>(p.plan?.length ? p.plan : null);
   const [stops, setStops] = useState<Place[]>(p.stops ?? []);
   const [news, setNews] = useState(editing?.newsletter ?? (p.kind ?? "resident") !== "resident");
@@ -226,7 +226,7 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
     setRk(x.repeat ? "weekly" : "none");
     if (x.date) setDays([fromIso(x.date).getUTCDay()]);
     setInts(x.interests?.length ? x.interests : null);
-    setWantPhotos((x.photos ?? 0) > 0);
+    setWantPhotos(!!x.photos);
     setDesc(x.desc ?? null);
     setAreas(x.areas ?? []);
     if (x.leader !== undefined) setLeaderSel(x.leader);
@@ -234,7 +234,7 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
     setPlan(x.plan?.length ? x.plan : null);
     setStops(x.stops ?? []);
   };
-  const fromTpl = (t: SavedTemplate): EventPrefill => ({ title: t.title, kind: t.kind, time: t.time, minutes: t.minutes, room: t.room, cap: t.cap, interests: t.interests, photos: t.photos, desc: t.desc, cost: t.cost, areas: t.areas, leader: t.leader });
+  const fromTpl = (t: SavedTemplate): EventPrefill => ({ title: t.title, kind: t.kind, time: t.time, minutes: t.minutes, room: t.room, cap: t.cap, interests: t.interests, photos: !!t.photos, desc: t.desc, cost: t.cost, areas: t.areas, leader: t.leader });
 
   const start = toMin(f.time), end = Math.max(toMin(f.end), start + 15);
   const d = fromIso(f.date || tomorrow);
@@ -244,7 +244,7 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
   const rule = ruleText(rk, pattern.days, d, until || undefined);
   const areaText = areas.length ? andList(areas) : "All residents";
   const cap = Number(f.cap) || undefined;
-  const photos = wantPhotos ? p.photos || 6 : 0;
+  const photos = wantPhotos;
   const set = (k: keyof typeof f) => (ev: { target: { value: string } }) => setF({ ...f, [k]: ev.target.value });
   const toggleInt = (i: Interest) => setInts(interests.includes(i) ? interests.filter((x) => x !== i) : [...interests, i]);
   // The dates it's on: a repeat with no end date is shown for the next eight weeks.

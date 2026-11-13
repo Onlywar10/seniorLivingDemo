@@ -14,10 +14,11 @@ import { inbox } from "./messages";
 import type { QItem } from "./portal";
 import { ago, STAFF_ROLES, type StaffRole } from "./shared";
 import { sitePages } from "./website";
+import { unreachableFamilies } from "./automations";
+import { surveySignals } from "./surveys";
 
 type Task = Extract<QItem, { kind: "task" }>;
 const first = (n = "") => n.split(" ")[0];
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) => StaffRole | undefined, names: Record<StaffRole, string>): QItem[] {
   const s = getStaffData(slug);
@@ -32,10 +33,12 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
   const week = calendarEvents(slug, addDays(t, -6), 7);
   const ended = (e: (typeof week)[number]) => e.date < todayIso || (e.date === todayIso && (e.end ?? e.start + 60) <= now);
   const noAttendance = week.filter((e) => ended(e) && !e.came && !e.cancelled && e.cat !== "movies" && e.cat !== "faith");
-  const noPhotos = week.filter((e) => ended(e) && !e.cancelled && (e.wanted ?? 0) > 0 && !(e.photos?.length) && e.date === todayIso);
-  const byOwner = <T extends { leader?: string }>(xs: T[]) => {
+  const noPhotos = week.filter((e) => ended(e) && !e.cancelled && e.wanted && !(e.photos?.length) && e.date === todayIso);
+  // Whoever led it, if they sign in; fitness classes (often taught by visiting instructors) belong to the fitness
+  // director; everything else to the activities director.
+  const byOwner = <T extends { leader?: string; cat?: string }>(xs: T[]) => {
     const m = new Map<StaffRole, T[]>();
-    for (const x of xs) { const r = roleOfName(x.leader) ?? "events"; m.set(r, [...(m.get(r) ?? []), x]); }
+    for (const x of xs) { const r = roleOfName(x.leader) ?? (x.cat === "fitness" ? "fitness" : "events"); m.set(r, [...(m.get(r) ?? []), x]); }
     return m;
   };
   for (const [r, evs] of byOwner(noAttendance)) {
@@ -46,9 +49,9 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
       title: evs.length === 1 ? `Attendance for ${evs[0].title}` : `Attendance for ${evs.length} activities`,
       context: evs.length === 1 ? `${dayShort(fromIso(evs[0].date))}, ${fmtTime(evs[0].start)} · ${evs[0].room}` : "Finished, and nobody has said who came",
       lines: evs.length > 1 ? evs.sort((a, b) => b.date.localeCompare(a.date) || b.start - a.start).map((e) => `${e.title} · ${dayShort(fromIso(e.date))}, ${fmtTime(e.start)}`) : undefined,
-      why: r === "events" && !evs.some((e) => e.leader) ? "You run the activities calendar" : "You led it",
+      why: r === "fitness" && !evs.some((e) => roleOfName(e.leader) === "fitness") ? "You run the fitness classes" : r === "events" && !evs.some((e) => e.leader) ? "You run the activities calendar" : "You led it",
       ifNot: "or Reports and “what worked” miss who came",
-      help: "Tap the names, scan the QR sign-in, or photograph the paper sheet. Families are never told about attendance automatically.",
+      help: "Tap the names, scan residents’ check-in cards, or photograph the paper sheet. Families are never told about attendance automatically.",
       due: 1439, dueLabel: "by the end of today",
       main: { label: "Take attendance", href: evs.length === 1 ? `/staff/calendar?event=${encodeURIComponent(evs[0].id)}&date=${evs[0].date}` : "/staff/calendar" },
     });
@@ -57,9 +60,9 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
     task({
       id: `ph-${r}`, signal: "photos", for: [r], owner: r, type: "Photos wanted", icon: "image", mins: 90,
       title: evs.length === 1 ? `Photos from ${evs[0].title}` : `Photos from ${evs.length} activities`,
-      context: evs.length === 1 ? `${evs[0].wanted} wanted, none added yet` : "Each asked for photos when it was added",
+      context: evs.length === 1 ? "Photos wanted, none added yet" : "Each asked for photos when it was added",
       lines: evs.length > 1 ? evs.map((e) => `${e.title} · ${e.wanted} wanted`) : undefined,
-      why: "You led it, and it asked for photos", ifNot: "or this week’s newsletter goes without them",
+      why: r === "fitness" && !evs.some((e) => roleOfName(e.leader) === "fitness") ? "You run the fitness classes, and they asked for photos" : "You led it, and it asked for photos", ifNot: "or this week’s newsletter goes without them",
       help: "Kinlight suggests who’s in each photo from who came, checks consent and writes the caption.",
       due: 1439, dueLabel: "by the end of today",
       main: { label: "Add photos", href: evs.length === 1 ? `/staff/calendar?event=${encodeURIComponent(evs[0].id)}&date=${evs[0].date}&photos=1` : "/staff/calendar?photos=1" },
@@ -112,7 +115,7 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
   for (const r of STAFF_ROLES) {
     const mine = convos.filter((c) => c.owner === r);
     if (!mine.length) continue;
-    const lead = mine.filter((c) => r === "sales" && /assisted living|move|moving/i.test(c.msgs.map((m) => m.text).join(" ")));
+    const lead = mine.filter((c) => r === ("sales" as StaffRole) && /assisted living|move|moving/i.test(c.msgs.map((m) => m.text).join(" ")));
     const rest = mine.filter((c) => !lead.includes(c));
     for (const c of lead) {
       task({
@@ -126,7 +129,7 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
     }
     if (rest.length) {
       const oldest = Math.max(...rest.map((c) => c.last ?? 60));
-      const topic: Partial<Record<StaffRole, string>> = { manager: "Billing and anything sensitive come to you", kitchen: "Meals and diets come to you", desk: "Visits, parking and deliveries come to you", events: "Activities come to you", sales: "Prospects and the waitlist come to you", caregiver: "Your residents’ families come to you", lantern: "Lantern families come to you" };
+      const topic: Partial<Record<StaffRole, string>> = { manager: "Billing and anything sensitive come to you", kitchen: "Meals and diets come to you", desk: "Visits, deliveries and the waitlist come to you", events: "Activities come to you", sales: "Prospects and the waitlist come to you", caregiver: "Your residents’ families come to you", lantern: "Lantern families come to you" };
       task({
         id: `msg-${r}`, signal: "message", for: [r], owner: r, type: "Message to answer", icon: "sms", mins: oldest,
         title: rest.length === 1 ? `${rest[0].name} is waiting for a reply` : `${rest.length} family messages to answer`,
@@ -137,6 +140,39 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
         due: Math.max(now + 30, 1440 - oldest + now), main: { label: rest.length === 1 ? "Reply" : "Open Communications", href: "/staff/messages" },
       });
     }
+  }
+
+  /* ---------- Automations: a family nobody can reach by text any more (they replied STOP, with no email on file) */
+  for (const pb of unreachableFamilies(slug)) {
+    const r = pb.owner;
+    task({
+      id: `unreach-${pb.who}`, signal: "unreachable", for: [r], owner: r, about: pb.resident, type: "Can’t reach", icon: "sms",
+      mins: Math.max(30, now - pb.at),
+      title: `${first(pb.resident)}’s family can’t be reached by text`,
+      context: `${pb.who}, ${pb.rel.toLowerCase()}, replied STOP`,
+      why: "A family nobody can reach is an operations matter, so it comes to you",
+      ifNot: `or ${first(pb.resident)}’s family hears nothing from us: no reminders, no family events`,
+      help: "They were the only family member on file who takes texts. A call to ask how they’d like to hear from us: email, another family member, or texts again (they reply START).",
+      due: 1439, dueLabel: "today",
+      main: { label: "Call them", href: pb.phone ? `tel:+1${pb.phone.replace(/\D/g, "")}` : "/staff/automations?tab=problems", done: `Called about ${first(pb.resident)}’s family` },
+      second: { label: "Open in Automations", href: "/staff/automations?tab=problems" },
+    });
+  }
+
+  /* ---------- Surveys: one to approve (the approver), one closing tomorrow with few replies (its owner) */
+  for (const x of surveySignals(slug)) {
+    if (x.kind === "approve") task({
+      id: `sv-ap-${x.sv.id}`, signal: "survey-approve", for: ["manager"], owner: "manager", type: "Survey to approve", icon: "list", mins: 60 * 20,
+      title: `“${x.sv.title}” is ready to approve`, context: x.line, why: "You approve new surveys",
+      ifNot: "or it doesn’t go out", help: "A new survey goes to the approver once before it first sends. Open it to preview exactly what residents and families will see.",
+      due: 1439, dueLabel: "today", main: { label: "Review and approve", href: `/staff/surveys/${x.sv.id}` },
+    });
+    if (x.kind === "closing") task({
+      id: `sv-cl-${x.sv.id}`, signal: "survey-closing", for: [x.sv.owner], owner: x.sv.owner, type: "Survey closing", icon: "list", mins: 60 * 2,
+      title: `“${x.sv.title}” closes soon with few replies`, context: x.line, why: "It’s your survey",
+      ifNot: "or the results rest on few answers", help: "Send a reminder now, extend the closing date, or leave paper copies at the front desk.",
+      due: 1439, dueLabel: "today", main: { label: "Open the survey", href: `/staff/surveys/${x.sv.id}` },
+    });
   }
 
   /* ---------- Menus: next week's checks and dining requests, in the kitchen's queue */
@@ -184,25 +220,19 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
     });
   }
 
-  /* ---------- Prospects: tours to log, and a waitlist told about an opening */
-  for (const tour of s.tours.filter((x) => x.days === 0 && x.time + 60 <= now)) {
-    const r = roleOfName(s.people[tour.with]?.name) ?? "sales";
+  /* ---------- Apartments (front desk): today's finished tours, counted. Kinlight doesn't do sales in the alpha, so
+     the only thing asked is whether the tour happened: that's the tour number on the scorecard. The waitlist is told
+     about an opening automatically, so it needs nobody. */
+  const done = s.tours.filter((x) => x.days === 0 && x.time + 60 <= now);
+  if (done.length) {
     task({
-      id: `tour-${tour.who}`, signal: "tour", for: [r], owner: r, type: "Tour to log", icon: "building", mins: now - (tour.time + 60),
-      title: `How did the tour with ${tour.who} go?`, context: `${fmtTime(tour.time)} · ${tour.interest}${tour.for ? ` · for ${tour.for}` : ""}`,
-      why: "You gave the tour", ifNot: "or the follow-up goes out without your notes",
-      help: "A line on how it went and the next step; Kinlight drafts the thank-you from it.",
-      due: 1439, main: { label: "Log it", href: "/staff/prospects" },
-    });
-  }
-  const opening = s.alerts.filter((a) => a.days <= 7);
-  for (const a of opening) {
-    task({
-      id: `wl-${a.plan}`, signal: "waitlist", for: ["sales"], owner: "sales", type: "Waitlist follow-up", icon: "list", mins: a.days * 1440,
-      title: `${a.text}: follow up`, context: `${a.sent} on the waitlist told ${plural(a.days, "day")} ago · ${a.opened} opened · ${plural(a.tours, "tour")} booked`,
-      why: "You look after the waitlist", ifNot: "or the apartment sits empty longer",
-      help: "Kinlight told everyone waiting for this kind of apartment. Call the ones who opened it and haven’t booked a tour.",
-      due: Math.max(1440 + 10 * 60, (8 - a.days) * 1440), main: { label: "See who opened it", href: "/staff/prospects" },
+      id: "tours-today", signal: "tour", for: ["desk"], owner: "desk", type: "Tours to count", icon: "building", mins: now - (done[0].time + 60),
+      title: done.length === 1 ? `Did ${done[0].who}’s tour happen?` : `Did today’s ${done.length} tours happen?`,
+      context: done.length === 1 ? `${fmtTime(done[0].time)} · ${done[0].interest}` : "Booked through the website chat and the tour page",
+      lines: done.length > 1 ? done.map((x) => `${fmtTime(x.time)} · ${x.who}`) : undefined,
+      why: "You keep the tour count", ifNot: "or this month’s tour number is short",
+      help: "Only whether each tour happened, for the monthly tour number. No notes about the visitor.",
+      due: 1439, main: { label: done.length === 1 ? "It happened" : "Count them", href: "/staff/prospects#tours" },
     });
   }
 

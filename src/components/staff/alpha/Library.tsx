@@ -1,11 +1,11 @@
 "use client";
 
-// Print: the large-print items ready to send to the front desk printer, with previews of a QR check-in sign and a
+// Print: the large-print items ready to send to the front desk printer, with previews of a resident's check-in card and a
 // suggestion slip. Kept in this browser only.
 import { useState } from "react";
 import { Icon } from "../../Icon";
 
-export interface PrintRow { id: string; title: string; size: string; copies: number; note: string; sign?: { id: string; title: string; when: string; place: string } }
+export interface PrintRow { id: string; title: string; size: string; copies: number; note: string; card?: { name: string; community: string } }
 
 /** A stable 32-bit hash of a string (FNV-1a). */
 function h32(s: string) {
@@ -44,7 +44,7 @@ export function QrGrid({ seed, size = 21, label }: { seed: string; size?: number
 
 export function PrintList({ items, printer, community }: { items: PrintRow[]; printer: string; community?: string }) {
   const [done, setDone] = useState<Record<string, "print" | "pdf">>({});
-  const sign = items.find((p) => p.sign)?.sign;
+  const card = items.find((p) => p.card)?.card;
   return (
     <>
       <ul className="pr-list">
@@ -71,17 +71,16 @@ export function PrintList({ items, printer, community }: { items: PrintRow[]; pr
         ))}
       </ul>
       <div className="pr-samples">
-        {sign && (
+        {card && (
           <figure>
             <div className="pr-sheet pr-sign">
-              <p className="pr-eyebrow">{community ?? "Check in"}</p>
-              <p className="pr-big">{sign.title}</p>
-              <p className="pr-mid">{sign.when} · {sign.place}</p>
-              <QrGrid seed={`checkin-${sign.id}`} label={`QR code to check in to ${sign.title}`} />
-              <p className="pr-scan">Scan to check in</p>
-              <p className="pr-small">Use your phone’s camera. No app, no login.</p>
+              <p className="pr-eyebrow">{card.community}</p>
+              <p className="pr-big">{card.name}</p>
+              <QrGrid seed={`card:${card.name}`} label={`${card.name}’s check-in code`} />
+              <p className="pr-scan">My check-in card</p>
+              <p className="pr-small">Show it at the door. Staff scan it: you don’t need a phone.</p>
             </div>
-            <figcaption className="sx-hint">QR check-in sign, one for each activity</figcaption>
+            <figcaption className="sx-hint">Check-in card, one per resident, for a lanyard or key ring</figcaption>
           </figure>
         )}
         <figure>

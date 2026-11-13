@@ -10,6 +10,7 @@ import { addDays, dayName, dayShort, dow, fmtTime, fromIso, iso, shortDate, toda
 import { getStaffData } from "./index";
 import { atToday } from "./shared";
 import { themeNight } from "./dining";
+import { morningMenuReach } from "./automations";
 
 export interface HolidayMenu {
   id: string; venue: string; venueName: string; date: string; label: string; name: string; desc?: string; items: string[]; by: string; sent: string; hours?: string;
@@ -203,7 +204,7 @@ export function menuBoard(slug: CommunitySlug): MenuBoard {
       if (!m.holiday) continue;
       holidays.push({
         kind: "holiday", status: "approved", approved: `${first(approver)} approved Nov 4`,
-        announced: ["Website dining page", "Sunday newsletter", `Text to ${Math.round(214 * s.visitScale)} opted-in residents and families`],
+        announced: ["Website dining page", "Sunday newsletter", `Text to ${morningMenuReach(slug)} opted-in residents and families`],
         booking: "Seatings 11:30 am and 1:30 pm · up to 4 guests per apartment · reply to book",
         id: `hol-${k}-${m.date}`, venue: k, venueName: c.venues[k].name, date: m.date, label: dayShort(d), name: m.special.name, desc: m.special.desc,
         items: m.sections.flatMap((x) => x.items.map((it) => it.name)).slice(0, 6), by: chef, sent: `${uploadedOn}, 3:55 pm`,
@@ -338,7 +339,8 @@ export function menuBoard(slug: CommunitySlug): MenuBoard {
     venues, coming, holidays, subs, served,
     live: { date: iso(t), label: dayShort(t), published: `${atToday(fresh)} by ${chef}`, menus: c.venueOrder.map((k) => ({ venue: c.venues[k], bar: isBar(c.venues[k]), menu: c.menuFor(k, t) })) },
     sendsBy: `${dayName(nextSun)}, ${shortDate(nextSun)} at 5 am`,
-    textOptIns: Math.round(214 * s.visitScale),
+    // The same people Automations → Morning menu reaches.
+    textOptIns: morningMenuReach(slug),
     publishedAhead: `Next week’s menus published ${dayShort(addDays(sun, -2))}`,
     nextStatus: Object.fromEntries(venues.map((v) => {
       const n = coming[0]?.checks.filter((x) => x.venue === v.venue.key && x.kind !== "holiday").length ?? 0;

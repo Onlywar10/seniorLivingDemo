@@ -9,7 +9,7 @@ import { INTERESTS, engagement, eventInterests, todayActivities, whatWorked, typ
 import { areasOf } from "./areas";
 import { getStaffData } from "./index";
 import { residents } from "./portal";
-import type { StaffRole } from "./shared";
+import { fitnessKey, type StaffRole } from "./shared";
 
 const first = (n = "") => n.split(" ")[0];
 
@@ -18,7 +18,7 @@ const first = (n = "") => n.split(" ")[0];
 export interface Busy { date: string; start: number; end: number; room: string; title: string }
 export interface Invitee { name: string; interests: Interest[] }
 /** A ready-made event to start from: Post opens with one, so the invites show real numbers. */
-export interface EventSample { title: string; kind: EventKind; cat: Cat; time: string; minutes: number; room: string; interests: Interest[]; photos: number }
+export interface EventSample { title: string; kind: EventKind; cat: Cat; time: string; minutes: number; room: string; interests: Interest[]; photos: boolean }
 export interface NewEventSetup {
   brand: { name: string; short: string; domain: string; phone: string };
   rooms: string[];
@@ -63,7 +63,7 @@ export function newEventSetup(slug: CommunitySlug, as: StaffRole): NewEventSetup
     past: pastEvents(slug),
     areas: areasOf(slug).map((a) => a.name),
     staff: Object.values(s.people).map((x) => x.name).filter((n, i, a) => a.indexOf(n) === i),
-    me: s.people[({ events: s.roles.calendar, sales: s.roles.tours, manager: s.roles.approver, kitchen: s.roles.menus, desk: s.roles.desk, caregiver: s.roles.calendar, lantern: s.roles.lantern } as const)[as]]?.name ?? approver,
+    me: s.people[({ events: s.roles.calendar, sales: s.roles.tours, manager: s.roles.approver, kitchen: s.roles.menus, desk: s.roles.desk, caregiver: s.roles.calendar, lantern: s.roles.lantern, fitness: fitnessKey(s) } as const)[as]]?.name ?? approver,
   };
 }
 
@@ -84,7 +84,7 @@ function pastEvents(slug: CommunitySlug): PastEvent[] {
       while (iso(next) <= iso(t)) next = addDays(next, 7);
       return {
         label: `${e.title.replace(/^Bus Trip: /, "")} · ${dayShort(d)}`, title: e.title, kind: kindOf(e), cat: e.cat as Cat, time: hh(e.start), minutes: (e.end ?? e.start + 60) - e.start,
-        room: e.room, interests: eventInterests(e), photos: 0, date: iso(next), cap: e.cap,
+        room: e.room, interests: eventInterests(e), photos: false, date: iso(next), cap: e.cap,
       };
     });
 }
@@ -92,9 +92,9 @@ function pastEvents(slug: CommunitySlug): PastEvent[] {
 /** The sample Post opens with: the first that reaches a good number of residents, so the invites look real. */
 function pickSample(invitees: Invitee[], room: string): EventSample {
   const options: EventSample[] = [
-    { title: "Afternoon Concert", kind: "resident", cat: "music", time: "15:30", minutes: 60, room, interests: ["Music"], photos: 6 },
-    { title: "Travel Talk: Autumn in New England", kind: "resident", cat: "community", time: "14:00", minutes: 60, room, interests: ["Learning"], photos: 4 },
-    { title: "Morning Walk and Stretch", kind: "resident", cat: "fitness", time: "10:00", minutes: 45, room, interests: ["Fitness"], photos: 4 },
+    { title: "Afternoon Concert", kind: "resident", cat: "music", time: "15:30", minutes: 60, room, interests: ["Music"], photos: true },
+    { title: "Travel Talk: Autumn in New England", kind: "resident", cat: "community", time: "14:00", minutes: 60, room, interests: ["Learning"], photos: true },
+    { title: "Morning Walk and Stretch", kind: "resident", cat: "fitness", time: "10:00", minutes: 45, room, interests: ["Fitness"], photos: true },
   ];
   const reach = (x: EventSample) => invitees.filter((r) => r.interests.some((i) => x.interests.includes(i))).length;
   return options.find((x) => reach(x) >= 8) ?? options.reduce((a, b) => (reach(b) > reach(a) ? b : a));
@@ -394,12 +394,13 @@ export function photoKit(slug: CommunitySlug, as: StaffRole): PhotoKit {
   const shares: Record<string, boolean> = {};
   for (const n of names) { consent[n] = !presetNo.has(n); shares[n] = true; }
   for (const r of recs) { consent[r.name] = r.photoConsent && !presetNo.has(r.name); shares[r.name] = r.shares; }
-  const approver = s.people[s.roles.approver].name;
+  // Photos showing residents go to the activities director; the directors approve their own.
+  const approver = s.people[s.roles.calendar].name;
   const sun = addDays(t, (7 - t.getUTCDay()) % 7 || 7);
   return {
     presets: s.photoPresets.map((p) => ({ k: p.k, src: p.src, label: p.label })),
     consent, shares, residentNames: names,
-    approver: { name: approver, first: first(approver) }, isApprover: as === "manager",
+    approver: { name: approver, first: first(approver) }, isApprover: as === "events" || as === "manager" || as === "lantern",
     newsletter: dayShort(sun),
   };
 }

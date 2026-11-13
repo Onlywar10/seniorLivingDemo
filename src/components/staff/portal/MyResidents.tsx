@@ -24,7 +24,7 @@ export function MyResidents({ title, sub, items, empty }: { title: string; sub: 
         <h2 id="mr-h">{title} <small>{items.length}</small></h2>
         <p className="sx-hint">{sub}</p>
         <Help label="About My residents" align="end">
-          <p>Everything to do with these residents comes to you: asks in person, invites, “We haven’t seen lately”, welcome checklists and family requests.</p>
+          <p>Everything to do with these residents comes to you: asks in person, “We haven’t seen lately”, things they might enjoy and welcome checklists. Family requests and new family members stay with the activities director.</p>
           <p>Engagement and communication only. Medication, care plans and clinical notes belong in the community’s care system, never here.</p>
         </Help>
       </header>

@@ -28,15 +28,15 @@ export interface CalEvent {
   requests?: ReqRow[];
   /** About how many usually come, and who (events without a seat list), for attendance. */
   expected?: number; regulars?: string[];
-  /** Attendance, once taken: QR check-ins and staff taps (or a photo of the paper sheet). */
+  /** Attendance, once taken: card scans and staff taps (or a photo of the paper sheet). */
   came?: { n: number; of: number; qr: number; staff: number; how: "tap" | "sheet"; by: string };
   /** Who came (or is booked), for suggesting photo tags. */
   cameNames?: string[];
   /** Personal invites to residents whose interests match. */
   invites?: { invited: number; yes: number; interests: string[]; text: string; sentAt: string };
   photos?: string[];
-  /** How many photos staff want from it (0 or missing: none). */
-  wanted?: number;
+  /** Staff asked for photos from it (yes or no). */
+  wanted?: boolean;
   /** A resident's suggestion that became this event (their name, or "a resident"). */
   idea?: string;
   /** Waiting for the approver (it has a price). */
@@ -141,7 +141,7 @@ export function calendarEvents(slug: CommunitySlug, from: Date, days: number): C
         came: att ? { n: att.came, of: att.expected, qr, staff: att.came - qr, how: att.method === "Tap list" ? "tap" : "sheet", by: att.by } : undefined,
         invites: inv ? { invited: inv.invited, yes: inv.yes, interests: inv.interests, text: inv.text, sentAt: inv.sentAt } : undefined,
         photos, wanted: wanted || undefined, cameNames,
-        ...(isDemoTrip(e.id) ? { stops: demoTripStops(), plan: demoTripPlan(), cost: "$15 (lunch included)", wanted: 6, newsletter: true } : {}),
+        ...(isDemoTrip(e.id) ? { stops: demoTripStops(), plan: demoTripPlan(), cost: "$15 (lunch included)", wanted: true, newsletter: true } : {}),
       });
     }
   }
@@ -195,7 +195,7 @@ function notesFor(s: ReturnType<typeof getStaffData>, e: { id: string; title: st
     if (who(0)) add("people", `${who(0)} settles best with a hand to hold at the start.`);
   } else {
     add("setup", `Set up ${e.room} 20 minutes before: chairs in a half circle, name tags at the door.`);
-    add("materials", "Sign-in sheet for anyone who doesn’t scan the QR code.", [signIn]);
+    add("materials", "Sign-in sheet for anyone without their check-in card.", [signIn]);
     if (who(0)) add("people", `${who(0)} asked to help hand things out.`);
   }
   if (e.cap) add("people", "Check the waitlist the morning of: anyone who drops out frees a seat automatically.");

@@ -112,7 +112,7 @@ export function AttendanceReport({ data, community, initialResident, initialGrou
           </div>
         </div>
       )}
-      <p className="sx-hint">From attendance taken by tap list, QR check-in or a photo of the sign-in sheet. Per activity, the same numbers as each activity sheet; per resident, the same as their page. Kept for as long as your community uses Kinlight, and included in Export everything (Settings).</p>
+      <p className="sx-hint">From attendance taken by tap list, card scan or a photo of the sign-in sheet. Per activity, the same numbers as each activity sheet; per resident, the same as their page. Kept for as long as your community uses Kinlight, and included in Export everything (Settings).</p>
     </section>
   );
 }

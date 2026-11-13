@@ -11,6 +11,7 @@ import type { FamilyMember, ResidentRecord } from "@/data/staff/portal";
 import { Icon } from "../../Icon";
 import { Badge, Initials } from "../ui";
 import { Help } from "./Help";
+import { useRemoved } from "../removedStore";
 
 type Filter = "all" | "new" | "notseen" | "lantern" | "lang" | "nophoto" | "notjoined";
 const first = (n = "") => n.split(" ")[0];
@@ -23,11 +24,14 @@ export function People({ records, total, eng, welcomes, interests, initial }: {
   const [q, setQ] = useState("");
   const [f, setF] = useState<Filter>(initial && welcomes.some((w) => w.name === initial) ? "new" : "all");
   const [interest, setInterest] = useState<string>("");
+  // Residents removed in this browser (passed away, moved out) leave the list; a move to another care area doesn't.
+  const removed = useRemoved();
   const engOf = (n: string): Engagement | undefined => eng[n];
   const welcomeOf = (n: string) => welcomes.find((w) => w.name === n);
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return list.filter((r) => {
+      if (removed[r.name] && removed[r.name].why !== "moved-area") return false;
       if (s && !`${r.name} ${r.apt} ${r.family.map((m) => m.name).join(" ")}`.toLowerCase().includes(s)) return false;
       if (interest && !(eng[r.name]?.interests ?? []).includes(interest as Interest)) return false;
       if (f === "new") return welcomes.some((w) => w.name === r.name);
@@ -38,7 +42,7 @@ export function People({ records, total, eng, welcomes, interests, initial }: {
       if (f === "notjoined") return r.family.some((m) => m.status === "Invited" || m.status === "Waiting for a check");
       return true;
     });
-  }, [q, f, list, interest, eng, welcomes]);
+  }, [q, f, list, interest, eng, welcomes, removed]);
 
   return (
     <div className="pt-people">

@@ -21,7 +21,6 @@ import { Attendance } from "./Attendance";
 import { Drawer } from "./Drawer";
 import { EventPhotos } from "./EventPhotos";
 import { Help } from "./Help";
-import { QrBlock } from "./Qr";
 
 const webShows: Record<EventKind, string> = {
   public: "Everything: name, day, time, place and description, with a sign-up form. Each sign-up is a lead for sales.",
@@ -156,7 +155,7 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
   const invitedN = (e.invites?.invited ?? 0) + interested.filter((x) => x.status === "invited").length;
   const cameN = e.came?.n;
   const photos = e.photos ?? [];
-  const wantedLeft = Math.max(0, (e.wanted ?? 0) - photos.length);
+  const wantedLeft = !!e.wanted && !photos.length;
   // "Invite someone else": only residents the activity is for, matching interests first.
   const forThis = residents.filter((r) => (lantern.includes(r) ? !!e.lantern : !e.lantern) && !(e.people ?? []).some((x) => x.name === r));
   const ints = new Set(e.interests ?? e.invites?.interests ?? []);
@@ -168,12 +167,12 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
     <section className="pt-ev-sec pc-attend-first" id="pc-attendance" key="attend">
       <h3>Attendance</h3>
       {phase === "before" ? (
-        <p className="sx-hint pc-oneline"><Icon name="clock" /> {isToday ? `Take attendance from ${opensAt}, 15 minutes before it starts.` : "Take attendance from 15 minutes before it starts."}{e.lantern ? "" : " Residents can also check in with the QR sign."}</p>
+        <p className="sx-hint pc-oneline"><Icon name="clock" /> {isToday ? `Take attendance from ${opensAt}, 15 minutes before it starts.` : "Take attendance from 15 minutes before it starts."}{e.lantern ? "" : " Or scan residents’ check-in cards at the door."}</p>
       ) : e.came ? (
         <>
           <p><b>{e.came.n}</b> came · {e.came.of} said yes</p>
           <div className="pc-split">
-            <div><b>{e.came.qr}</b><span>{e.lantern ? "QR not used" : "QR check-in"}</span></div>
+            <div><b>{e.came.qr}</b><span>{e.lantern ? "Cards not used" : "Card scans"}</span></div>
             <div><b>{e.came.staff}</b><span>{e.came.how === "tap" ? `Tapped in by ${first(e.came.by)}` : `Paper sheet, by ${first(e.came.by)}`}</span></div>
             <div><b>{Math.max(0, e.came.of - e.came.n)}</b><span>Said yes, didn’t come</span></div>
           </div>
@@ -193,7 +192,7 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
         />
       ) : (
         <div className="pt-act">
-          {qrIn.length > 0 && <span className="sx-hint">{qrIn.length} checked in by QR so far.</span>}
+          {qrIn.length > 0 && <span className="sx-hint">{qrIn.length} checked in by card so far.</span>}
           <button type="button" className="sx-btn sx-btn-primary sx-btn-lg" onClick={() => setTaking(true)}><Icon name="users" /> Take attendance</button>
         </div>
       )}
@@ -202,9 +201,9 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
 
   const photosSec = !readOnly && !e.cancelled && (
     <section className="pt-ev-sec" id="pc-photos" key="photos">
-      <h3>Photos {e.wanted ? <small className="sx-hint">{photos.length} added{wantedLeft ? ` · ${wantedLeft} more wanted` : ""}</small> : null}</h3>
+      <h3>Photos {e.wanted ? <small className="sx-hint">{photos.length ? `${photos.length} added` : "Wanted, none yet"}</small> : null}</h3>
       {phase === "before" ? (
-        <p className="sx-hint pc-oneline"><Icon name="image" /> Add photos once it starts{e.wanted ? `: ${e.wanted} wanted` : ""}. Tags are suggested from who checks in.</p>
+        <p className="sx-hint pc-oneline"><Icon name="image" /> Add photos once it starts{e.wanted ? ": photos wanted" : ""}. Tags are suggested from who checks in.</p>
       ) : (
         <>
           {photos.length > 0 && (
@@ -374,7 +373,7 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
         <div><dt>Price</dt><dd>{e.cost ?? "Free"}</dd></div>
         <div><dt>Led by</dt><dd>{lead ?? "Not set"}</dd></div>
         <div><dt>Interests</dt><dd>{(e.interests ?? e.invites?.interests ?? []).join(", ") || "None"}</dd></div>
-        <div><dt>Photos wanted</dt><dd>{e.wanted ? e.wanted : "No"}</dd></div>
+        <div><dt>Photos wanted</dt><dd>{e.wanted ? "Yes" : "No"}</dd></div>
       </dl>
       {e.desc && <p className="pc-desc">{e.desc}</p>}
     </details>
@@ -382,7 +381,7 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
 
   const printSec = !readOnly && !e.cancelled && (
     <details className="pt-ev-sec pc-fold" key="print">
-      <summary><h3>Print</h3> <small className="sx-hint">Flyer and QR check-in sign</small></summary>
+      <summary><h3>Print</h3> <small className="sx-hint">Flyer</small></summary>
       <div className="pc-prints">
         <div className="pc-print">
           <div className="pv-flyer">
@@ -396,15 +395,6 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
             <div className="pv-flyer-foot">Questions? {brand.phone}</div>
           </div>
           <button type="button" className="sx-btn sx-btn-sm" onClick={() => say("Flyer sent to the front desk printer")}><Icon name="printer" /> Print the flyer</button>
-        </div>
-        <div className="pc-print">
-          <div className="pc-qr-sign" aria-label={`QR check-in sign for ${e.title}`}>
-            <b>{e.title}</b>
-            <strong>Scan to check in</strong>
-            <QrBlock seed={e.id} />
-            <small>{e.lantern ? "Staff check residents in" : "Use your phone’s camera. No app, no login."}</small>
-          </div>
-          <button type="button" className="sx-btn sx-btn-sm" onClick={() => say("QR sign sent to the front desk printer")}><Icon name="printer" /> Print the QR sign</button>
         </div>
       </div>
     </details>
@@ -433,7 +423,7 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
           // eslint-disable-next-line @next/next/no-img-element
           <img className="pc-cover" src={photos[0]} alt={`Photo from ${e.title}`} />
         ) : (
-          <span className="pc-cover pc-cover-none" style={{ background: e.color }} title={e.wanted ? `No photos yet · ${e.wanted} wanted` : "No photo"}><Icon name="image" /></span>
+          <span className="pc-cover pc-cover-none" style={{ background: e.color }} title={e.wanted ? "No photos yet · photos wanted" : "No photo"}><Icon name="image" /></span>
         )}
         <p className="pt-ev-meta">
           <Badge tone={e.kind === "public" ? "accent" : e.kind === "family" ? "info" : "good"}>{eventKindLabel[e.kind]}</Badge>

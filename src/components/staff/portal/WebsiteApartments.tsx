@@ -20,7 +20,11 @@ export interface PendingPrice { id: string; code: string; name: string; from: nu
 const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
 const lower = (t: string) => t.replace(/^(Today|Yesterday)/, (x) => x.toLowerCase());
 
-export function WebsiteApartments({ plans, approver, isApprover, pending }: { plans: PlanInfo[]; approver: string; isApprover: boolean; pending: PendingPrice | null }) {
+export function WebsiteApartments({ plans, approver, isApprover, pending, availabilityOnly = false }: {
+  plans: PlanInfo[]; approver: string; isApprover: boolean; pending: PendingPrice | null;
+  /** The front desk (Apartments): marks floor plans open or taken, straight away, and never changes prices. */
+  availabilityOnly?: boolean;
+}) {
   const [rows, setRows] = useState(plans);
   const [edit, setEdit] = useState<{ code: string; kind: Change["kind"] } | null>(null);
   const [price, setPrice] = useState("");
@@ -37,6 +41,20 @@ export function WebsiteApartments({ plans, approver, isApprover, pending }: { pl
 
   const setRow = (code: string, f: (p: PlanInfo) => PlanInfo) => setRows((xs) => xs.map((x) => (x.code === code ? f(x) : x)));
   const note = (code: string, t: string | null) => setDone((d) => { const n = { ...d }; if (t) n[code] = t; else delete n[code]; return n; });
+
+  // Availability only: open goes live and texts the waitlist; taken just updates the count.
+  const openNow = (p: PlanInfo) => {
+    setRow(p.code, (x) => ({ ...x, available: x.available + 1 }));
+    const t = p.waiting ? `Marked open · ${people(p.waiting)} on the waitlist ${p.waiting === 1 ? "was" : "were"} texted` : "Marked open · nobody is on its waitlist yet";
+    note(p.code, `${t}. It shows as available on the website.`);
+    say(`${p.code}: ${t}`);
+  };
+  const takenNow = (p: PlanInfo) => {
+    const before = p;
+    setRow(p.code, (x) => ({ ...x, available: Math.max(0, x.available - 1) }));
+    note(p.code, p.available <= 1 ? "Marked taken · the website shows none open." : `Marked taken · ${p.available - 1} still open.`);
+    say(`${p.code}: one marked taken`, () => { setRow(p.code, () => before); note(p.code, null); });
+  };
 
   const submit = (p: PlanInfo) => {
     if (!edit) return;
@@ -126,6 +144,11 @@ export function WebsiteApartments({ plans, approver, isApprover, pending }: { pl
                 </form>
               ) : w ? (
                 <span className="ws-plan-wait"><Badge tone="warn"><Icon name="clock" /> Waiting for {appr}</Badge> <small>{w.kind === "open" ? `Open from ${money(w.from)}` : `New price ${money(w.from)}`}</small></span>
+              ) : availabilityOnly ? (
+                <span className="ws-plan-a">
+                  <button type="button" className="sx-btn sx-btn-sm" onClick={() => openNow(p)}>Mark one open</button>
+                  {p.available > 0 && <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => takenNow(p)}>Mark one taken</button>}
+                </span>
               ) : (
                 <span className="ws-plan-a">
                   <button type="button" className="sx-btn sx-btn-sm" onClick={() => { setEdit({ code: p.code, kind: "open" }); setPrice(String(p.from)); }}>Mark one open</button>

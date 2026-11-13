@@ -11,6 +11,7 @@ import { celebrations, concerns, thankYous, todayActivities, unseen, welcomes } 
 import { concernOwners, queueAll, queueFor, roleNames, viewer } from "@/data/staff/portal";
 import { newEventSetup, photoKit } from "@/data/staff/post";
 import { placements } from "@/data/staff/areas";
+import { surveySignals } from "@/data/staff/surveys";
 import { diningRequests } from "@/data/staff/dining";
 import { getAlertRules, getAreaState, getStaffCommunity, getStaffRole } from "@/data/staff/server";
 import { accessOf, type StaffRole } from "@/data/staff/shared";
@@ -26,9 +27,10 @@ const emptyFor: Record<StaffRole, string> = {
   sales: "New inquiries appear here the moment they arrive.",
   manager: "Posts and the newsletter waiting for your approval appear here.",
   kitchen: "Menus to check appear here. Diet questions are in Communications.",
-  desk: "Anything assigned to you appears here. Messages are in Communications.",
-  caregiver: "Anything about your residents appears here: someone to ask in person, a family request, a new family member.",
+  desk: "Tours to count and anything assigned to you appear here. Messages are in Communications.",
+  caregiver: "Anything about your residents appears here: someone to ask in person, someone you haven’t seen lately, something they might enjoy.",
   lantern: "Lantern family requests and Lantern concerns appear here.",
+  fitness: "Attendance and photos for your classes, and your fitness page, appear here. Posts with resident photos go to your activities director.",
 };
 
 export default async function TodayPage() {
@@ -42,7 +44,7 @@ export default async function TodayPage() {
   const now = nowMinutes();
   const acts = todayActivities(slug);
   const { familiesReached } = s.weekKpis;
-  const team = as === "events" || as === "desk";
+  const team = as === "events" || as === "desk" || as === "fitness";
   // "Who looks after whom" (Settings): each person's own residents, and who looks after everyone.
   const areas = await getAreaState();
   const rules = await getAlertRules();
@@ -107,13 +109,13 @@ export default async function TodayPage() {
   const careNote = as === "caregiver" && !areas.on ? (
     <section className="sx-card pt-tcard"><p className="sx-card-body">Your residents’ activities show here when <b>Who looks after whom</b> is on in <Link className="sx-link" href="/staff/settings">Settings</Link>.</p></section>
   ) : null;
-  const day = { manager: <>{toursCard}{holidayLine}</>, sales: toursCard, kitchen: <>{menusCard}{guestsCard}</>, desk: <>{busesCard}{guestsCard}</>, events: null, caregiver: careNote, lantern: null }[as];
+  const day = { manager: <>{toursCard}{holidayLine}</>, sales: toursCard, kitchen: <>{menusCard}{guestsCard}</>, desk: <>{toursCard}{busesCard}{guestsCard}</>, events: null, fitness: null, caregiver: careNote, lantern: null }[as];
 
   /* ---------- When you have a minute: at most three, chosen for today */
   const thanks = thankYous(slug).filter((x) => x.staffName === me.name).map((x) => ({ id: x.id, from: x.from, relation: x.relation, resident: x.resident, text: x.text }));
   const cel = as === "events" || as === "manager" ? celebrations(slug) : as === "lantern" ? celebrations(slug).filter((x) => lanternSet.has(x.who)) : [];
   const wel = areas.on ? welcomes(slug).filter((w) => mine.has(w.name)) : as === "events" ? welcomes(slug) : [];
-  const uns = areas.on ? unseen(slug).filter((u) => mine.has(u.name)) : as === "events" ? unseen(slug) : as === "lantern" ? unseen(slug).filter((u) => lanternSet.has(u.name)) : [];
+  const uns = as === "caregiver" ? [] : areas.on ? unseen(slug).filter((u) => mine.has(u.name)) : as === "events" ? unseen(slug) : as === "lantern" ? unseen(slug).filter((u) => lanternSet.has(u.name)) : [];
   const pick = { thanks: [] as typeof thanks, celebrations: [] as typeof cel, welcomes: [] as typeof wel, unseen: [] as typeof uns };
   const pools = [["thanks", thanks], ["celebrations", cel], ["welcomes", wel], ["unseen", uns]] as const;
   for (let round = 0, left = 3; left > 0 && round < 3; round++) {
@@ -143,9 +145,9 @@ export default async function TodayPage() {
         kit={team || as === "manager" || as === "lantern" ? photoKit(slug, as) : undefined}
         setup={team || as === "manager" || as === "lantern" ? newEventSetup(slug, as) : undefined}
         day={day}
-        suggest={pick}
+        suggest={{ ...pick, results: surveySignals(slug).filter((x) => x.kind === "results" && (x.sv.owner === as || as === "manager")).map((x) => ({ id: x.sv.id, title: x.sv.title, line: x.line, href: `/staff/reports/surveys?id=${x.sv.id}` })) }}
         did={as !== "sales" && as !== "caregiver" ? { items: didThisWeek(slug), range: `${weekNumbers(slug).range} · ${familiesReached} of ${s.community.families} families reached`, full: friday } : undefined}
-        numbers={as === "manager" ? `This week: ${familiesReached} of ${s.community.families} families reached · ${weekNumbers(slug).activities} activities · ${s.enquiries.length} inquiries.` : undefined}
+        numbers={as === "manager" ? `This week: ${familiesReached} of ${s.community.families} families reached · ${weekNumbers(slug).activities} activities · ${s.tours.length} tours booked.` : undefined}
       />
     </div>
   );

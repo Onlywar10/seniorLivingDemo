@@ -22,3 +22,16 @@ export function QrBlock({ seed, className = "pc-qr" }: { seed: string; className
     </svg>
   );
 }
+
+/**
+ * A resident's check-in card: printed once, wallet-sized, with their own QR code. They carry it on a lanyard or key
+ * ring and staff scan it at the door with the Kinlight phone, so the resident doesn't need a phone or a camera.
+ */
+export function CheckInCard({ name, className = "" }: { name: string; className?: string }) {
+  return (
+    <div className={`ck-card ${className}`} aria-label={`${name}’s check-in card`}>
+      <QrBlock seed={`card:${name}`} className="pc-qr ck-card-qr" />
+      <span><b>{name}</b><small>Show this card at activities</small></span>
+    </div>
+  );
+}

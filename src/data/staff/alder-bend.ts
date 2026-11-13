@@ -56,7 +56,7 @@ const enquirySourcesPrev = [13, 8, 8, 3, 4, 1, 4, 2, 2];
 
 const activity: Activity[] = [
   { who: "nora", mins: 34, text: "posted “Harvest Happy Hour: Fun Hats Encouraged” to the website, 186 families and this week’s digest" },
-  { who: "devin", mins: 96, text: "sent “Healthy Happy Hour with Devin & Priya!” flyer for approval", tone: "wait" },
+  { who: "devin", mins: 96, text: "added “Healthy Happy Hour with Devin & Priya!” with resident photos: waiting for Nora", tone: "wait" },
   { who: "priya", mins: 140, text: "booked a tour for the Andersons, Friday at 10:00 am, with lunch in the Juniper Room", tone: "info" },
   { who: "rafael", mins: 230, text: "published today’s menus for the Juniper Room, Millpond Café and The Perch" },
   { who: "maribel", mins: 60 * 19, text: "texted 21 Lantern families about Lantern Pumpkin Painting" },
@@ -202,32 +202,25 @@ const lanternNames = ["Russell Park", "Frank Delgado", "Arthur Bellamy", "Gloria
 
 /* ------------------------------------------------------------ approvals */
 
+// Posts with resident photos from the activities team go to the activities director; prices and special menus go to
+// the executive director. Posts by an approver, and anything without resident photos, prices or a special menu,
+// publish straight away.
 const approvals: Approval[] = [
   {
-    id: "a1", by: "devin", mins: 96, kind: "Flyer (PDF)", title: "Healthy Happy Hour with Devin & Priya!",
-    detail: "Wednesday, November 18 · 3:00 pm · The Perch. Music, nutritious snacks and choreography.",
+    id: "a1", by: "devin", to: "events", mins: 96, kind: "Event with 4 photos", title: "Healthy Happy Hour with Devin & Priya!",
+    detail: "Wednesday, November 18 · 3:00 pm · The Perch. Music, nutritious snacks and choreography. Four photos from October’s Happy Hour on the event page.",
     photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (186)", "Weekly email digest", "Large-print flyer"],
-    note: "Mocktail recipes on the back. Priya is bringing the playlist.",
+    note: "All 4 residents pictured have photo consent on file. Mocktail recipes in the description.",
   },
   {
-    id: "a2", by: "nora", mins: 60 * 3 + 10, kind: "News post with 6 photos", title: "Honoring our veterans",
-    detail: "Veterans Day plans: the bus to the parade at 7:30 am, Veterans’ Lunch in Millpond Café, and the Veterans’ & Families Only Ceremony at 2:00 pm.",
-    photo: "/img/flag.jpg", channels: ["Website news", "Family email digest", "Google Business Profile"],
-    note: "All 6 residents pictured have photo consent on file.",
-  },
-  {
-    id: "a3", by: "leonard", mins: 60 * 26, kind: "Pricing change", title: "One Bedroom Standard (NB2B) starting rate",
-    detail: "Floor plans page shows $6,155; the pricing page and brochure say $6,150. Correct the floor plan to match.",
-    channels: ["Website floor plans", "Google Business Profile"], diff: ["From $6,155 a month", "From $6,150 a month"],
-  },
-  {
-    id: "a4", by: "rafael", mins: 60 * 30, kind: "Menu", title: "Thanksgiving dinner menu, Thursday, November 26",
+    id: "a4", by: "rafael", to: "manager", mins: 60 * 30, kind: "Holiday menu", title: "Thanksgiving dinner menu, Thursday, November 26",
     detail: "Juniper Room, 11:00 am–3:00 pm by reservation. Herb-roasted turkey, honey-glazed ham, wild mushroom Wellington, and pumpkin, pecan and apple desserts.",
     photo: "/img/turkey.jpg", channels: ["Website dining", "Family email digest", "Large-print menu cards"],
   },
 ];
 
 const approvedRecently = [
+  { title: "Honoring our veterans: news post with 6 photos", by: "nora", mins: 60 * 27, ok: true },
   { title: "Calder Valley Memory Walk: story and 14 photos", by: "maribel", mins: 60 * 28, ok: true },
   { title: "November activity calendar (312 events)", by: "nora", mins: 60 * 190, ok: true },
   { title: "Paint and Sip with Talia: news post", by: "nora", mins: 60 * 24 * 19, ok: true },

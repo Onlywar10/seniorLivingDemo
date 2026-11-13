@@ -10,7 +10,7 @@ import { addDays, dayShort, fromIso, hash, iso, today } from "@/lib/clock";
 import { ago, getStaffData, planRows } from "./index";
 import type { Block } from "./blocks";
 import { pageBlocks } from "./pageBlocks";
-import type { StaffData, StaffRole } from "./shared";
+import { fitnessKey, type StaffData, type StaffRole } from "./shared";
 
 export type Rhythm = "Weekly" | "Monthly" | "Every 3 months" | "Every 6 months" | "Every year";
 const rhythmDays: Record<Rhythm, number> = { Weekly: 7, Monthly: 30, "Every 3 months": 90, "Every 6 months": 180, "Every year": 365 };
@@ -44,7 +44,7 @@ const first = (n = "") => n.split(" ")[0];
 
 /** The person who holds each role in this community. */
 export function roleHolder(s: StaffData, as: StaffRole) {
-  const key = ({ events: s.roles.calendar, sales: s.roles.tours, manager: s.roles.approver, kitchen: s.roles.menus, desk: s.roles.desk, caregiver: careLogin[s.slug], lantern: s.roles.lantern })[as];
+  const key = ({ events: s.roles.calendar, sales: s.roles.tours, manager: s.roles.approver, kitchen: s.roles.menus, desk: s.roles.desk, caregiver: careLogin[s.slug], lantern: s.roles.lantern, fitness: fitnessKey(s) })[as];
   return { key, ...s.people[key] };
 }
 
@@ -78,7 +78,7 @@ export function sitePages(slug: CommunitySlug): SitePage[] {
     P({ id: "dining", title: "Dining", group: "Community pages", path: "/dining", ownerRole: "kitchen", rhythm: "Monthly", days: 12 + h, text: `${venues.length} places to eat, one kitchen team: ${venues.map((v) => `${v.name} (${v.blurb.replace(/\.$/, "").toLowerCase()})`).join("; ")}.`, fills: "Today’s menu for each restaurant and the hours come from Menus." }),
     P({ id: "lifestyle", title: "Life here", group: "Community pages", path: "/lifestyle", ownerRole: "events", rhythm: "Monthly", days: 9 + h, text: `Something on every day at ${name}: clubs, classes, trips, music and faith, planned with residents and open to their families.`, fills: "The calendar and recent news update themselves." }),
     P({ id: "events-adventures", title: "Events & Adventures", group: "Community pages", path: "/events-adventures", ownerRole: "events", rhythm: "Monthly", days: 16 + h, text: `Trips out every week and something special every month, from lake days to theatre matinees. Families are welcome on many of them.`, fills: "Upcoming trips come from the calendar; photos from the galleries." }),
-    P({ id: "fitness", title: "Fitness", group: "Community pages", path: "/fitness", ownerRole: "events", rhythm: "Weekly", days: 6, text: c.fitness.intro, fills: "Class times come from the calendar." }),
+    P({ id: "fitness", title: "Fitness", group: "Community pages", path: "/fitness", ownerRole: "fitness", rhythm: "Weekly", days: 6, text: c.fitness.intro, fills: "Class times come from the calendar." }),
     P({ id: "faq", title: "FAQs", group: "FAQs", path: "/faq", ownerRole: "manager", rhythm: "Every 3 months", days: 23 + h, text: `${c.faqs.length} questions families ask most, with short answers. ${c.faqs[0]?.q ?? ""} ${c.faqs[0]?.a ?? ""}`.trim(), fills: "Kinlight suggests new questions from what families ask in replies and chat." }),
     P({ id: "contact", title: "Info & directions", group: "Contact", path: "/contact", ownerRole: "desk", rhythm: "Every 3 months", days: 30 + h, text: c.directions[0]?.text ?? "", fills: "Phone numbers, hours and the address come from Settings → Community details." }),
     P({ id: "team", title: "Meet our team", group: "Meet our team", path: "/team", ownerRole: "manager", rhythm: "Every 3 months", days: 52 + h, text: `${c.team.length} people with a photo and a few lines each, so families know who they’re talking to.`, fills: "Names and job titles come from Settings → Team." }),
@@ -239,7 +239,7 @@ export function siteResources(slug: CommunitySlug): ResourceSetup {
     mk("policy", "policy", "Policies: guests, pets and smoking", `Guests are welcome any time and can stay for short visits. Pets are welcome with a short agreement. ${name} is smoke-free inside and on the grounds.`, 140 + h, 225 - h, "/faq"),
     mk("welcome", "welcome", "Welcome pack", `A short guide for new residents and families: who to call, mealtimes, how messages from ${name} work, and how to share photos with family.`, 64 + h, 116 - h, "/guides", "Welcome pack.pdf"),
   ].map((r) => (r.kind === "policy" ? { ...r, slug: "policies" } : r));
-  const roles: StaffRole[] = ["manager", "desk", "events", "kitchen", "sales"];
+  const roles: StaffRole[] = ["manager", "desk", "events", "kitchen"];
   return {
     items,
     owners: roles.map((r) => ({ role: r, name: R(r).name, title: R(r).role })).filter((o, i, a) => a.findIndex((x) => x.name === o.name) === i),

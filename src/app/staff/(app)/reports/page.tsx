@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import "@/app/staff/reports.css";
+import "@/app/staff/automations.css";
+import Link from "next/link";
+import { AutoSummaryCard } from "@/components/staff/portal/AutoSummary";
+import { weekSummary } from "@/data/staff/automations";
+import { scorecardSurveys } from "@/data/staff/surveys";
+import "@/app/staff/surveys.css";
+import { accessOf } from "@/data/staff/shared";
 import { Icon } from "@/components/Icon";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
 import { Help } from "@/components/staff/portal/Help";
@@ -23,8 +30,9 @@ export const metadata: Metadata = { title: "Monthly scorecard" };
 const evidenceKeys = new Set(["Enquiries", "Tours", "Deposits", "Move-ins", "Occupancy", "Google rating"]);
 
 export default async function ScorecardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const { access } = await sectionAccess("reports");
+  const { as, access } = await sectionAccess("reports");
   if (!access) return <NotYours section="Reports" />;
+  const canAuto = !!accessOf(as, "automations");
   // Activities staff open Reports on Engagement; the scorecard is a tab for them.
   if (access === "community" && (await searchParams).tab !== "scorecard") redirect("/staff/reports/engagement");
   const sc = await getStaffCommunity();
@@ -53,6 +61,7 @@ export default async function ScorecardPage({ searchParams }: { searchParams: Pr
   }
 
   const { highlights, scoreRows, topPosts } = s;
+  const sat = scorecardSurveys(s.slug);
   const ps = promises(s.slug);
   const kept = ps.filter((p) => p.status === "Kept").length;
   const ad = adoption(s.slug);
@@ -80,7 +89,7 @@ export default async function ScorecardPage({ searchParams }: { searchParams: Pr
                   <tr key={p.code}>
                     <td><span className="sc-code">{p.code}</span> <b>{p.promise}</b><small>{p.target}</small></td>
                     <td className="rp-nowrap"><PromiseStatusMark status={p.status} /></td>
-                    <td><small style={{ marginTop: 0 }}>{p.evidence}</small></td>
+                    <td><small style={{ marginTop: 0 }}>{p.evidence}</small>{p.href && canAuto && <Link className="sx-link rp-ev-link" href={p.href}>{p.hrefLabel}</Link>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -108,6 +117,18 @@ export default async function ScorecardPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="sx-grid g-2">
+        <AutoSummaryCard w={weekSummary(s.slug)} link={canAuto} />
+        <Card title="Satisfaction" sub="Family and resident surveys, before go-live and now" action={<Help label="Where this comes from" align="end"><p>From the Family satisfaction and Resident satisfaction surveys in Surveys: their real answers, as percentages of the best score (the recommend question is out of 10).</p></Help>}>
+          <ul className="su-sc">
+            {[...sat.family.qs.map((q) => ({ ...q, who: "Families" })), ...sat.resident.qs.map((q) => ({ ...q, who: "Residents" }))].map((q) => (
+              <li key={q.who + q.q}><span>{q.q}<small>{q.who}</small></span><b>{q.before}{q.now > 10 ? "%" : ""} → {q.now}{q.now > 10 ? "%" : ""}</b></li>
+            ))}
+          </ul>
+          <p className="au-rep-link"><Link className="sx-link" href="/staff/reports/surveys">Survey results <Icon name="right" /></Link> · {sat.family.answered} of {sat.family.sent} families answered</p>
+        </Card>
+      </div>
+
+      <div className="sx-grid g-2">
         <Card title="Adoption" sub="Is the team using it?" action={<Help label="About adoption" align="end"><p>Whether staff are adding photos and events, and whether families are reading them. Measured every month against the alpha’s targets.</p><p>Time saved comes from the team’s time diary.</p></Help>} pad={false}>
           <div className="sx-table-wrap">
             <table className="sx-table">
@@ -120,6 +141,7 @@ export default async function ScorecardPage({ searchParams }: { searchParams: Pr
                       {a.value}
                       <Meter v={a.pct} tone={a.ok ? "var(--green)" : "var(--terra)"} label={`${a.pct}% of target`} />
                       {a.note && <small>{a.note}</small>}
+                      {a.href && canAuto && <Link className="sx-link rp-ev-link" href={a.href}>{a.hrefLabel}</Link>}
                     </td>
                     <td><small style={{ marginTop: 0 }}>{a.target}</small>{a.ok ? <span className="sc-status hit"><Icon name="check" /> On track</span> : <span className="sc-status miss"><Icon name="minus" /> Behind</span>}</td>
                   </tr>

@@ -9,7 +9,7 @@ import type { PhotoKit } from "@/data/staff/post";
 import { Icon } from "../../Icon";
 import { Auto, Help } from "./Help";
 
-export interface PhotoEvent { id: string; title: string; date: string; room: string; lantern?: boolean; photos?: string[]; wanted?: number; came?: string[] }
+export interface PhotoEvent { id: string; title: string; date: string; room: string; lantern?: boolean; photos?: string[]; wanted?: boolean; came?: string[] }
 
 
 
@@ -27,7 +27,7 @@ export function EventPhotos({ e, kit, todayIso, focus = false, onPosted }: { e: 
   }, [focus]);
 
   const have = e.photos?.length ?? 0;
-  const wanted = e.wanted ?? 0;
+  const wanted = !!e.wanted;
   const future = e.date > todayIso;
 
   const chosen = shots.size + uploads.length;
@@ -48,7 +48,7 @@ export function EventPhotos({ e, kit, todayIso, focus = false, onPosted }: { e: 
     <section className="pt-ev-sec pc-photos-sec" id="pc-photos" ref={ref}>
       <h3>
         Photos
-        {wanted > 0 && <span className="po-tag">Photos wanted: {wanted}</span>}
+        {wanted && <span className="po-tag">Photos wanted</span>}
         <Help label="How photos work" align="end">
           <p>Kinlight writes the caption from the event. Photo consent is checked before anything is published.</p>
           {!kit.isApprover && <p>Photos showing residents go to {kit.approver.first} first.</p>}
@@ -57,7 +57,6 @@ export function EventPhotos({ e, kit, todayIso, focus = false, onPosted }: { e: 
       {have > 0 && (
         <>
           <div className="pc-photos">{e.photos!.map((src, i) => <Thumb key={src + i} src={src} />)}</div>
-          {wanted > 0 && <p className="sx-hint">{have} of {wanted} wanted</p>}
         </>
       )}
       {done && (

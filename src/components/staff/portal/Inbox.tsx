@@ -21,14 +21,17 @@ const prospect = (c: { relation: string }) => c.relation === "Prospect" || c.rel
 /** "Daughter of Rosa Hernández", "Resident", or "Prospect · Assisted Living". */
 const sub = (c: { relation: string; resident: string }) => (c.relation === "Resident" ? "Resident" : prospect(c) ? `${c.relation} · ${c.resident}` : `${c.relation} of ${c.resident}`);
 
-export function Inbox({ convos: initial, people, as, me }: { convos: Convo[]; people: Reachable[]; as: StaffRole; me: string }) {
+export function Inbox({ convos: initial, people, as, me, initialOpen }: { convos: Convo[]; people: Reachable[]; as: StaffRole; me: string;
+  /** A conversation to open straight away (from a link in Automations → Problems). */
+  initialOpen?: string }) {
   const [convos, setConvos] = useState(initial);
   const mine = (c: Convo) => c.needsReply && c.owner === as;
-  const [show, setShow] = useState<Show>(initial.some(mine) ? "reply" : "all");
+  const linked = initialOpen ? initial.find((c) => c.id === initialOpen) : undefined;
+  const [show, setShow] = useState<Show>(linked && !mine(linked) ? "all" : initial.some(mine) ? "reply" : "all");
   const [q, setQ] = useState("");
-  const [openId, setOpenId] = useState<string | null>(initial.find(mine)?.id ?? initial[0]?.id ?? null);
+  const [openId, setOpenId] = useState<string | null>(linked?.id ?? initial.find(mine)?.id ?? initial[0]?.id ?? null);
   const [starting, setStarting] = useState(false);
-  const [phoneList, setPhoneList] = useState(true);
+  const [phoneList, setPhoneList] = useState(!linked);
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -44,7 +47,7 @@ export function Inbox({ convos: initial, people, as, me }: { convos: Convo[]; pe
     const before = convos;
     const m: ConvoMsg = { id: `me-${Date.now()}`, me: true, who: first(me), text, when: "Just now", via };
     setConvos((xs) => xs.map((x) => (x.id === c.id ? { ...x, needsReply: false, last: 0, msgs: [...x.msgs, m] } : x)));
-    say(`Sent to ${first(c.name)} by ${via.toLowerCase()}${c.lang !== "English" ? `, in ${c.lang}` : ""}.${prospect(c) ? " Filed in Prospects." : ` Filed on ${first(c.resident)}’s page.`}`, () => setConvos(before));
+    say(`Sent to ${first(c.name)} by ${via.toLowerCase()}${c.lang !== "English" ? `, in ${c.lang}` : ""}.${prospect(c) ? " Filed in Apartments." : ` Filed on ${first(c.resident)}’s page.`}`, () => setConvos(before));
   };
   const done = (c: Convo, why: string) => {
     const before = convos;

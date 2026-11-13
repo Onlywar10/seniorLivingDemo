@@ -10,18 +10,21 @@ import { NotYours } from "@/components/staff/portal/NotYours";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Badge, Card, PageHead } from "@/components/staff/ui";
 import { sectionAccess } from "@/data/staff/access";
-import { surveys } from "@/data/staff/alpha";
+import { surveyRows } from "@/data/staff/surveys";
+import { accessOf } from "@/data/staff/shared";
 import { concerns, thankYous } from "@/data/staff/engage";
 import { ideas } from "@/data/staff/portal";
 import { getStaffCommunity } from "@/data/staff/server";
 import { roleHolder } from "@/data/staff/website";
 
+const first = (n = "") => n.split(" ")[0];
+
 export const metadata: Metadata = { title: "Feedback" };
 
-const suggestionsHelp = (
+const suggestionsHelp = (decide: boolean) => (
   <Help label="About resident suggestions">
     <p>Ideas come from paper slips, the QR code on printed calendars, or a text. Most votes first.</p>
-    <p>“Make it an event” opens Post with the idea filled in. When an idea makes the calendar, the resident who suggested it is told.</p>
+    <p>{decide ? "“Make it an event” opens Post with the idea filled in." : "The activities director decides which ideas become activities."} When an idea makes the calendar, the resident who suggested it is told.</p>
   </Help>
 );
 
@@ -39,31 +42,30 @@ export default async function Page() {
   if (!full) {
     return (
       <>
-        <PageHead title="Feedback" sub="Residents’ ideas. Log a slip when someone hands you one." />
+        <PageHead title="Feedback" sub={`Residents’ ideas. Log a slip when someone hands you one; ${first(roleHolder(s, "events").name)} decides which become activities.`} />
         <div className="fb-scope">
           <Badge tone="info">Resident suggestions</Badge>
-          <Help label="Why you see only suggestions"><p>You see the suggestions part of Feedback. An administrator can change that in Settings.</p></Help>
+          <Help label="Why you see only suggestions"><p>You see the suggestions part of Feedback, to log slips residents hand you and add votes. Family concerns go to whoever owns each topic. An administrator can change that in Settings.</p></Help>
         </div>
-        <Card title={<>Resident suggestions {suggestionsHelp}</>} sub={`${list.length} ideas`}>
-          <FeedbackSuggestions ideas={list} residents={s.residentNames} me={me.name} />
+        <Card title={<>Resident suggestions {suggestionsHelp(false)}</>} sub={`${list.length} ideas`}>
+          <FeedbackSuggestions ideas={list} residents={s.residentNames} me={me.name} decide={false} />
         </Card>
       </>
     );
   }
 
-  const cs = concerns(slug);
+  // The executive director sees every concern; everyone else sees the ones they own (billing stays with the business
+  // office and the executive director, dining with the culinary director).
+  const cs = concerns(slug).filter((x) => as === "manager" || x.owner === me.key);
+  const decide = as === "manager" || as === "events";
   const ty = thankYous(slug);
-  const sv = surveys(slug);
+  const canSurveys = !!accessOf(as, "surveys");
+  const svRows = surveyRows(slug, "manager").filter((x) => x.status !== "closed").slice(0, 4);
   // Who a concern can be passed to. Care and safety go to the care team's own system, never here.
   const owners: Owner[] = concernOwners(slug);
   const open = cs.filter((x) => x.status !== "Resolved" && !x.care).length;
   const newIdeas = list.filter((x) => x.status === "New").length;
 
-  const schedule = [
-    { title: sv.family.title, how: "Text and email", steps: [["Before go-live", "Done"], ["Day 90", `${sv.family.answered} of ${sv.family.sent} answered`], ["Every 6 months", "Scheduled"]] },
-    { title: "Resident survey", how: "Printed or read aloud", steps: [["Before go-live", "Done"], ["Day 90", `${sv.resident.answered} so far`], ["Every 6 months", "Scheduled"]] },
-    { title: sv.staff.title, how: sv.staff.when, steps: [...sv.staff.months.map((m) => [m, "Done"]), ["Next month", "Scheduled"]] },
-  ];
 
   return (
     <>
@@ -85,8 +87,8 @@ export default async function Page() {
             <FeedbackConcerns items={cs} owners={owners} me={me.name} />
           </Card>
 
-          <Card id="suggestions" title={<>Resident suggestions {suggestionsHelp}</>} sub={`${list.length} ideas`}>
-            <FeedbackSuggestions ideas={list} residents={s.residentNames} me={me.name} />
+          <Card id="suggestions" title={<>Resident suggestions {suggestionsHelp(decide)}</>} sub={`${list.length} ideas`}>
+            <FeedbackSuggestions ideas={list} residents={s.residentNames} me={me.name} decide={decide} />
           </Card>
         </div>
 
@@ -96,21 +98,16 @@ export default async function Page() {
           </Card>
 
           <Card title={<>Surveys <Help label="About surveys" align="end">
-            <p>Sent on schedule by Kinlight: before go-live, at day 90, then every six months. The staff pulse goes monthly.</p>
-            <p>Family surveys go by text and email in each family’s language. Resident surveys are printed, or read aloud by staff for anyone who prefers.</p>
-          </Help></>} action={<Link className="sx-btn sx-btn-sm sx-btn-quiet" href="/staff/reports/surveys">Results</Link>}>
+            <p>Surveys now have their own section: make one from a template or a past survey, choose who and when, and see the results in Reports.</p>
+            <p>A concern written in a named survey arrives here as a concern with an owner. Thank-yous that name staff go to them.</p>
+          </Help></>} action={<Link className="sx-btn sx-btn-sm sx-btn-quiet" href={canSurveys ? "/staff/surveys" : "/staff/reports/surveys"}>{canSurveys ? "Open Surveys" : "Results"}</Link>}>
             <ul className="sx-list fb-surveys">
-              {schedule.map((x) => (
-                <li key={x.title}>
+              {svRows.map((x) => (
+                <li key={x.id}>
                   <b>{x.title}</b>
-                  <small>{x.how}</small>
+                  <small>{x.when}</small>
                   <ol>
-                    {x.steps.map(([when, state]) => (
-                      <li key={when}>
-                        <span>{when}</span>
-                        {state === "Done" ? <span className="fb-done">Done</span> : <Badge tone={state === "Scheduled" ? "neutral" : "info"}>{state}</Badge>}
-                      </li>
-                    ))}
+                    <li><span>{x.audience}</span>{x.status === "open" || x.status === "repeating" || x.status === "automatic" ? <Badge tone="info">{x.rate}% replied</Badge> : <Badge tone="neutral">{x.status === "waiting" ? "To approve" : "Draft"}</Badge>}</li>
                   </ol>
                 </li>
               ))}

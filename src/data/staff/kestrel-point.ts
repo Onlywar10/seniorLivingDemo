@@ -61,7 +61,7 @@ const enquirySourcesPrev = [16, 9, 8, 3, 5, 1, 3, 3, 2];
 
 const activity: Activity[] = [
   { who: "grant", mins: 28, text: "posted “Harvest Happy Hour: Fun Hats Encouraged” to the website, 155 families and this week’s digest" },
-  { who: "kara", mins: 85, text: "sent “Mindfulness & Mocktails with Kara” flyer for approval", tone: "wait" },
+  { who: "kara", mins: 85, text: "added “Mindfulness & Mocktails with Kara” with resident photos: waiting for Grant", tone: "wait" },
   { who: "mateo", mins: 150, text: "booked a tour for the Gill family, Monday at 11:00 am, with lunch in Meadowbrook Cafe", tone: "info" },
   { who: "julien", mins: 240, text: "published today’s menus for the Juniper Room, Meadowbrook Cafe and the Bistro" },
   { who: "anjali", mins: 60 * 20, text: "texted 20 Lantern families about Lantern Pumpkin Painting" },
@@ -205,38 +205,31 @@ const lanternNames = ["Walter Foster", "Eugene Whitley", "Yolanda Fuentes", "Lor
 
 /* ------------------------------------------------------------ approvals */
 
+// Posts with resident photos from the activities team go to the activities director; prices and special menus go to
+// the executive director. Posts by an approver, and anything without resident photos, prices or a special menu,
+// publish straight away.
 const approvals: Approval[] = [
   {
-    id: "a1", by: "kara", mins: 85, kind: "Flyer (PDF)", title: "Mindfulness & Mocktails with Kara",
-    detail: "Wednesday, November 18 · 3:00 pm · The Bistro. A short mindfulness session, then nutritious snacks and mocktails.",
+    id: "a1", by: "kara", to: "events", mins: 85, kind: "Event with 3 photos", title: "Mindfulness & Mocktails with Kara",
+    detail: "Wednesday, November 18 · 3:00 pm · The Bistro. A short mindfulness session, then nutritious snacks and mocktails. Three photos from last month’s session on the event page.",
     photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (155)", "Weekly email digest", "Large-print flyer"],
-    note: "Mocktail recipes on the back.",
+    note: "All 3 residents pictured have photo consent on file. Mocktail recipes in the description.",
   },
   {
-    id: "a2", by: "grant", mins: 60 * 3, kind: "News post with 8 photos", title: "Honoring our veterans",
-    detail: "Veterans Day plans: the Flag Ceremony in the Courtyard at 9:30 am, Veterans’ Lunch in Meadowbrook Cafe, and the Veterans’ & Families Only Ceremony in the Theatre at 2:00 pm.",
-    photo: "/img/flag.jpg", channels: ["Website news", "Family email digest", "Google Business Profile"],
-    note: "All 8 residents pictured have photo consent on file.",
-  },
-  {
-    id: "a3", by: "imani", mins: 60 * 25, kind: "Pricing change", title: "One Bedroom Standard (B6) starting rate",
-    detail: "The pricing page headline says one-bedrooms start at $5,250; the B6 floor plan says $5,235. Match the headline to the floor plan.",
-    channels: ["Website pricing", "Google Business Profile"], diff: ["From $5,250 a month", "From $5,235 a month"],
-  },
-  {
-    id: "a4", by: "julien", mins: 60 * 31, kind: "Menu", title: "Thanksgiving dinner menu, Thursday, November 26",
+    id: "a4", by: "julien", to: "manager", mins: 60 * 31, kind: "Holiday menu", title: "Thanksgiving dinner menu, Thursday, November 26",
     detail: "Juniper Room, 11:00 am–3:00 pm by reservation. Herb-roasted turkey, honey-glazed ham, wild mushroom Wellington, and pumpkin pie, pecan pie and apple crisp.",
     photo: "/img/turkey.jpg", channels: ["Website dining", "Family email digest", "Large-print menu cards"],
   },
   {
-    id: "a5", by: "callie", mins: 60 * 40, kind: "News post with 5 photos", title: "Bocce Tournament: Round One sign-ups",
-    detail: "Five photos from last week’s practice on the courtyard court, inviting residents to sign up for Round One on Thursday, November 5.",
+    id: "a5", by: "callie", to: "events", mins: 60 * 40, kind: "News post with 5 photos", title: "Bocce Tournament: Round One sign-ups",
+    detail: "Five photos from last week’s practice on the courtyard court, inviting residents to sign up for Round One next Thursday.",
     photo: "/img/bocce.jpg", channels: ["Website news", "Family email digest"],
     note: "All 5 residents pictured have photo consent on file.",
   },
 ];
 
 const approvedRecently = [
+  { title: "Honoring our veterans: news post with 8 photos", by: "grant", mins: 60 * 26, ok: true },
   { title: "Paint and Sip: October story and 11 photos", by: "callie", mins: 60 * 30, ok: true },
   { title: "November activity calendar (287 events)", by: "grant", mins: 60 * 180, ok: true },
   { title: "Axe throwing: news post", by: "kara", mins: 60 * 24 * 12, ok: true },

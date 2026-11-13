@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import "@/app/staff/reports.css";
+import "@/app/staff/automations.css";
+import { AutoSummaryCard } from "@/components/staff/portal/AutoSummary";
+import { weekSummary } from "@/data/staff/automations";
+import { accessOf } from "@/data/staff/shared";
 import { Icon } from "@/components/Icon";
 import { ReportTabs } from "@/components/staff/portal/CalendarTabs";
 import { Help } from "@/components/staff/portal/Help";
@@ -19,7 +23,7 @@ export const metadata: Metadata = { title: "Families" };
 const concernTone: Record<ConcernStatus, "good" | "warn" | "bad" | "neutral"> = { Open: "bad", "In progress": "warn", Resolved: "good", "Passed to the care team": "neutral" };
 
 export default async function FamiliesPage() {
-  const { access } = await sectionAccess("reports");
+  const { as, access } = await sectionAccess("reports");
   if (!access) return <NotYours section="Reports" />;
   if (!mayOpen(access, "families")) return <NotThisReport title="Families" access={access} />;
   const sc = await getStaffCommunity();
@@ -40,6 +44,8 @@ export default async function FamiliesPage() {
         <Kpi label="Replies" value={fmt(f.sends.replied)} note={`to ${f.sends.count} sends, ${fmt(f.sends.sent)} messages`} />
         <Kpi label="Concerns resolved" value={<>{f.concernsResolved}<small> / {f.concernsOwned}</small></>} note={`${f.concernsPassed} passed to the care team`} />
       </div>
+
+      <AutoSummaryCard w={weekSummary(s.slug)} link={!!accessOf(as, "automations")} />
 
       <div className="sx-grid g-2">
         <Card title="Family concerns" sub={`${f.concernsOpened} this month`} action={<Help label="About family concerns" align="end"><p>Each concern has an owner and stays open until they mark it resolved. Concerns are never answered by the AI.</p><p>Care concerns are passed to the care team straight away and recorded in the community’s own care system. Kinlight keeps only who it went to and when, so they aren’t counted as open or resolved here.</p></Help>}>

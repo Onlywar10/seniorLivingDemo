@@ -16,7 +16,6 @@ const staffMoves: [string, string][] = [
   ["tours", "prospects"],
   ["apartments", "prospects"],
   ["scorecard", "reports"],
-  ["surveys", "reports/surveys"],
   ["seo", "reports/search"],
   ["geo", "reports/search"],
   ["leadership", "reports/communities"],

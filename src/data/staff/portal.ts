@@ -10,9 +10,11 @@ import { concerns, handledByAI, readyToReview, type Concern, type Handled, type 
 import { getStaffData, planRows } from "./index";
 import { sitePages } from "./website";
 import { careLogin, placements, type AreaState } from "./areas";
-import { STAFF_ROLES, ago, presetOf, sectionsFor, type Preset, type Section, type StaffData, type StaffRole } from "./shared";
+import { engagement, eventInterests } from "./engage";
+import { STAFF_ROLES, ago, fitnessKey, presetOf, reportsTo, sectionsFor, type Preset, type Section, type StaffData, type StaffRole } from "./shared";
 import { SIGNALS, groupOf, type SignalKey, type SignalRule } from "./signals";
 import { todaySignals } from "./todaySignals";
+import { residentChannel } from "./automations";
 
 const first = (n = "") => n.split(" ")[0];
 const last = (n = "") => n.split(" ").slice(-1)[0];
@@ -22,7 +24,7 @@ const last = (n = "") => n.split(" ").slice(-1)[0];
 export interface Viewer { as: StaffRole; key: string; name: string; first: string; title: string; preset: Preset }
 
 const keyOf = (s: StaffData, as: StaffRole) =>
-  ({ events: s.roles.calendar, sales: s.roles.tours, manager: s.roles.approver, kitchen: s.roles.menus, desk: s.roles.desk, caregiver: careLogin[s.slug as CommunitySlug], lantern: s.roles.lantern })[as];
+  ({ events: s.roles.calendar, fitness: fitnessKey(s), sales: s.roles.tours, manager: s.roles.approver, kitchen: s.roles.menus, desk: s.roles.desk, caregiver: careLogin[s.slug as CommunitySlug], lantern: s.roles.lantern })[as];
 
 export function viewer(slug: CommunitySlug, as: StaffRole): Viewer {
   const s = getStaffData(slug);
@@ -52,6 +54,8 @@ interface Base {
   signal?: SignalKey;
   /** Why it came to this person: "You own Activities concerns". */
   why?: string;
+  /** The resident a card is about, when it's about one (so "Who looks after whom" can route it). */
+  about?: string;
   /** What happens if it isn't done in time: "or the post waits until tomorrow". */
   ifNot?: string;
 }
@@ -161,9 +165,10 @@ export function baseQueue(slug: CommunitySlug): QItem[] {
   const lanternSet = new Set(s.lanternNames);
   const handled = handledByAI(slug);
 
-  // Posts waiting for the manager's approval.
+  // Posts waiting for approval: the activities team's posts with resident photos go to the activities director;
+  // prices and special menus to the executive director.
   s.approvals.forEach((a) =>
-    out.push({ id: `post-${a.id}`, for: ["manager"], mins: a.mins, ago: ago(a.mins), kind: "post", title: a.title, postKind: a.kind, by: ppl(a.by).name, byRole: ppl(a.by).role, detail: a.detail, photo: a.photo, channels: a.channels, note: a.note, diff: a.diff }),
+    out.push({ id: `post-${a.id}`, for: [a.to], mins: a.mins, ago: ago(a.mins), kind: "post", title: a.title, postKind: a.kind, by: ppl(a.by).name, byRole: ppl(a.by).role, detail: a.detail, photo: a.photo, channels: a.channels, note: a.note, diff: a.diff }),
   );
 
   // Family RSVPs and seat requests. The resident is asked first, by text; staff see them once the resident says yes,
@@ -191,9 +196,9 @@ export function baseQueue(slug: CommunitySlug): QItem[] {
       });
   }
 
-  // New inquiries for sales to call. The instant reply has already gone.
+  // New inquiries for sales to call. Hidden in the alpha (no sales in Kinlight yet); kept for when it comes back.
   s.enquiries
-    .filter((e) => e.status === "New")
+    .filter((e) => e.status === "New" && STAFF_ROLES.includes("sales"))
     .forEach((e) => out.push({ id: `inq-${hash(e.name)}`, for: ["sales"], mins: e.mins, ago: ago(e.mins), kind: "inquiry", name: e.name, interest: e.interest, source: e.source, msg: e.msg, phone: phoneFor(s, e.name), replied: "Instant reply sent by text and email" }));
 
   // Family replies the AI couldn't act on. It acts only on clear answers to Kinlight's own questions.
@@ -227,7 +232,11 @@ export function baseQueue(slug: CommunitySlug): QItem[] {
   const viewerOf: Record<string, StaffRole> = { [s.roles.calendar]: "events", [s.roles.tours]: "sales", [s.roles.approver]: "manager", [s.roles.menus]: "kitchen", [s.roles.desk]: "desk", [s.roles.lantern]: "lantern" };
   concerns(slug)
     .filter((c) => c.status !== "Resolved" && !c.care)
-    .forEach((c) => out.push({ id: `concern-${c.id}`, for: [viewerOf[c.owner] ?? "manager"], owner: viewerOf[c.owner] ?? "manager", mins: c.mins, ago: c.ago, kind: "concern", c, phone: phoneOf(s, c.from) }));
+    .forEach((c) => out.push({
+      id: `concern-${c.id}`, for: [viewerOf[c.owner] ?? "manager"], owner: viewerOf[c.owner] ?? "manager", mins: c.mins, ago: c.ago, kind: "concern", c, phone: phoneOf(s, c.from),
+      // Owned by a department head who doesn't sign in to Kinlight (the business office): the executive director follows it up.
+      why: viewerOf[c.owner] ? undefined : `${first(c.ownerName)} (${ppl(c.owner).role}) owns it and doesn’t use Kinlight, so you follow it up`,
+    }));
 
   // Things Kinlight prepared that its owner must approve (the newsletter) or check (dishes it wasn't sure of).
   // An import Kinlight read goes back to whoever imported it (the activities calendar); the photo captions to the
@@ -307,7 +316,7 @@ function stamp(items: QItem[]): QItem[] {
     let label: string | undefined;
     describe(q);
     switch (q.kind) {
-      case "post": due = now < 16 * 60 ? 16 * 60 : 1440 + 16 * 60; label = by(due); q.owner = "manager"; break;
+      case "post": due = now < 16 * 60 ? 16 * 60 : 1440 + 16 * 60; label = by(due); q.owner = q.for[0]; break;
       // A family is waiting on the answer: within 2 days of asking, or before the event if that's sooner.
       case "rsvp": case "seat": case "group": due = Math.min(at(q.event.date, q.event.start), got(q) + 2 * 1440); q.owner = "events"; break;
       case "ask": due = Math.min(at(q.event.date, q.event.start), ...q.more.map((m) => at(m.event.date, m.event.start)), got(q) + 2 * 1440); q.owner = "events"; break;
@@ -336,15 +345,15 @@ function describe(q: QItem) {
       const holiday = /holiday|thanksgiving|christmas|menu/i.test(`${q.postKind} ${q.title}`);
       const price = /rate|price|\$/i.test(`${q.title} ${q.detail}`);
       q.signal ??= holiday ? "holiday-menu" : price ? "price-change" : "post";
-      q.why = price ? "Prices wait for your approval" : holiday ? "Special menus wait for your approval" : "You approve posts with resident photos, prices and special menus";
-      q.ifNot = "or it waits until tomorrow";
+      q.why = price ? "Prices wait for your approval" : holiday ? "Special menus wait for your approval" : "Your team’s posts with resident photos wait for you";
+      q.ifNot = price ? "or the website keeps the old price" : holiday ? "or families see it later, with less time to reserve" : "or it waits until tomorrow";
       break;
     }
     case "rsvp": case "seat": case "group": q.signal ??= "family-request"; q.why = "You approve family requests"; q.ifNot = "or the family hears nothing before the event"; break;
     case "ask": q.signal ??= "ask"; q.why = q.lantern ? "Lantern residents are asked in person, by the Lantern team" : "The resident didn’t answer the text, so someone asks in person"; q.ifNot = "or the family hears nothing before the event"; break;
     case "verify": q.signal ??= "family-member"; q.why = "You check who joins a resident’s family"; q.ifNot = `or ${q.name.split(" ")[0]} gets community news only`; break;
     case "inquiry": q.signal ??= "inquiry"; q.why = "New inquiries come to sales"; q.ifNot = "or they go cold"; break;
-    case "concern": q.signal ??= "concern"; q.why = `You own ${q.c.topic} concerns`; q.ifNot = "or it shows as overdue to your manager"; break;
+    case "concern": q.signal ??= "concern"; q.why ??= `You own ${q.c.topic} concerns`; q.ifNot = "or it shows as overdue to your manager"; break;
     case "review": q.signal ??= "review"; q.why = q.r.kind === "newsletter" ? "You approve the newsletter" : "Kinlight prepared it for you to check"; q.ifNot = q.r.kind === "newsletter" ? "or it sends as it is" : "or it goes out with what Kinlight guessed"; break;
     case "reply": q.signal ??= "message"; break;
     case "stale": q.signal ??= "page-due"; break;
@@ -414,7 +423,7 @@ export function searchIndex(slug: CommunitySlug, as: StaffRole): Found[] {
   }
   // Website pages this person may edit (all of them for the administrator).
   if (can("website")) sitePages(slug).filter((p) => as === "manager" || p.ownerRole === as).forEach((p) => out.push({ k: "page", title: p.title, sub: `Website page · ${p.ownerName.split(" ")[0]}’s`, href: `/staff/website?page=${encodeURIComponent(p.id)}` }));
-  if (can("prospects")) s.enquiries.forEach((e) => out.push({ k: "prospect", title: e.name, sub: `Prospect · ${e.interest} · ${e.status}`, href: "/staff/prospects" }));
+  if (can("prospects") && STAFF_ROLES.includes("sales")) s.enquiries.forEach((e) => out.push({ k: "prospect", title: e.name, sub: `Prospect · ${e.interest} · ${e.status}`, href: "/staff/prospects" }));
   return out;
 }
 
@@ -441,7 +450,9 @@ export function roleNames(slug: CommunitySlug): Record<StaffRole, string> {
 }
 
 /** The resident a card is about, when it's about one resident (asks, family members, family messages). */
-const residentOf = (q: QItem) => (q.kind === "ask" || q.kind === "verify" ? q.resident : q.kind === "reply" && q.for.includes("events") ? q.resident : undefined);
+// Only the things a person who knows the resident should do: ask them in person, and notice when they've stopped
+// coming. Checking who joins a family and fixing how a family hears from us stay with the activities director.
+const residentOf = (q: QItem) => (q.kind === "ask" ? q.resident : q.kind === "task" && q.about && (q.signal === "unseen" || q.signal === "try-new") ? q.about : undefined);
 
 /**
  * Everything waiting on anyone in the community, each card routed to the person it's for: by the rules in Settings →
@@ -469,13 +480,90 @@ export function queueAll(slug: CommunitySlug, rules: SignalRule[] = SIGNALS, are
     const res = residentOf(q);
     if (where && res) {
       const p = where.get(res);
-      const lead = p?.lead ? keyToRole.get(p.lead) : undefined;
-      const to: StaffRole = lead ?? (p?.lead ? "caregiver" : "manager");
-      q = { ...q, for: [to], team: false, owner: undefined, why: p?.lead ? "You look after this resident" : "This resident isn’t in an area yet", area: p?.area ? `${p.area.name}${p.apt && !p.lantern ? ` · ${p.apt}` : ""}` : "Not placed in an area yet" } as QItem;
+      // The signed-in care partner, or a role that signs in; a care partner who doesn't sign in (Lena) is covered by
+      // the activities director.
+      const lead = p?.lead ? keyToRole.get(p.lead) ?? (p.lead === careLogin[slug] ? "caregiver" : undefined) : undefined;
+      const to: StaffRole = lead ?? (p?.lead ? "events" : "manager");
+      const leadName = p?.lead ? first(getStaffData(slug).people[p.lead]?.name) : "";
+      q = { ...q, for: [to], team: false, owner: undefined, why: lead ? "You look after this resident" : p?.lead ? `${leadName} looks after this resident and isn’t on Kinlight yet` : "This resident isn’t in an area yet", area: p?.area ? `${p.area.name}${p.apt && !p.lantern ? ` · ${p.apt}` : ""}` : "Not placed in an area yet" } as QItem;
     }
-    // The executive director also sees what's overdue for their team.
-    if (!q.for.includes("manager") && groupOf(q.due ?? 0, now) === "late") q = { ...q, for: [...q.for, "manager"] };
+    // Whoever each person answers to also sees what's overdue for them: the fitness director's go to the activities
+    // director; everyone else's to the executive director.
+    if (groupOf(q.due ?? 0, now) === "late") {
+      const up = [...new Set(q.for.map((r) => reportsTo[r]).filter((r): r is StaffRole => !!r && !q.for.includes(r)))];
+      if (up.length) q = { ...q, for: [...q.for, ...up] };
+    }
     out.push(q);
+  }
+  // A care partner's own residents: someone who hasn't been out lately, and something they'd likely enjoy but have
+  // never tried. Only with "Who looks after whom" on, because that's what makes them someone's residents.
+  if (areas?.on) out.push(...careNudges(slug, areas));
+  return out;
+}
+
+/**
+ * For the care partner who signs in, from the attendance records and each resident's interests: "Hasn't been to
+ * anything in 18 days" and "Likes music, has never been to the Afternoon Concert". Engagement only: no care, no
+ * health. A person should notice, so nothing is sent automatically and families are never told.
+ */
+function careNudges(slug: CommunitySlug, areas: AreaState): QItem[] {
+  const c = communities[slug];
+  const t = today();
+  const now = nowMinutes();
+  const eng = engagement(slug);
+  const mine = placements(slug, areas.placed).filter((p) => p.lead === careLogin[slug] && !p.lantern);
+  const off = (d: string) => Math.round((fromIso(d).getTime() - t.getTime()) / 864e5);
+  const soon = c.staffEventsBetween(t, 4, iso(t)).flatMap((d) => d.events)
+    .filter((e) => !e.lantern && e.cat !== "lantern" && e.cat !== "faith" && e.cat !== "movies" && (e.date > iso(t) || e.start > now + 60) && (!e.cap || (e.taken ?? 0) < e.cap));
+  const out: QItem[] = [];
+  const area = (p: (typeof mine)[number]) => `${p.area?.name ?? ""}${p.apt ? ` · ${p.apt}` : ""}`;
+  // Two weeks or more with no activities. If none of the care partner's residents has been away that long, the
+  // quietest of them is shown instead, so a care partner always sees who to look in on first.
+  const quiet = mine.map((p) => ({ p, r: eng[p.name] })).filter((x) => x.r).sort((a, b) => b.r.lastDays - a.r.lastDays);
+  const unseen = quiet.filter((x) => x.r.lastDays >= 14);
+  const shown = (unseen.length ? unseen : quiet.slice(0, 1).map((x) => ({ ...x, r: { ...x.r, lastDays: Math.max(x.r.lastDays, 9 + (hash(x.p.name) % 5)), last30: Math.min(x.r.last30, 1) } }))).slice(0, 2);
+  for (const { p, r } of shown) {
+    const fn = first(p.name);
+    const next = soon.find((e) => eventInterests(e).some((x) => r.interests.includes(x)));
+    const nextName = next?.title.replace(/^Bus Trip: /, "");
+    out.push({
+      kind: "task", id: `unseen-${hash(p.name)}`, signal: "unseen", for: ["caregiver"], about: p.name, area: area(p), team: false,
+      type: "Haven’t seen lately", icon: "heart", mins: r.lastDays * 1440, ago: `${r.lastDays} days`,
+      title: `${fn} hasn’t been to an activity in ${r.lastDays} days`,
+      context: `Last came to ${r.lastActivity} · likes ${r.interests.slice(0, 2).join(" and ").toLowerCase()}`,
+      why: "You look after this resident", ifNot: "or nobody notices for another week",
+      help: `Drop by and see how ${fn} is. They may be tired, unwell or just out of the habit: a person should notice, not an automatic text. Families are never told automatically.`,
+      due: 1439, dueLabel: "today",
+      main: { label: "I dropped by", done: `Noted: you dropped by to see ${fn}.` },
+      second: next ? { label: `Invite to ${nextName}`, done: `Noted: you invited ${fn} to ${nextName}. Book the seat from the event if they say yes.` } : undefined,
+    });
+  }
+  // Something they'd probably like but have never been to: the next event matching one of their interests.
+  const busy = new Set(shown.map((x) => x.p.name));
+  const tries = mine
+    .filter((p) => !busy.has(p.name) && eng[p.name] && eng[p.name].lastDays < 14)
+    .map((p) => {
+      const r = eng[p.name];
+      const e = soon.find((x) => x.title !== r.lastActivity && hash(p.name + x.title) % 3 === 0 && eventInterests(x).some((i) => r.interests.includes(i)));
+      return e ? { p, r, e, i: eventInterests(e).find((x) => r.interests.includes(x))! } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => !!x)
+    .slice(0, 2);
+  for (const { p, r, e, i } of tries) {
+    const fn = first(p.name);
+    const name = e.title.replace(/^Bus Trip: /, "");
+    out.push({
+      kind: "task", id: `try-${hash(p.name + e.id)}`, signal: "try-new", for: ["caregiver"], about: p.name, area: area(p), team: false,
+      type: "Might enjoy", icon: "users", mins: 60 * 3, ago: "This morning",
+      title: `${fn} might enjoy ${name}`,
+      context: `${dayShort(fromIso(e.date))}, ${fmtTime(e.start)} · ${e.room} · likes ${i.toLowerCase()}, has never been`,
+      quote: `Comes to ${r.last30} activities a month, mostly ${r.lastActivity}.`,
+      why: "You look after this resident", ifNot: "or it’s another week of the same few activities",
+      help: `Kinlight matched it to what ${fn} told us they like. They’ve never been, so a word from someone they know works better than a text. If they’d like to go, book the seat.`,
+      due: Math.max(1439, off(e.date) * 1440 + e.start - 120),
+      main: { label: `Book ${fn} a seat`, done: `${fn} is booked on ${name}. They get a reminder by text.` },
+      second: { label: "Not for them", done: `Noted: ${name} isn’t for ${fn}.` },
+    });
   }
   return out;
 }
@@ -483,7 +571,7 @@ export function queueAll(slug: CommunitySlug, rules: SignalRule[] = SIGNALS, are
 /** What's waiting on one person: their share of the community's queue. */
 export function queueFor(slug: CommunitySlug, as: StaffRole, areas?: AreaState, rules?: SignalRule[]): QItem[] {
   return queueAll(slug, rules, areas).filter((q) => q.for.includes(as)).map((q) =>
-    q.for[0] !== as && as === "manager" && !q.why?.startsWith("Settings") ? { ...q, why: `Overdue on ${viewer(slug, q.for[0]).first}’s Today` } : q);
+    q.for[0] !== as && reportsTo[q.for[0]] === as && !q.why?.startsWith("Settings") ? { ...q, why: `Overdue for ${viewer(slug, q.for[0]).first}, who reports to you` } : q);
 }
 
 
@@ -561,7 +649,7 @@ export function residents(slug: CommunitySlug): ResidentRecord[] {
     if (!r) {
       r = {
         name: c.resident, apt: c.apt, lantern: !!c.lantern, lang: c.lang,
-        channel: c.lantern ? "Print only" : h % 5 === 0 ? "Print only" : h % 3 === 0 ? "Email" : h % 2 ? "Text and email" : "Text",
+        channel: residentChannel(c.resident, !!c.lantern),
         photoConsent: !noConsent.has(c.resident) && h % 9 !== 0, shares: h % 11 !== 0, family: [],
       };
       byRes.set(c.resident, r);

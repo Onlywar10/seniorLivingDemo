@@ -15,6 +15,8 @@ const extra: Record<string, ReactNode> = {
   key: <path d="M15 7a4 4 0 1 1-3.9 4.9L3 20v-3h2v-2h2l2.1-2.1A4 4 0 0 1 15 7zM16 8h.01" />,
   clipboard: <path d="M9 4h6v3H9zM9 5H6v16h12V5h-3M9 12h6M9 16h4" />,
   dash: <path d="M3 13h8V3H3zM13 21h8V11h-8zM13 3v6h8V3zM3 21h8v-6H3z" />,
+  lock: <path d="M6 11h12v10H6zM8.5 11V7.5a3.5 3.5 0 0 1 7 0V11" />,
+  pause: <path d="M9 5v14M15 5v14" />,
 };
 export function XIcon({ name }: { name: keyof typeof extra }) {
   return (

@@ -12,15 +12,17 @@ import { Icon } from "../Icon";
 import { Search } from "./Search";
 import { CommunitySwitcher, useStaffCommunity } from "./StaffCommunity";
 import { Toaster, useNeedsCount } from "./store";
+import { useProblemCount } from "./autoStore";
 import type { QLite } from "@/data/staff/lite";
 import { XIcon } from "./ui";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
 interface Me { as: StaffRole; key: string; name: string; first: string; title: string; preset: string }
 
-const info: Record<Section, { href: string; label: string; icon?: IconName; x?: "shield" | "door"; hint: string }> = {
+const info: Record<Section, { href: string; label: string; icon?: IconName; x?: "shield" | "door" | "repeat"; hint: string }> = {
   today: { href: "/staff/today", label: "Today", icon: "sun", hint: "What needs you" },
   messages: { href: "/staff/messages", label: "Communications", icon: "sms", hint: "Texts and emails with families" },
+  automations: { href: "/staff/automations", label: "Automations", x: "repeat", hint: "What Kinlight sends on its own" },
   post: { href: "/staff/post", label: "Post", icon: "send", hint: "Say it once, everywhere" },
   calendar: { href: "/staff/calendar", label: "Calendar", icon: "calendar", hint: "Events and sign-ups" },
   menus: { href: "/staff/menus", label: "Menus", icon: "fork", hint: "Every restaurant, every day" },
@@ -28,7 +30,8 @@ const info: Record<Section, { href: string; label: string; icon?: IconName; x?: 
   website: { href: "/staff/website", label: "Website", icon: "globe", hint: "Pages, apartments, galleries" },
   people: { href: "/staff/people", label: "People", icon: "users", hint: "Residents and families" },
   feedback: { href: "/staff/feedback", label: "Feedback", icon: "heart", hint: "Ideas, concerns, thank-yous" },
-  prospects: { href: "/staff/prospects", label: "Prospects", x: "door", hint: "Inquiries, tours, waitlist" },
+  surveys: { href: "/staff/surveys", label: "Surveys", icon: "list", hint: "Ask residents, families and staff" },
+  prospects: { href: "/staff/prospects", label: "Apartments", x: "door", hint: "Availability, waitlist, tours" },
   reports: { href: "/staff/reports", label: "Reports", icon: "chart", hint: "Read monthly" },
   settings: { href: "/staff/settings", label: "Settings", x: "shield", hint: "Team, alerts, print" },
 };
@@ -48,9 +51,12 @@ function useSignInAs() {
   };
 }
 
-export function Shell({ children, me, people, queue = [], replies = 0, found = [] }: { children: ReactNode; me: Me; people: Me[]; queue?: QLite[]; replies?: number; found?: Found[] }) {
+export function Shell({ children, me, people, queue = [], replies = 0, found = [], autoProblems = [] }: { children: ReactNode; me: Me; people: Me[]; queue?: QLite[]; replies?: number; found?: Found[];
+  /** Automations: the problems this person owns (a failed text, an opt-out), for the small count beside the section. */
+  autoProblems?: string[] }) {
   // The one number: overdue plus due today, after anything done, snoozed or handed on (the same as Today's heading).
   const waiting = useNeedsCount(queue, me.as);
+  const problems = useProblemCount(autoProblems);
   const path = usePathname();
   const { scope, current, site } = useStaffCommunity();
   const name = current ? current.name : "Wrenhaven Senior Living";
@@ -107,6 +113,12 @@ export function Shell({ children, me, people, queue = [], replies = 0, found = [
                     <span className="sx-nav-badge">
                       {replies}
                       <span className="vh"> to reply to</span>
+                    </span>
+                  )}
+                  {s === "automations" && problems > 0 && (
+                    <span className="sx-nav-badge sx-nav-badge-quiet">
+                      {problems}
+                      <span className="vh"> {problems === 1 ? "problem" : "problems"} to look at</span>
                     </span>
                   )}
                   {s === "today" && waiting > 0 && (

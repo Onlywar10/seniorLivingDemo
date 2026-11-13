@@ -75,7 +75,9 @@ export interface TodayDeskProps {
   /** The rest of "Your day", built for this role on the server (tours, menus, buses…). */
   day?: ReactNode;
   /** "When you have a minute": at most three suggestions for today, chosen on the server. */
-  suggest: { welcomes: Welcome[]; unseen: Unseen[]; celebrations: Celebration[]; thanks: ThanksNote[] };
+  suggest: { welcomes: Welcome[]; unseen: Unseen[]; celebrations: Celebration[]; thanks: ThanksNote[];
+    /** Survey results that are in, for the survey's owner. */
+    results?: { id: string; title: string; line: string; href: string }[] };
   /** What Kinlight did this week: one line, or the full card on Fridays. */
   did?: { items: DidItem[]; range: string; full: boolean };
   /** One line of this week's numbers, for the executive director. */
@@ -96,7 +98,7 @@ export function TodayDesk(p: TodayDeskProps) {
   const dayEvents = p.dayActs === "lantern" ? todays.filter((e) => e.lantern) : todays;
   const n = useNeedsCount(lite(p.items), p.me.as);
   const s = p.suggest;
-  const anySuggest = s.welcomes.length + s.unseen.length + s.celebrations.length + s.thanks.length > 0;
+  const anySuggest = s.welcomes.length + s.unseen.length + s.celebrations.length + s.thanks.length + (s.results?.length ?? 0) > 0;
 
   return (
     <>
@@ -132,6 +134,12 @@ export function TodayDesk(p: TodayDeskProps) {
             {s.celebrations.length > 0 && <Celebrations items={s.celebrations} />}
             {s.welcomes.length > 0 && <WelcomeList items={s.welcomes} />}
             {s.unseen.length > 0 && <NotSeen items={s.unseen} />}
+            {(s.results?.length ?? 0) > 0 && (
+              <section className="sx-card pt-tcard" aria-labelledby="pt-svr-h">
+                <header className="pt-tcard-h"><h2 id="pt-svr-h">Survey results are in</h2></header>
+                <ul className="pt-week">{s.results!.map((r) => <li key={r.id}><span><b>{r.title}</b><small>{r.line}</small></span><Link className="sx-btn sx-btn-sm" href={r.href}>Results</Link></li>)}</ul>
+              </section>
+            )}
           </div>
           {p.numbers && <p className="pt-numbers"><Icon name="chart" /> {p.numbers} <Link className="sx-link" href="/staff/reports">Reports</Link></p>}
           {p.did && <DidThisWeek items={p.did.items} range={p.did.range} full={p.did.full} />}
@@ -260,7 +268,7 @@ function NowNext({ events, acts, me, open }: { events: CalEvent[]; acts: TodayAc
           <button key={e.id} type="button" className={`pt-nn ${w}`} onClick={() => open(e.id, e.date)}>
             <span className="pt-nn-w">{w === "now" ? <><i aria-hidden="true" /> On now</> : `Up next · ${fmtTime(e.start)}`}</span>
             <b>{e.title}</b>
-            <small>{e.room} · {w === "now" && a ? `${a.qr} checked in by QR` : `${n} ${e.booked ? "booked" : "said yes"}`}{lead ? ` · ${lead === me ? "you’re leading" : `${first(lead)} leading`}` : ""}</small>
+            <small>{e.room} · {w === "now" && a ? `${a.qr} checked in by card` : `${n} ${e.booked ? "booked" : "said yes"}`}{lead ? ` · ${lead === me ? "you’re leading" : `${first(lead)} leading`}` : ""}</small>
             <Seats e={e} />
             <span className="pt-nn-go">{w === "now" ? "Attendance, photos" : "Who’s coming"} <Icon name="right" /></span>
           </button>
@@ -326,18 +334,17 @@ export function Activities({ events, acts, me, attendance, open, title = "Today�
 
 /* ------------------------------------------------------------ photos wanted */
 
-/** Every activity today that has started or finished and still wants photos, with how many are missing. Events that didn't ask for photos don't nag. */
+/** Every activity today that has started or finished, asked for photos, and has none yet. Events that didn't ask for photos don't nag. */
 export function PhotosWanted({ events, acts, open }: { events: CalEvent[]; acts: TodayActivity[]; open: (id: string, date: string, photos?: boolean) => void }) {
   const begun = new Map(acts.filter((a) => a.state !== "later").map((a) => [a.id, a.state]));
-  const missing = (e: CalEvent) => Math.max(0, (e.wanted ?? 0) - (e.photos?.length ?? 0));
-  const due = events.filter((e) => begun.has(e.id) && missing(e) > 0 && !e.cancelled).sort((a, b) => a.start - b.start);
+  const due = events.filter((e) => begun.has(e.id) && e.wanted && !e.photos?.length && !e.cancelled).sort((a, b) => a.start - b.start);
   if (!due.length) return null;
   return (
     <Card id="pt-ph-h" title={<>Photos wanted <small className="pt-tcard-n">{due.length}</small></>} help={<p>Only activities marked “photos wanted” when they were added. Tagging is suggested from who came, consent is checked, and the caption is written for you.</p>}>
       <ul className="pt-ph">
         {due.map((e) => (
           <li key={e.id}>
-            <span><b>{e.title}</b><small>{begun.get(e.id) === "now" ? "On now · " : `${fmtTime(e.start)} · `}{e.photos?.length ? `${e.photos.length} added, ${missing(e)} more wanted` : `${missing(e)} wanted, none yet`}</small></span>
+            <span><b>{e.title}</b><small>{begun.get(e.id) === "now" ? "On now · " : `${fmtTime(e.start)} · `}Photos wanted, none yet</small></span>
             <button type="button" className="sx-btn sx-btn-sm sx-btn-primary" onClick={() => open(e.id, e.date, true)}><Icon name="image" /> Add photos</button>
           </li>
         ))}

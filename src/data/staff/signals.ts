@@ -22,7 +22,7 @@ export type SignalKey =
   | "attendance" | "clash" | "few-signups" | "photos" | "idea" | "thanks"
   | "message" | "sales-lead" | "unreachable" | "sent-back" | "import-check"
   | "menu-missing" | "menu-checks" | "dining-request" | "holiday-menu"
-  | "page-due" | "price-change" | "tour" | "waitlist" | "promise";
+  | "page-due" | "price-change" | "tour" | "waitlist" | "promise" | "unseen" | "try-new" | "survey-approve" | "survey-closing" | "survey-results";
 
 export interface SignalRule {
   key: SignalKey;
@@ -38,13 +38,12 @@ export interface SignalRule {
 }
 
 export const SIGNALS: SignalRule[] = [
-  { key: "post", label: "To approve", section: "Post", to: "manager", level: "time", text: true },
+  { key: "post", label: "To approve", section: "Post", to: "events", level: "time", text: true },
   { key: "review", label: "Ready to review", section: "Newsletter · Menus · Photos", to: "owner", level: "active", text: false },
   { key: "family-request", label: "Family request", section: "Calendar", to: "events", level: "active", text: false },
   { key: "ask", label: "Ask in person", section: "Calendar", to: "events", level: "active", text: false },
   { key: "family-member", label: "New family member", section: "People", to: "events", level: "active", text: false },
   { key: "concern", label: "Concern", section: "Feedback", to: "owner", level: "active", text: false },
-  { key: "inquiry", label: "New inquiry", section: "Prospects", to: "sales", level: "time", text: true },
   { key: "attendance", label: "Take attendance", section: "Calendar", to: "owner", level: "active", text: false },
   { key: "clash", label: "Room clash", section: "Calendar", to: "events", level: "active", text: false },
   { key: "few-signups", label: "Few sign-ups", section: "Calendar", to: "events", level: "active", text: false },
@@ -52,8 +51,7 @@ export const SIGNALS: SignalRule[] = [
   { key: "idea", label: "Resident idea", section: "Feedback", to: "events", level: "active", text: false },
   { key: "thanks", label: "A thank-you", section: "Feedback", to: "owner", level: "passive", text: false },
   { key: "message", label: "Message to answer", section: "Communications", to: "owner", level: "active", text: false },
-  { key: "sales-lead", label: "Moving-in question", section: "Communications", to: "sales", level: "active", text: false },
-  { key: "unreachable", label: "Can’t reach", section: "Communications", to: "owner", level: "active", text: false },
+  { key: "unreachable", label: "Can’t reach", section: "Automations", to: "owner", level: "active", text: false },
   { key: "sent-back", label: "Sent back to you", section: "Post", to: "owner", level: "active", text: false },
   { key: "import-check", label: "Import to check", section: "Post", to: "owner", level: "active", text: false },
   { key: "menu-missing", label: "Menu not up", section: "Menus", to: "kitchen", level: "time", text: true },
@@ -62,9 +60,15 @@ export const SIGNALS: SignalRule[] = [
   { key: "holiday-menu", label: "Holiday menu", section: "Menus", to: "manager", level: "active", text: false },
   { key: "page-due", label: "Page to update", section: "Website", to: "owner", level: "active", text: false },
   { key: "price-change", label: "Price change", section: "Website", to: "manager", level: "active", text: false },
-  { key: "tour", label: "Tour", section: "Prospects", to: "sales", level: "active", text: false },
-  { key: "waitlist", label: "Waitlist follow-up", section: "Prospects", to: "sales", level: "active", text: false },
-  { key: "promise", label: "Promise at risk", section: "Reports", to: "manager", level: "active", text: false },
+  { key: "tour", label: "Tours to count", section: "Apartments", to: "desk", level: "active", text: false },
+  // Inquiries, moving-in questions and waitlist follow-ups are sales, which is hidden in the alpha.
+  // Kinlight's own promise to the community: Kinlight fixes it, so it's in the Friday summary and Reports, not a task.
+  { key: "promise", label: "Promise at risk", section: "Reports", to: "manager", level: "passive", text: false },
+  { key: "survey-approve", label: "Survey to approve", section: "Surveys", to: "manager", level: "active", text: false },
+  { key: "survey-closing", label: "Survey closing, few replies", section: "Surveys", to: "owner", level: "active", text: false },
+  { key: "survey-results", label: "Survey results are in", section: "Surveys", to: "owner", level: "passive", text: false },
+  { key: "unseen", label: "Haven’t seen lately", section: "People", to: "owner", level: "active", text: false },
+  { key: "try-new", label: "Might enjoy", section: "People", to: "owner", level: "active", text: false },
 ];
 export const signalOf = (k: SignalKey) => SIGNALS.find((s) => s.key === k)!;
 

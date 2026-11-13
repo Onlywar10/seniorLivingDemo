@@ -1,0 +1,239 @@
+/* =====================================================================
+   Staff · Automations: what Kinlight sends on its own (.au-)
+   The list with its switches, how Kinlight sends, the log, problems,
+   the next 24 hours and the record of changes. Also the "Messages
+   Kinlight sent" list on each resident's page.
+===================================================================== */
+.au { display: grid; gap: 18px; }
+.au-count { margin: 0; font-size: 14px; color: var(--sx-ink-2); }
+
+/* ---------- the week, in one line ---------- */
+.au-sum { padding: 16px 18px; display: grid; gap: 14px; }
+.au-sum-h { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.au-sum-h p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--sx-ink); }
+.au-sum-h b { font-weight: 700; }
+.au-days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.au-days li { display: grid; justify-items: center; gap: 2px; text-align: center; padding: 8px 4px 6px; border-radius: 8px; background: var(--sx-soft); }
+.au-days li:last-child { background: var(--green-tint); }
+.au-day-l { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sx-ink-3); }
+.au-day-bar { width: 10px; height: 34px; display: flex; align-items: flex-end; border-radius: 4px; background: #e2e7df; overflow: hidden; }
+.au-day-bar i { display: block; width: 100%; background: var(--sky); border-radius: 4px; }
+.au-days b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.au-days small { font-size: 11.5px; color: var(--sx-ink-3); line-height: 1.2; }
+
+.au-paused { align-items: center; }
+.au-paused p { flex: 1; }
+.au-paused .icon { width: 18px; height: 18px; }
+
+/* ---------- tabs ---------- */
+.au-tabs { margin-top: -4px; }
+.au-tab-n { display: inline-block; min-width: 20px; padding: 0 6px; line-height: 20px; border-radius: 999px; background: var(--terra-deep); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
+
+/* ---------- how Kinlight sends ---------- */
+.au-rules .sx-card-head { padding-bottom: 4px; }
+.au-rule-list { margin: 0; padding: 6px 18px 4px; display: grid; gap: 2px; }
+.au-rule-list li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--sx-line-2); font-size: 14.5px; line-height: 1.55; }
+.au-rule-list li:last-child { border-bottom: 0; }
+.au-rule-list li > .icon { flex: none; width: 18px; height: 18px; margin-top: 3px; color: var(--green); }
+.au-rule-list select { font: inherit; font-size: 14px; font-weight: 600; padding: 2px 6px; min-height: 32px; border: 1px solid #c6cfc2; border-radius: 6px; background: #fff; color: var(--sx-ink); }
+.au-rule-list .sx-badge { margin-left: 4px; vertical-align: 1px; }
+.au-rules-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 18px 16px; border-top: 1px solid var(--sx-line-2); }
+.au-pause-btn .icon { width: 16px; height: 16px; }
+
+/* ---------- the list ---------- */
+.au-group { display: grid; gap: 10px; }
+.au-group > header h2 { margin: 6px 0 0; font-family: var(--font-display); font-weight: 400; font-size: 21px; color: var(--green-ink); }
+.au-group > header p { margin: 2px 0 0; font-size: 13.5px; color: var(--sx-ink-3); }
+.au-group > ul { margin: 0; padding: 0; display: grid; gap: 10px; }
+.au-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 16px 18px; }
+.au-card.off { background: var(--sx-soft); }
+.au-card.off h3 { color: var(--sx-ink-2); }
+.au-card-main { display: grid; gap: 8px; min-width: 0; }
+.au-card h3 { margin: 0; font-size: 16px; font-weight: 700; font-family: var(--font-body); line-height: 1.35; }
+.au-fires { margin: -4px 0 0; font-size: 14px; color: var(--sx-ink-2); }
+.au-facts { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 16px; }
+.au-facts div { min-width: 0; }
+.au-facts dt { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sx-ink-3); }
+.au-facts dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: var(--sx-ink); }
+.au-facts dd small { display: block; font-weight: 400; font-size: 12.5px; color: var(--sx-ink-3); margin-top: 2px; }
+.au-chs { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; }
+.au-chs span { display: inline-flex; align-items: center; gap: 4px; }
+.au-chs .icon { width: 15px; height: 15px; color: var(--green); }
+.au-state { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; color: var(--sx-ink-2); }
+.au-state .icon { width: 13px; height: 13px; }
+.au-wording { margin: 0; display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--sx-ink-3); }
+.au-wording .icon { width: 14px; height: 14px; }
+.au-waiting { display: grid; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--butter-tint); font-size: 14px; }
+.au-waiting p { margin: 0; display: flex; gap: 6px; align-items: flex-start; }
+.au-waiting p .icon { flex: none; width: 15px; height: 15px; margin-top: 3px; }
+.au-waiting blockquote { margin: 0; padding: 8px 10px; border-left: 3px solid var(--butter); background: #fff; border-radius: 4px; }
+.au-acts { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.au-link { display: inline-flex; align-items: center; gap: 3px; font-size: 13.5px; font-weight: 600; min-height: 34px; padding: 0 4px; }
+.au-link .icon { width: 13px; height: 13px; }
+.au-owner { margin: 0; }
+.au-switch { display: grid; justify-items: end; align-content: start; gap: 4px; }
+.au-switch-l { min-width: 24px; }
+.au-lock { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; max-width: 96px; text-align: center; font-size: 12px; font-weight: 700; color: var(--sx-ink-2); padding: 6px 8px; border-radius: 8px; background: var(--sx-soft); border: 1px solid var(--sx-line); }
+.au-lock .icon { width: 18px; height: 18px; color: var(--green); }
+.au-foot { margin: 0; }
+
+/* ---------- preview and wording ---------- */
+.au-prev { display: grid; gap: 14px; }
+.au-prev-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+.au-prev-bar .icon { width: 14px; height: 14px; vertical-align: -2px; }
+.au-phone { background: #1e2529; border-radius: 26px; padding: 10px; width: 100%; max-width: 320px; margin: 0 auto; }
+.au-phone-top { text-align: center; font-size: 11px; color: #a9b4ba; padding: 4px 0 8px; }
+.au-phone-top b { display: block; color: #fff; font-size: 13px; }
+.au-sms { margin: 0 4px 6px; background: #fff; border-radius: 16px 16px 16px 4px; padding: 10px 12px; font-size: 14.5px; line-height: 1.45; color: #1d2123; white-space: pre-line; overflow-wrap: anywhere; }
+.au-mail { border: 1px solid var(--sx-line); border-radius: 10px; overflow: hidden; background: #fff; }
+.au-mail-h { padding: 9px 12px; background: var(--sx-soft); border-bottom: 1px solid var(--sx-line-2); font-size: 13.5px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: baseline; }
+.au-mail-h small { color: var(--sx-ink-3); font-size: 12px; }
+.au-mail-b { padding: 14px 14px 12px; display: grid; gap: 12px; }
+.au-mail-b p { margin: 0; font-size: 15px; line-height: 1.55; overflow-wrap: anywhere; }
+.au-mail-b small { color: var(--sx-ink-3); font-size: 12px; border-top: 1px solid var(--sx-line-2); padding-top: 8px; }
+.au-chars { margin: -4px 0 0; font-size: 13px; color: var(--sx-ink-3); text-align: center; }
+.au-chars.warn { color: #6f4c08; background: var(--sx-warn-tint); padding: 8px 10px; border-radius: 8px; text-align: left; }
+.au-chars .icon { width: 14px; height: 14px; vertical-align: -2px; }
+.au-variants { display: grid; gap: 8px; }
+.au-variants h3 { margin: 0; font-size: 14px; font-weight: 700; font-family: var(--font-body); }
+.au-variants figure { margin: 0; padding: 9px 12px; border: 1px solid var(--sx-line-2); border-radius: 8px; }
+.au-variants figcaption { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--sx-ink-3); }
+.au-variants p { margin: 4px 0 0; font-size: 14px; }
+.au-edit textarea { min-height: 120px; }
+.au-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.au-chips button { font: inherit; font-size: 13px; font-weight: 600; min-height: 34px; padding: 4px 11px; border-radius: 999px; border: 1px solid #b8c8d1; background: var(--sky-tint); color: #24485c; cursor: pointer; }
+.au-chips button:hover { border-color: var(--green); }
+.au-edit-prev { display: grid; gap: 8px; padding: 12px; border-radius: 10px; background: var(--sx-soft); }
+.au-edit .icon { width: 14px; height: 14px; vertical-align: -2px; }
+
+/* ---------- the log ---------- */
+.au-filters { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(120px, 1fr)); gap: 8px; align-items: center; }
+.au-filters label { display: block; min-width: 0; }
+.au-filters .sx-input { width: 100%; min-height: 40px; }
+.au-f-a { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.au-f-a:empty { display: none; }
+.au-log-card { overflow: hidden; }
+.au-log td { vertical-align: top; }
+.au-log td small { max-width: 52ch; }
+.au-when { white-space: nowrap; font-size: 13.5px; color: var(--sx-ink-2); font-variant-numeric: tabular-nums; }
+.au-open { font: inherit; font-size: 14px; font-weight: 600; color: var(--green-deep); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--sx-line); text-underline-offset: 3px; min-height: 24px; }
+.au-open:hover { text-decoration-color: currentColor; }
+.au-snip { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.au-ch { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.au-ch .icon { width: 15px; height: 15px; color: var(--green); }
+
+.au-detail { display: grid; gap: 10px; }
+.au-bubble { justify-self: start; max-width: 92%; display: grid; gap: 6px; padding: 10px 13px; border-radius: 14px 14px 14px 4px; background: var(--sx-soft); border: 1px solid var(--sx-line-2); }
+.au-bubble.mail { max-width: 100%; border-radius: 10px; background: #fff; }
+.au-bubble.them { justify-self: end; background: var(--green-tint); border-color: #cbd8de; border-radius: 14px 14px 4px 14px; }
+.au-bubble p { margin: 0; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.au-bubble small { font-size: 12px; color: var(--sx-ink-3); }
+.au-subject { font-weight: 700; }
+.au-en { padding-top: 6px; border-top: 1px dashed var(--sx-line); color: var(--sx-ink-2); font-size: 14px !important; }
+.au-en small { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.au-handled { margin: 0; display: flex; gap: 6px; align-items: flex-start; font-size: 13.5px; color: var(--sx-ink-2); }
+.au-handled .icon { flex: none; width: 15px; height: 15px; margin-top: 3px; color: var(--green); }
+.au-steps { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--sx-line-2); }
+.au-steps li { display: grid; grid-template-columns: 120px 1fr; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--sx-line-2); font-size: 14px; }
+.au-steps li.bad b { color: var(--sx-bad); }
+
+/* ---------- on a resident's page ---------- */
+.au-sent { display: grid; gap: 12px; }
+.au-sent h2 { margin: 0; font-size: 16px; font-weight: 700; font-family: var(--font-body); }
+.au-sent .sx-chips small { opacity: 0.7; margin-left: 2px; }
+.au-sent .sx-chips button:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- problems ---------- */
+.au-probs { display: grid; gap: 12px; }
+.au-prob-list { margin: 0; padding: 0; display: grid; gap: 10px; }
+.au-prob { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; padding: 14px 16px; align-items: start; }
+.au-prob-i { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--sx-bad-tint); color: var(--sx-bad); }
+.au-prob-i .icon { width: 17px; height: 17px; }
+.au-prob.k-opted-out .au-prob-i { background: var(--sx-warn-tint); color: var(--sx-warn); }
+.au-prob.k-reply .au-prob-i { background: var(--sky-tint); color: #2b5268; }
+.au-prob.k-unreachable { border-color: #e2b6b4; }
+.au-prob-b { display: grid; gap: 4px; min-width: 0; }
+.au-prob-b h3 { margin: 0; font-size: 15.5px; font-weight: 700; font-family: var(--font-body); }
+.au-prob-b p { margin: 0; font-size: 14px; color: var(--sx-ink-2); }
+.au-prob-b small { font-size: 12.5px; color: var(--sx-ink-3); }
+.au-prob-a { display: grid; gap: 6px; justify-items: end; }
+.au-fix { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.au-fix .sx-input { min-height: 36px; width: 220px; max-width: 100%; }
+.au-done summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--sx-ink-2); min-height: 32px; }
+.au-done ul { margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.au-done li { display: flex; gap: 10px; justify-content: space-between; align-items: center; font-size: 13.5px; color: var(--sx-ink-3); padding: 6px 10px; background: var(--sx-soft); border-radius: 8px; }
+
+/* ---------- next 24 hours ---------- */
+.au-next { display: grid; gap: 12px; }
+.au-next-list { list-style: none; margin: 0; padding: 4px 0; }
+.au-next-list li { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--sx-line-2); }
+.au-next-list li:last-child { border-bottom: 0; }
+.au-next-list li.stopped .au-next-w b { color: var(--sx-ink-3); text-decoration: line-through; text-decoration-color: var(--sx-line); }
+.au-next-t { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.au-next-w { display: grid; gap: 1px; min-width: 0; }
+.au-next-w small { font-size: 12.5px; color: var(--sx-ink-3); }
+.au-q { display: inline-flex; gap: 4px; align-items: center; color: #6f4c08 !important; }
+.au-q .icon { width: 13px; height: 13px; }
+.au-next-a { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+
+/* ---------- the record ---------- */
+.au-changes { display: grid; gap: 12px; }
+.au-change-list { list-style: none; margin: 0; padding: 4px 0; }
+.au-change-list li { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--sx-line-2); font-size: 14px; }
+.au-change-list li:last-child { border-bottom: 0; }
+.au-ch-at { color: var(--sx-ink-3); font-variant-numeric: tabular-nums; }
+.au-change-list q { display: block; margin-top: 2px; color: var(--sx-ink-2); font-style: italic; }
+.au-change-list small { display: block; color: var(--sx-ink-3); font-size: 12.5px; margin-top: 2px; }
+
+/* ---------- smaller screens ---------- */
+@media (max-width: 1000px) {
+  .au-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .au-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .au-f-q { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .au-sum-h p { font-size: 15px; }
+  .au-days { gap: 4px; }
+  .au-days li { padding: 6px 2px; }
+  .au-days small { display: none; }
+  .au-card { grid-template-columns: 1fr; gap: 10px; }
+  .au-switch { justify-items: start; grid-row: 1; }
+  .au-facts { grid-template-columns: 1fr 1fr; }
+  .au-filters { grid-template-columns: 1fr; }
+  .au-prob { grid-template-columns: auto minmax(0, 1fr); }
+  .au-prob-a { grid-column: 1 / -1; justify-items: start; grid-auto-flow: column; justify-content: start; }
+  .au-next-list li, .au-change-list li { grid-template-columns: 1fr; gap: 4px; }
+  .au-next-a { justify-content: flex-start; }
+  .au-steps li { grid-template-columns: 100px 1fr; }
+}
+.rs-kin { justify-self: start; font-size: 12.5px; font-weight: 600; background: none; border: 0; padding: 2px 0; cursor: pointer; text-align: left; }
+
+/* ---------- the summary in Reports ---------- */
+.au-rep-line { margin: 0 0 12px; font-size: 15px; }
+.au-days-rep li { padding: 6px 4px; }
+.au-rep-link { margin: 12px 0 0; font-size: 14px; color: var(--sx-ink-2); }
+.au-rep-link .icon { width: 13px; height: 13px; vertical-align: -2px; }
+.rp-ev-link { display: inline-block; margin-top: 4px; font-size: 12.5px; font-weight: 600; }
+
+/* ---------- Remove resident (on the resident's page) ---------- */
+.rs-remove { align-self: start; }
+.rs-gone { margin: 0; align-items: flex-start; }
+.rs-gone p { flex: 1; }
+.rr { gap: 16px; }
+.rr-who { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--sx-soft); }
+.rr-who b { display: block; font-size: 17px; }
+.rr-who small { color: var(--sx-ink-3); }
+.rr-why { margin: 0; padding: 0; border: 0; display: grid; gap: 6px; }
+.rr-why legend { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.rr-opt { display: flex !important; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--sx-line); border-radius: 10px; cursor: pointer; font-weight: 600; min-height: 44px; }
+.rr-opt.on { border-color: var(--green-deep); background: var(--green-tint); }
+.rr-opt small { width: 100%; font-weight: 400; color: var(--sx-ink-3); padding-left: 24px; }
+.rr-what h3, .rr-fam h3 { margin: 0 0 8px; font-size: 15px; font-family: var(--font-body); }
+.rr-what ul { margin: 0; padding: 0; display: grid; gap: 8px; }
+.rr-what li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; }
+.rr-what li .icon { flex: none; width: 17px; height: 17px; margin-top: 3px; color: var(--green); }
+.rr-fam { display: grid; gap: 10px; }
+.rr-member { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--sx-line); border-radius: 10px; }
+.rr-member p { margin: 0; }
+.rr-member small { color: var(--sx-ink-3); }
+.rr-member .sx-seg { flex-wrap: wrap; }

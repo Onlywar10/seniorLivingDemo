@@ -13,7 +13,7 @@ export interface IdeaRow { id: string; text: string; from: string; who?: string;
 const first = (n = "") => n.split(" ")[0];
 const order = ["New", "Planned", "On the calendar", "Not this time"];
 
-export function FeedbackSuggestions({ ideas, residents, me }: { ideas: IdeaRow[]; residents: string[]; me: string }) {
+export function FeedbackSuggestions({ ideas, residents, me, decide = true }: { ideas: IdeaRow[]; residents: string[]; me: string; /** Can turn an idea into an event (the activities director). Others log slips and add votes. */ decide?: boolean }) {
   const [rows, setRows] = useState(ideas);
   const [logging, setLogging] = useState(false);
   const [text, setText] = useState("");
@@ -78,8 +78,8 @@ export function FeedbackSuggestions({ ideas, residents, me }: { ideas: IdeaRow[]
               ) : (
                 <span className="fb-idea-a">
                   {x.status === "Planned" && <Badge tone="info">Planned</Badge>}
-                  <Link className="sx-btn sx-btn-sm sx-btn-primary" href={`/staff/post?type=event&idea=${encodeURIComponent(x.id)}`}><Icon name="plus" /> Make it an event</Link>
-                  {x.status === "New" && <button type="button" className="sx-btn sx-btn-sm" onClick={() => plan(x.id)}>Plan it</button>}
+                  {decide && <Link className="sx-btn sx-btn-sm sx-btn-primary" href={`/staff/post?type=event&idea=${encodeURIComponent(x.id)}`}><Icon name="plus" /> Make it an event</Link>}
+                  {decide && x.status === "New" && <button type="button" className="sx-btn sx-btn-sm" onClick={() => plan(x.id)}>Plan it</button>}
                   <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => vote(x.id)} aria-label={`Add a vote for ${x.text}`}>+1 vote</button>
                 </span>
               )}

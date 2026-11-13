@@ -252,7 +252,7 @@ export function moreScreens(slug: CommunitySlug) {
       : undefined;
 
 
-  /* ---------------------------------------------------------------- residents: personal invites and QR check-in */
+  /* ---------------------------------------------------------------- residents: personal invites and check-in cards */
 
   // A personal invite: the event matches the resident's interests, so Kinlight texts them. One word books it.
   const invEv = soon.find((e) => /bridge|bingo|club|trivia|card/i.test(e.title) && kindOf(e) === "resident" && !e.lantern) ?? musical;
@@ -272,25 +272,13 @@ export function moreScreens(slug: CommunitySlug) {
     screen: <SmsThread {...th} bubbles={[{ time: "Today 8:30 AM", text: invite }, { me: true, text: "YES" }, { time: "8:34 AM", text: `You’re booked, ${mom}! ${short(invEv.title)}, ${day(invEv.date)} at ${fmtTime(invEv.start)}${invEv.room ? `, ${invEv.room}` : ""}. We’ll remind you an hour before.` }]} />,
   };
 
-  // QR check-in: a sign at each activity. Scanning it checks the resident in under the number we know. No login.
+  // Check-in: the resident shows their check-in card at the door and staff scan it. Nothing to scan themselves.
   const ckEv = todays.find((e) => e.cat === "fitness") ?? todays[0] ?? musical;
   const resCheckin: TourStep = {
-    label: "Scan to check in",
+    label: "Show the card",
     time: fmtTime(ckEv.start).replace(/ (am|pm)$/, ""),
-    caption: `A QR sign at the door of every activity. ${mom} scans it with the phone camera and is checked in, from the number we already know. No app, no login.`,
-    screen: (
-      <div className="fl-checkin">
-        <div className="fl-checkin-top">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO} alt="" /> {name}
-        </div>
-        <div className="fl-checkin-ok" aria-hidden="true">✓</div>
-        <b>You’re checked in to {short(ckEv.title)}</b>
-        <p>{fmtTime(ckEv.start)}{ckEv.room ? ` · ${ckEv.room}` : ""}</p>
-        <small>Checked in as {mom}, from your phone number. Not you? Tell a member of staff.</small>
-        <span className="fl-checkin-next">Enjoy the class, {mom}!</span>
-      </div>
-    ),
+    caption: `${mom} shows the check-in card on their key ring at the door, and staff scan it with the Kinlight phone. ${mom} doesn’t need a phone or a camera. If they take texts, a short confirmation follows.`,
+    screen: <SmsThread {...th} bubbles={[{ time: `Today ${fmtTime(ckEv.start - 4).toUpperCase()}`, text: `You’re checked in to ${short(ckEv.title)}, ${mom}. Enjoy!` }]} />,
   };
 
   /* ---------------------------------------------------------------- residents: full outings, alerts, sharing, replies */

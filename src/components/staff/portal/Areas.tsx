@@ -46,7 +46,7 @@ export function AreasSettings({ on, areas, unplaced, placed }: { on: boolean; ar
         <div>
           <b>{on ? "On" : "Off"}</b>
           <p className="sx-hint">{on
-            ? "Asks in person, invites, “We haven’t seen lately”, welcome checklists and family requests go to whoever looks after the resident. Lantern residents go to the Lantern team."
+            ? "Asks in person, “We haven’t seen lately”, things a resident might enjoy and welcome checklists go to whoever looks after the resident. Lantern residents go to the Lantern team."
             : "Everything goes to roles, as it does now. Turn it on when caregivers or area leads each look after a set group of residents."}</p>
         </div>
         <button type="button" role="switch" aria-checked={on} className={`ar-toggle${on ? " on" : ""}`} onClick={toggle} disabled={pending}>
@@ -94,7 +94,7 @@ export function AreasSettings({ on, areas, unplaced, placed }: { on: boolean; ar
             Engagement and communication only. Medication, care plans and clinical notes stay in the community’s care systems, never here.
             <Help label="What changes when it’s on" align="end">
               <ul>
-                <li><b>Today:</b> “Needs you” shows each person their own residents’ asks, family requests and new family members.</li>
+                <li><b>Today:</b> “Needs you” shows each person their own residents to ask in person, anyone they haven’t seen lately and things a resident might enjoy but has never tried. Family requests and new family members stay with the activities director.</li>
                 <li><b>People:</b> “My residents” at the top, with interests, life story, participation, family, recent notes and 1:1 visits.</li>
                 <li><b>Care partners</b> can sign in with the Caregiver role: Today and People, for their residents only.</li>
               </ul>

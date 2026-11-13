@@ -49,3 +49,9 @@
 .pq-wait-plan h3 { margin: 0; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; font-size: 14.5px; padding-bottom: 4px; border-bottom: 1px solid var(--sx-line); }
 .pq-wait-plan h3 small { font-weight: 600; color: var(--sx-ink-3); font-size: 12px; }
 .pq-wait-c { display: inline-flex; gap: 8px; align-items: center; font-size: 12.5px; font-weight: 600; color: var(--sx-ink-2); }
+
+/* Apartments (front desk): the tour numbers. */
+.ap-tour-sum { margin: 0 0 14px; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ap-tour-sum > li > span { display: grid; gap: 2px; padding: 12px 16px; background: #fff; border: 1px solid var(--sx-line); border-radius: 12px; color: var(--sx-ink-2); min-height: 64px; }
+.ap-tour-sum b { font-size: 26px; color: var(--green-ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
+@media (max-width: 520px) { .ap-tour-sum { grid-template-columns: 1fr 1fr; } }

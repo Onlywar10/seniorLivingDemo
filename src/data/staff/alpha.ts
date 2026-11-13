@@ -10,6 +10,8 @@ import { addDays, dayShort, fmtTime, fromIso, hash, iso, nowMinutes, today } fro
 import { getStaffData } from "./index";
 import type { Contact, StaffData } from "./shared";
 import { weekNumbers } from "./week";
+import { welcomes } from "./engage";
+import { scorecardSurveys } from "./surveys";
 
 /* ------------------------------------------------------------ helpers */
 
@@ -191,20 +193,17 @@ export function suggestions(slug: CommunitySlug): Suggestion[] {
 /* ------------------------------------------------------------ surveys */
 
 export interface SurveyQ { q: string; before: number; now: number; aim?: string }
+/** The scheduled surveys, in the shape the older screens read. Family and resident satisfaction now come from the
+ *  Surveys section (its real answers), so the scorecard, Feedback and Reports agree. */
 export function surveys(slug: CommunitySlug) {
   const s = getStaffData(slug);
-  const h = hash(slug) % 6;
+  const sc = scorecardSurveys(slug);
   return {
     family: {
-      title: "Family survey",
-      sent: s.community.families, answered: Math.round(s.community.families * 0.46),
-      when: "Sent before go-live and again at day 90, by text and email in each family’s language",
-      qs: [
-        { q: "I know what’s happening in my loved one’s community", before: 41 + h, now: 63 + h, aim: "+15 points" },
-        { q: "I feel part of the community", before: 38 + h, now: 52 + h, aim: "+15 points" },
-        { q: "Messages from the community are useful, not too many", before: 55, now: 78 + (h % 3) },
-        { q: "How likely are you to recommend the community? (0–10)", before: 7.4, now: 8.3 },
-      ] as SurveyQ[],
+      title: "Family satisfaction",
+      sent: sc.family.sent, answered: sc.family.answered,
+      when: "Before go-live, at day 90 and every six months, by text and email in each family’s language",
+      qs: sc.family.qs.map((q, i) => ({ ...q, aim: i < 2 ? "+15 points" : undefined })) as SurveyQ[],
       comments: [
         { text: "The Sunday email is the first thing I read. I finally know what Mom did all week.", lang: "English" },
         { text: "Me encanta recibir los mensajes en español. Mi papá se ve feliz en las fotos.", lang: "Spanish", en: "I love getting the messages in Spanish. My dad looks happy in the photos." },
@@ -223,22 +222,22 @@ export function surveys(slug: CommunitySlug) {
       ],
       comments: ["The photo post from my phone is the part I use every day.", "Menu import from the PDF still needs a second look on soups."],
     },
-    resident: { title: "Resident survey (read aloud)", answered: Math.round(s.community.residents * 0.3), qs: [{ q: "I know what’s on each week", before: 58, now: 71 }, { q: "I feel part of the community", before: 66, now: 74 }, { q: "My ideas are listened to", before: 49, now: 64 }] as SurveyQ[] },
+    resident: { title: "Resident satisfaction (printed or read aloud)", answered: sc.resident.answered, qs: sc.resident.qs as SurveyQ[] },
   };
 }
 
 /* ------------------------------------------------------------ print */
 
-export interface PrintItem { id: string; title: string; size: string; copies: number; note: string; ready: boolean; sign?: { title: string; when: string; place: string; id: string } }
+export interface PrintItem { id: string; title: string; size: string; copies: number; note: string; ready: boolean; card?: { name: string; community: string } }
 
 export function printItems(slug: CommunitySlug): PrintItem[] {
   const c = communities[slug];
   const t = today();
   const month = t.toLocaleString("en-US", { month: "long", timeZone: "UTC" });
   const sp = nextSpecials();
-  // The next activity with a QR check-in sign, for the preview.
-  const next = upcoming(slug, 3).find((e) => e.cat !== "movies" && e.cat !== "faith" && e.cat !== "lantern" && !e.lantern && kindOf(e) === "resident" && (e.date > iso(t) || e.start > nowMinutes()));
-  const signs = upcoming(slug, 7).filter((e) => e.cat !== "movies" && e.cat !== "faith" && e.cat !== "lantern" && !e.lantern).length;
+  // Check-in cards: one per resident, printed once when they move in (and again if one is lost). Staff scan the card
+  // at the door; residents never have to scan anything themselves.
+  const newcomers = welcomes(slug).filter((w) => !w.steps.every((x) => x.done));
   return [
     { id: "p1", title: `${month} activity calendar`, size: "Tabloid · 16 pt", copies: 120, note: "For every apartment door and the Lobby", ready: true },
     { id: "p2", title: "Lantern activity calendar", size: "Tabloid · 20 pt", copies: 30, note: "Pictures beside each activity", ready: true },
@@ -246,9 +245,9 @@ export function printItems(slug: CommunitySlug): PrintItem[] {
     { id: "p4", title: `Family Barbecue flyer · ${dayShort(fromIso(sp.barbecue))}`, size: "Letter · 24 pt", copies: 40, note: "For the front desk and the elevators", ready: true },
     { id: "p5", title: "Family QR poster: “Get the weekly update”", size: "Tabloid", copies: 6, note: "Front desk and each elevator", ready: true },
     {
-      id: "p7", title: "QR check-in signs, this week", size: "Letter · 28 pt", copies: signs,
-      note: "One for each activity", ready: true,
-      sign: next ? { id: next.id, title: next.title, when: when(next), place: next.room } : undefined,
+      id: "p7", title: "Check-in cards for new residents", size: "Card stock · 10 per page", copies: Math.max(1, newcomers.length),
+      note: `${newcomers.map((w) => w.name).join(", ") || "Replacements for lost cards"}: staff scan the card at each activity`, ready: true,
+      card: { name: newcomers[0]?.name ?? "Resident name", community: c.site.name },
     },
     { id: "p6", title: "Suggestion slips", size: "Letter · 4 per page", copies: 100, note: "For the box at the front desk", ready: true },
   ];
@@ -258,18 +257,18 @@ export function printItems(slug: CommunitySlug): PrintItem[] {
 
 export type Permission = "Post updates and photos" | "Edit calendar and menus" | "Approve family messages" | "Approve resident photos" | "Approve event RSVPs" | "Pricing and availability" | "Inquiries and tours" | "Family contacts" | "Settings and roles";
 
-/** Everyone on the team with their preset role (Settings → Team). Front desk and fitness are Posters. */
+/** Everyone on the team with their preset role (Settings → Team). Fitness and community relations are Posters. */
 export function teamRoles(slug: CommunitySlug) {
   const s = getStaffData(slug);
   const r = s.roles;
   type Preset = import("./shared").Preset;
   const byKey = (k: string, role: string): { preset: Preset; status: "Active" | "Invited"; adjusted?: string } => {
     if (k === r.approver) return { preset: "Administrator", status: "Active" };
-    if (k === r.tours) return { preset: "Sales", status: "Active" };
     if (k === r.calendar) return { preset: "Approver", status: "Active" };
     if (k === r.lantern) return { preset: "Approver", status: "Active", adjusted: "Approves Lantern family requests" };
     if (k === r.menus || /Culinary|Dining/.test(role)) return { preset: "Kitchen", status: "Active" };
-    if (k === r.desk || /Fitness/.test(role)) return { preset: "Poster", status: "Active" };
+    if (k === r.desk) return { preset: "Front desk", status: "Active" };
+    if (/Fitness/.test(role)) return { preset: "Poster", status: "Active" };
     if (/Care Partner/.test(role)) return { preset: "Caregiver", status: "Active" };
     if (/Business Office/.test(role)) return { preset: "Poster", status: "Active", adjusted: "Also edits apartments and prices on the website" };
     const h = hash(k);
@@ -282,7 +281,9 @@ export function teamRoles(slug: CommunitySlug) {
 /* ------------------------------------------------------------ scorecard: promises, adoption, evidence */
 
 export type PromiseStatus = "Kept" | "At risk" | "Missed" | "Not due yet";
-export interface KPromise { code: string; promise: string; target: string; status: PromiseStatus; evidence: string }
+export interface KPromise { code: string; promise: string; target: string; status: PromiseStatus; evidence: string;
+  /** Where the evidence lives in the staff area. */
+  href?: string; hrefLabel?: string }
 
 export function promises(slug: CommunitySlug): KPromise[] {
   const s = getStaffData(slug);
@@ -296,14 +297,14 @@ export function promises(slug: CommunitySlug): KPromise[] {
     { code: "D5", promise: "Changes arrive fast", target: "Website and families updated within 15 minutes", status: "Kept", evidence: "Slowest change this month: 6 minutes" },
     { code: "D6", promise: "Messages arrive", target: "95% or more delivered, in the family’s language", status: "Kept", evidence: `${s.weekKpis.deliveredRate}% delivered; ${s.languages.length} languages` },
     { code: "D7", promise: "Nothing wrong goes out", target: "Nothing goes out without the approval your rules require (resident photos, prices, special menus, family requests); emergencies only skip it", status: "Kept", evidence: "Every resident photo, price, special menu and family request approved first; 0 exceptions (approval log)" },
-    { code: "D8", promise: "No inquiry left waiting", target: "Instant reply day or night; your team told within 5 minutes", status: "Kept", evidence: `${s.scoreRows.find((r) => r.k === "Enquiries")?.now ?? 50} inquiries, all answered instantly; slowest hand-off 2 min` },
+    { code: "D8", promise: "No inquiry left waiting", target: "Instant reply day or night; your team told within 5 minutes", status: "Kept", evidence: `${s.scoreRows.find((r) => r.k === "Enquiries")?.now ?? 50} inquiries, all answered instantly; slowest hand-off 2 min`, href: "/staff/automations?tab=log&auto=s-instant", hrefLabel: "Every instant reply, in Automations" },
     { code: "D9", promise: "Easy to find", target: "Live-facts feed and Google Business Profile accurate; monthly AI-answer report", status: slug === "alder-bend" ? "Kept" : "At risk", evidence: slug === "alder-bend" ? "Feed and profile accurate; AI-answer report sent" : "One AI answer still shows the old Lantern price; correction submitted" },
     { code: "D10", promise: "It stays up", target: "99.5% uptime or better", status: "Kept", evidence: "99.98% this month" },
     { code: "D11", promise: "You can see it working", target: "Scorecard sent every month; full export tested once", status: "Kept", evidence: "This scorecard; export tested on day 21" },
   ].map((p) => ({ ...p, status: p.status as PromiseStatus, evidence: p.evidence.replace("{fam}", String(fam)) }));
 }
 
-export interface Adoption { code: string; measure: string; target: string; value: string; pct: number; ok: boolean; note?: string }
+export interface Adoption { code: string; measure: string; target: string; value: string; pct: number; ok: boolean; note?: string; href?: string; hrefLabel?: string }
 
 export function adoption(slug: CommunitySlug): Adoption[] {
   const s = getStaffData(slug);
@@ -316,7 +317,7 @@ export function adoption(slug: CommunitySlug): Adoption[] {
     { code: "T3", measure: "Pages stay current", target: "No page older than 7 days", value: "1 page at 6 days (Fitness)", pct: 96, ok: true, note: "Reminder sent" },
     { code: "T4", measure: "Families reachable", target: "60% by day 30, 70% by day 90", value: `${Math.min(optedPct, 88)}% of residents have an opted-in family contact`, pct: Math.min(optedPct, 88), ok: optedPct >= 60 },
     { code: "T5", measure: "Families read it", target: "50% of opted-in families view or click the digest", value: `${s.weekKpis.openRate}% opened this week · ${reached} families reached`, pct: s.weekKpis.openRate, ok: s.weekKpis.openRate >= 50 },
-    { code: "T6", measure: "Families stay subscribed", target: "Opt-outs 5% or less", value: "1.6% opted out", pct: 98, ok: true },
+    { code: "T6", measure: "Families stay subscribed", target: "Opt-outs 5% or less", value: "1.6% opted out", pct: 98, ok: true, href: "/staff/automations?tab=problems", hrefLabel: "This week’s opt-outs, in Automations" },
     { code: "T7", measure: "Calendar takes less time", target: "Monthly calendar build time down 50%", value: "From 9 h to 3.5 h (time diary)", pct: 61, ok: true },
     { code: "T8", measure: "Communication takes less time", target: "15+ staff hours a month saved", value: "17 h saved this month (time diary)", pct: 100, ok: true },
   ];

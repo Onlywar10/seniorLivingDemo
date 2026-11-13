@@ -46,14 +46,14 @@ export default async function EngagementPage() {
   return (
     <>
       <PageHead title="Engagement" sub={`${s.brand.name}, the last four weeks`}>
-        <Help label="How engagement is counted" align="end"><p>Counted from attendance, QR check-ins and the visit notes staff log in People. Nobody fills in a spreadsheet.</p><p>A resident is reached if they came to an activity or had a 1:1 visit.</p></Help>
+        <Help label="How engagement is counted" align="end"><p>Counted from attendance, card scans and the visit notes staff log in People. Nobody fills in a spreadsheet.</p><p>A resident is reached if they came to an activity or had a 1:1 visit.</p></Help>
       </PageHead>
       <ReportTabs access={access} />
 
       <div className="sx-kpis">
         <Kpi label="Residents reached" value={<>{e.reached}<small> / {e.residents}</small></>} delta={pctChange(e.reached, e.reachedPrev)} note={`${reachedPct}% of residents`} />
         <Kpi label="Activity visits" value={fmt(e.visits)} delta={pctChange(e.visits, e.visitsPrev)} note={`${e.sessions} activities`} />
-        <Kpi label="Checked in by QR" value={`${e.checkIns.qrPct}%`} note={`${fmt(e.checkIns.qr)} by QR, ${fmt(e.checkIns.staff)} by staff`} />
+        <Kpi label="Checked in by card" value={`${e.checkIns.qrPct}%`} note={`${fmt(e.checkIns.qr)} by card, ${fmt(e.checkIns.staff)} tapped in`} />
         <Kpi label="1:1 visits" value={e.oneToOne.length} note={`with ${e.oneToOneResidents} residents`} />
       </div>
 
@@ -67,12 +67,12 @@ export default async function EngagementPage() {
       </div>
 
       <div className="sx-grid g-2">
-        <Card title="QR versus staff check-ins" action={<Help label="About check-ins" align="end"><p>A resident with a phone scans the sign at the activity; staff tap everyone else in.</p><p>Each scan counts under the phone number we already know: no login. Lantern residents are always checked in by staff.</p></Help>}>
-          <div className="rp-split" role="img" aria-label={`${e.checkIns.qrPct}% by QR, ${100 - e.checkIns.qrPct}% by staff`}>
+        <Card title="Card scans versus tapped in" action={<Help label="About check-ins" align="end"><p>Staff scan each resident’s check-in card at the door; anyone without their card is tapped in. Residents never need a phone.</p><p>Lantern residents are always tapped in by staff.</p></Help>}>
+          <div className="rp-split" role="img" aria-label={`${e.checkIns.qrPct}% by card, ${100 - e.checkIns.qrPct}% tapped in`}>
             <i style={{ width: `${e.checkIns.qrPct}%` }} />
           </div>
           <ul className="sx-legend rp-split-l">
-            <li><i style={{ background: "var(--green-deep)" }} />By QR · {fmt(e.checkIns.qr)}</li>
+            <li><i style={{ background: "var(--green-deep)" }} />By card · {fmt(e.checkIns.qr)}</li>
             <li><i style={{ background: "#cdbfa5" }} />By staff · {fmt(e.checkIns.staff)}</li>
           </ul>
         </Card>

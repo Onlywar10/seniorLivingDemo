@@ -108,7 +108,7 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
   const busy = useMemo(() => events.filter((e) => e.isNew).map((e) => ({ date: e.date, start: e.start, end: e.end ?? e.start + 60, room: e.room, title: e.title })), [events]);
   const add = (date: string, extra: { prefill?: EventPrefill; idea?: IdeaPrefill } = {}) => setAdding((a) => ({ date, n: (a?.n ?? 0) + 1, ...extra }));
   const tomorrow = iso(addDays(fromIso(todayIso), 1));
-  const tplPrefill = (t: Template): EventPrefill => ({ title: t.title, kind: t.kind, cat: t.cat, minutes: t.minutes, cap: t.cap, interests: t.interests, repeat: t.repeat, photos: t.kind === "resident" && !t.cap ? 0 : 6 });
+  const tplPrefill = (t: Template): EventPrefill => ({ title: t.title, kind: t.kind, cat: t.cat, minutes: t.minutes, cap: t.cap, interests: t.interests, repeat: t.repeat, photos: !(t.kind === "resident" && !t.cap) });
   const fromTemplate = (t: Template) => add(tomorrow, { prefill: tplPrefill(t) });
   const openEvent = (e: CalEvent) => { setPhotoFocus(false); setOpen(e); };
 
@@ -137,7 +137,7 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
         <span className="t">
           {fmtTime(e.start)}
           {e.rule ? <span title={e.rule}><XIcon name="repeat" /><span className="vh"> {e.rule}</span></span> : e.clash ? <Icon name="alert" /> : null}
-          {needPhotos && <span className="pc-want" title={`Photos wanted: ${e.wanted}`}><Icon name="image" /><span className="vh"> Photos wanted: {e.wanted}</span></span>}
+          {needPhotos && <span className="pc-want" title="Photos wanted"><Icon name="image" /><span className="vh"> Photos wanted</span></span>}
         </span>
         {e.cancelled ? <s>{e.title}</s> : e.title}
         {e.late && !e.cancelled ? <span className="pc-new">{e.late} min late</span> : null}
@@ -388,7 +388,7 @@ function Plan({ plan, onTemplate, onIdea, onDragTemplate, onDragIdea }: { plan: 
         <header className="sx-card-head">
           <div><h2>This month</h2></div>
           <Help label="How attendance is counted" align="end">
-            <p>Average attendance per session over the last four weeks, from QR check-ins and attendance taken by staff.</p>
+            <p>Average attendance per session over the last four weeks, from card scans and attendance taken by staff.</p>
             <p>▲▼ against the month before. More in Reports.</p>
           </Help>
         </header>

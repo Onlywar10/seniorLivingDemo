@@ -18,15 +18,25 @@ export const parseStaffScope = (v: string | null | undefined): StaffScope => (v 
  * Who is using the workspace, by what they do. The same five exist in every community, so the choice survives a
  * change of community. Kept in a cookie so server pages can build each person's own view.
  * - events: the activities director (Nora at Alder Bend), preset Approver
- * - sales: community relations (Priya), preset Sales
+ * - sales: community relations (Priya). Hidden in the alpha: Kinlight doesn't do sales. Tour numbers, apartment
+ *   availability and the waitlist belong to the front desk; the role stays in the types so it can come back.
  * - manager: the executive director (Renata), preset Administrator
  * - kitchen: the culinary director (Rafael), preset Kitchen
  * - desk: the front desk (Bea), preset Poster
+ * - fitness: the fitness director (Devin at Alder Bend, Kara at Kestrel Point), preset Poster. A member of the
+ *   activities team: their posts with resident photos go to the activities director to approve, and anything of
+ *   theirs that runs late goes to the activities director, not the executive director.
  * - caregiver: a care partner (Kenji at Alder Bend), preset Caregiver. Only when "Who looks after whom" is on in
  *   Settings: Today (their residents' asks, quick attendance) and People (their residents). Nothing clinical.
  */
-export type StaffRole = "events" | "sales" | "manager" | "kitchen" | "desk" | "caregiver" | "lantern";
-export const STAFF_ROLES: StaffRole[] = ["events", "desk", "kitchen", "sales", "manager", "caregiver", "lantern"];
+export type StaffRole = "events" | "fitness" | "sales" | "manager" | "kitchen" | "desk" | "caregiver" | "lantern";
+export const STAFF_ROLES: StaffRole[] = ["events", "fitness", "desk", "kitchen", "manager", "caregiver", "lantern"];
+
+/**
+ * Who each person answers to: where their posts go to be approved and where anything of theirs that runs late is
+ * also shown. The fitness director works in the activities team; everyone else reports to the executive director.
+ */
+export const reportsTo: Record<StaffRole, StaffRole | null> = { fitness: "events", events: "manager", desk: "manager", kitchen: "manager", sales: "manager", caregiver: "manager", lantern: "manager", manager: null };
 export const AS_COOKIE = "wh-staff-as";
 export const parseAs = (v: string | null | undefined): StaffRole => (STAFF_ROLES.includes(v as StaffRole) ? (v as StaffRole) : "events");
 
@@ -35,24 +45,29 @@ export const AREAS_COOKIE = "wh-staff-areas";
 export const ASSIGN_COOKIE = "wh-staff-assign";
 
 /** The workspace sections, in menu order. */
-export type Section = "today" | "post" | "messages" | "calendar" | "menus" | "newsletter" | "website" | "people" | "feedback" | "prospects" | "reports" | "settings";
-export const SECTIONS: Section[] = ["today", "post", "messages", "calendar", "menus", "newsletter", "website", "people", "feedback", "prospects", "reports", "settings"];
+export type Section = "today" | "post" | "messages" | "automations" | "calendar" | "menus" | "newsletter" | "website" | "people" | "feedback" | "surveys" | "prospects" | "reports" | "settings";
+export const SECTIONS: Section[] = ["today", "post", "messages", "automations", "calendar", "menus", "newsletter", "website", "people", "feedback", "surveys", "prospects", "reports", "settings"];
 
 /**
  * What each preset role may do in each section (the spec's Roles table). A section that's missing isn't shown.
  * "full" is everything; any other value is the part of the section that role sees, in plain words.
+ * Automations: the administrator sees every one; area owners see their own ("assigned": events and activities,
+ * dining, sales and tours, Lantern). Everyone else doesn't see the section.
  */
 export type Access = "full" | "assigned" | "view" | "announcements" | "own-pages" | "dining-page" | "apartments" | "suggestions" | "community" | "prospect-numbers" | "my-residents" | "dining-requests";
 export const accessFor: Record<StaffRole, Partial<Record<Section, Access>>> = {
-  // Poster (fitness, front desk): Newsletter only through its Today card.
-  desk: { today: "full", messages: "assigned", post: "full", calendar: "full", menus: "dining-requests", website: "own-pages", feedback: "suggestions" },
-  events: { today: "full", messages: "full", post: "full", calendar: "full", menus: "view", newsletter: "full", website: "own-pages", people: "full", feedback: "full", reports: "community" },
-  kitchen: { today: "full", messages: "assigned", menus: "full", website: "dining-page" },
-  sales: { today: "full", messages: "assigned", post: "announcements", calendar: "view", website: "apartments", prospects: "full", reports: "prospect-numbers" },
+  // Front desk: visits, dining requests, their own pages, and Apartments: availability by floor plan, the waitlist and
+  // the number of tours (no inquiries or prospects: Kinlight doesn't do sales in the alpha).
+  desk: { today: "full", messages: "assigned", automations: "assigned", post: "full", calendar: "full", menus: "dining-requests", website: "own-pages", feedback: "suggestions", prospects: "full" },
+  // Poster (fitness): their own classes, posts (resident photos go to the activities director) and the fitness page.
+  fitness: { today: "full", messages: "assigned", post: "full", calendar: "full", website: "own-pages", feedback: "suggestions" },
+  events: { today: "full", messages: "full", automations: "assigned", post: "full", calendar: "full", menus: "view", newsletter: "full", website: "own-pages", people: "full", feedback: "full", surveys: "full", reports: "community" },
+  kitchen: { today: "full", messages: "assigned", automations: "assigned", menus: "full", website: "dining-page", surveys: "assigned", feedback: "full" },
+  sales: { today: "full", messages: "assigned", automations: "assigned", post: "announcements", calendar: "view", website: "apartments", prospects: "full", reports: "prospect-numbers" },
   manager: Object.fromEntries(SECTIONS.map((s) => [s, "full"])) as Record<Section, Access>,
   caregiver: { today: "full", messages: "assigned", people: "my-residents" },
   // The Lantern lead: Lantern residents, their families and the Lantern calendar.
-  lantern: { today: "full", messages: "assigned", calendar: "full", people: "my-residents" },
+  lantern: { today: "full", messages: "assigned", automations: "assigned", calendar: "full", people: "my-residents", surveys: "assigned" },
 };
 export const accessLabel: Record<Access, string> = {
   full: "",
@@ -75,8 +90,8 @@ export const sectionsFor: Record<StaffRole, Section[]> = Object.fromEntries(
 export const accessOf = (r: StaffRole, s: Section): Access | undefined => accessFor[r][s];
 
 /** The preset role each person holds (Settings → Team). */
-export type Preset = "Poster" | "Approver" | "Kitchen" | "Sales" | "Administrator" | "Caregiver" | "Lantern lead";
-export const presetOf: Record<StaffRole, Preset> = { events: "Approver", sales: "Sales", manager: "Administrator", kitchen: "Kitchen", desk: "Poster", caregiver: "Caregiver", lantern: "Lantern lead" };
+export type Preset = "Poster" | "Front desk" | "Approver" | "Kitchen" | "Sales" | "Administrator" | "Caregiver" | "Lantern lead";
+export const presetOf: Record<StaffRole, Preset> = { events: "Approver", fitness: "Poster", sales: "Sales", manager: "Administrator", kitchen: "Kitchen", desk: "Front desk", caregiver: "Caregiver", lantern: "Lantern lead" };
 
 /** A page on a community's public website: siteHref("kestrel-point", "/calendar") → "/kestrel-point/calendar". */
 export const siteHref = (scope: StaffScope, path = "/") => (scope === "all" ? path : path === "/" ? `/${scope}` : `/${scope}${path}`);
@@ -185,6 +200,8 @@ export function contactMaker(prefixes: string[], area = "916") {
 export interface Approval {
   id: string; by: PersonKey; mins: number; kind: string; title: string; detail: string; photo?: string;
   channels: string[]; note?: string; diff?: [string, string];
+  /** Who approves it: the activities director for their team's posts with resident photos; the executive director for prices and special menus. */
+  to: "events" | "manager";
 }
 
 export interface Ranking { q: string; pos: number; change: number; volume: number; url: string; hist: number[] }
@@ -330,3 +347,7 @@ export function rsvpFor(d: Pick<StaffData, "residentNames" | "lanternNames">, id
   const all = pick(taken + waitlist, start);
   return { going: all.slice(0, taken), waiting: all.slice(taken) };
 }
+
+/** The fitness director (the "fitness" sign-in): a member of the activities team, under the activities director. */
+export const fitnessKey = (s: { people: Record<PersonKey, StaffPerson>; roles: { calendar: PersonKey } }): PersonKey =>
+  Object.keys(s.people).find((k) => /Fitness Director/.test(s.people[k].role)) ?? s.roles.calendar;

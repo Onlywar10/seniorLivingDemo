@@ -4,12 +4,19 @@
 // Their week (the default) is a timeline of what they came to and missed, invites and answers, photos, 1:1 visits and
 // family requests. About holds interests, story, how they hear from us and consent. Family lists each family member
 // with every message exchanged, both ways, and a Message button in their language. Notes are staff-only. Report shows
-// participation over a date range, ready to print for a care conference. Changes stay in this browser.
+// participation over a date range, ready to print for a care conference. "Kinlight sent" is every message Kinlight sent
+// on its own to the resident and their family this week (the Automations log, for them). Changes stay in this browser.
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Interest } from "@/data/staff/engage";
 import type { FamilyMember, FamilyStatus } from "@/data/staff/portal";
 import type { Msg, Pending, ResidentProfile, TimelineItem } from "@/data/staff/resident";
+import type { LogRow } from "@/data/staff/autoText";
+import { SentByKinlight } from "./AutoLog";
+import type { RemovalPlan } from "@/data/staff/removal";
+import type { StaffRole } from "@/data/staff/shared";
+import { useRemove, useRemoved } from "../removedStore";
+import { RemoveResident } from "./RemoveResident";
 import { Icon } from "../../Icon";
 import { say, useDecide, useDecisions } from "../store";
 import { Badge, HBars, Initials } from "../ui";
@@ -20,15 +27,19 @@ import { FamilyLink } from "../ResidentLink";
 import { Invite, WelcomeChecklist } from "./People";
 import { Seats } from "./seats";
 
-export type ResidentTab = "week" | "about" | "family" | "notes" | "report";
+export type ResidentTab = "week" | "about" | "family" | "kinlight" | "notes" | "report";
 type IconName = Parameters<typeof Icon>[0]["name"];
 const first = (n = "") => n.split(" ")[0];
 const statusTone: Record<FamilyStatus, "good" | "info" | "warn" | "neutral"> = { Joined: "good", Invited: "info", "Waiting for a check": "warn", Stopped: "neutral" };
 const kindIcon: Record<TimelineItem["kind"], IconName> = { came: "check", missed: "minus", invite: "sms", photo: "image", visit: "heart", request: "users", celebration: "star", booked: "calendar" };
 const evHref = (e: { id: string; date: string }) => `/staff/calendar?event=${encodeURIComponent(e.id)}&date=${e.date}`;
 
-export function ResidentPage({ p, me, community, interests, tab: initialTab, openWelcome, messageTo, member }: {
+export function ResidentPage({ p, me, community, interests, tab: initialTab, openWelcome, messageTo, member, sent = [], autoNames = {}, todayIso = "", removal, as = "events", approver = "", phone = "" }: {
   p: ResidentProfile; me: string; community: string; interests: readonly Interest[]; tab: ResidentTab; openWelcome?: boolean; messageTo?: string;
+  /** What Kinlight sent on its own to them and their family in the last 7 days, with each automation's name. */
+  sent?: LogRow[]; autoNames?: Record<string, string>; todayIso?: string;
+  /** Remove resident (the administrator and approvers only): what would happen, worked out for them. */
+  removal?: RemovalPlan; as?: StaffRole; approver?: string; phone?: string;
   /** A family member's name was clicked somewhere: open Family, on them. */
   member?: string;
 }) {
@@ -57,6 +68,10 @@ export function ResidentPage({ p, me, community, interests, tab: initialTab, ope
   const [visit, setVisit] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [welcome, setWelcome] = useState(!!openWelcome && !!p.welcome);
+  const [kinFor, setKinFor] = useState<string | undefined>(undefined);
+  const [removing, setRemoving] = useState(false);
+  const gone = useRemoved()[r0.name];
+  const unremove = useRemove();
   const fn = first(rec.name);
   const canText = rec.channel !== "Print only";
 
@@ -70,7 +85,7 @@ export function ResidentPage({ p, me, community, interests, tab: initialTab, ope
   };
 
   const tabs: [ResidentTab, string, number?][] = [
-    ["week", "Their week"], ["about", "About"], ["family", "Family", rec.family.length], ["notes", "Notes", notes.length], ["report", "Report"],
+    ["week", "Their week"], ["about", "About"], ["family", "Family", rec.family.length], ["kinlight", "Kinlight sent", sent.length], ["notes", "Notes", notes.length], ["report", "Report"],
   ];
   const last30 = p.attended.filter((a) => a.date >= isoDaysAgo(p.today, 30)).length;
 
@@ -91,13 +106,27 @@ export function ResidentPage({ p, me, community, interests, tab: initialTab, ope
             <Badge tone="neutral">{last30} {last30 === 1 ? "activity" : "activities"} in 30 days</Badge>
           </p>
         </div>
-        <div className="rs-quick" role="group" aria-label={`Quick actions for ${fn}`}>
+        {removal && !gone && <button type="button" className="sx-btn sx-btn-terra sx-btn-lg rs-remove" onClick={() => setRemoving(true)}><Icon name="x" /> Remove resident</button>}
+        {!gone || gone.why === "moved-area" ? <div className="rs-quick" role="group" aria-label={`Quick actions for ${fn}`}>
           {!rec.lantern && <button type="button" className="sx-btn sx-btn-primary" onClick={() => setInviting(true)}><Icon name="calendar" /> Invite to an activity</button>}
           <button type="button" className="sx-btn" onClick={() => message(rec.family.find((m) => m.status === "Joined")?.name ?? rec.family[0]?.name ?? (canText ? rec.name : null))} disabled={!rec.family.length && !canText}><Icon name="sms" /> Message</button>
           <button type="button" className="sx-btn" onClick={() => setVisit(true)}><Icon name="heart" /> Log a 1:1 visit</button>
           <button type="button" className="sx-btn" onClick={() => { setTab("notes"); setNoteOpen(true); }}><Icon name="edit" /> Add a note</button>
-        </div>
+        </div> : null}
       </header>
+
+      {gone && (
+        <div className={`sx-callout rs-gone${gone.why === "moved-area" ? " info" : ""}`} role="status">
+          <Icon name={gone.why === "moved-area" ? "info" : "heart"} />
+          <p>
+            <b>{gone.why === "passed" ? `${fn} passed away` : gone.why === "moved-out" ? `${fn} moved out` : `${fn} moved to ${gone.area}`}, {gone.when}.</b>{" "}
+            {gone.why === "moved-area" ? "Their messages follow their new care area." : "Every automatic message about them has stopped; they’re off upcoming events, the newsletter, birthdays and photo suggestions, and open requests about them are closed."}{" "}
+            Recorded by {gone.by}, {gone.at}.
+            {gone.family.length > 0 && <> Family: {gone.family.map((m) => `${m.name}: ${m.choice === "news" ? "keeps the community news" : m.choice === "stop" ? "nothing more" : m.status === "waiting" ? `one gentle message, waiting for ${approver.split(" ")[0]}` : "one gentle message, sent"}`).join("; ")}.</>}
+          </p>
+          {as === "manager" && <button type="button" className="sx-btn sx-btn-sm" onClick={() => unremove.undo(r0.name)}>Undo</button>}
+        </div>
+      )}
 
       {p.welcome && (
         <button type="button" className="rs-welcome" onClick={() => setWelcome(true)}>
@@ -131,10 +160,13 @@ export function ResidentPage({ p, me, community, interests, tab: initialTab, ope
       {tab === "about" && <About rec={rec} setRec={setRec} eng={eng} setEng={setEng} legal={p.legal} interests={interests} fn={fn} />}
       {tab === "family" && (
         <Family rec={rec} convos={convos} own={own} canText={canText} onMessage={message} focus={member}
+          sentCount={(n) => sent.filter((r) => r.to === n).length} onSent={(n) => { setKinFor(n); setTab("kinlight"); }}
           onPatch={(who, m) => setRec((r) => ({ ...r, family: m === null ? r.family.filter((x) => x.name !== who) : r.family.map((x) => (x.name === who ? { ...x, ...m } : x)) }))}
           onInvite={(m) => { setRec((r) => ({ ...r, family: [...r.family, m] })); say(`Invite sent to ${m.name} by ${m.channel.toLowerCase()}. One reminder in a few days, then it stops.`); }}
         />
       )}
+      {tab === "kinlight" && <SentByKinlight key={kinFor ?? "all"} rows={sent} names={autoNames} todayIso={todayIso} people={[rec.name, ...rec.family.map((m) => m.name)].filter((n, i, a) => a.indexOf(n) === i)} focus={kinFor} fn={fn} />}
+      {removing && removal && <RemoveResident plan={removal} me={me} as={as} admin={as === "manager"} approver={approver} community={community} phone={phone} todayIso={todayIso} onClose={() => setRemoving(false)} />}
       {tab === "notes" && <Notes fn={fn} notes={notes} open={noteOpen} setOpen={setNoteOpen} onAdd={(text) => { setNotes((n) => [{ id: `new-${Date.now()}`, when: "Just now", by: me, text }, ...n]); setNoteOpen(false); say("Note saved. Staff only."); }} />}
       {tab === "report" && <Report p={p} community={community} visits={eng.visits.length} />}
 
@@ -307,7 +339,7 @@ function Week({ fn, timeline, upcoming }: { fn: string; timeline: TimelineItem[]
         <header className="rs-sec-h">
           <h2 id="rs-week-h">The last 7 days</h2>
           <small>{came} came · {missed} missed</small>
-          <Help label="About their week" align="end"><p>From attendance, QR check-ins, invites, photos, 1:1 visits and family requests. Families are never told about attendance automatically.</p></Help>
+          <Help label="About their week" align="end"><p>From attendance, card scans, invites, photos, 1:1 visits and family requests. Families are never told about attendance automatically.</p></Help>
         </header>
         {byDay.length === 0 ? <p className="pt-empty">Nothing yet. {fn}’s activities appear here once attendance is taken.</p> : (
           <ol className="rs-tl">
@@ -409,8 +441,10 @@ function About({ rec, setRec, eng, setEng, legal, interests, fn }: {
 
 /* ------------------------------------------------------------ family, with every message */
 
-function Family({ rec, convos, own, canText, onMessage, onPatch, onInvite, focus }: {
+function Family({ rec, convos, own, canText, onMessage, onPatch, onInvite, focus, sentCount, onSent }: {
   rec: ResidentProfile["record"]; convos: Record<string, Msg[]>; own: Msg[]; canText: boolean;
+  /** "Messages Kinlight sent": how many to this person this week, and opening them. */
+  sentCount: (name: string) => number; onSent: (name: string) => void;
   onMessage: (to: string, via?: Via) => void; onPatch: (who: string, m: Partial<FamilyMember> | null) => void; onInvite: (m: FamilyMember) => void;
   /** The family member someone clicked on, shown highlighted. */
   focus?: string;
@@ -436,6 +470,7 @@ function Family({ rec, convos, own, canText, onMessage, onPatch, onInvite, focus
               <b>{m.name}</b>
               <small>{m.relation} · prefers {m.channel.toLowerCase()} · {m.lang}{m.note ? ` · ${m.note}` : ""}</small>
               {(m.phone || m.email) && <small>{[m.phone, m.email].filter(Boolean).join(" · ")}</small>}
+              {sentCount(m.name) > 0 && <button type="button" className="sx-link rs-kin" onClick={() => onSent(m.name)}>Messages Kinlight sent ({sentCount(m.name)})</button>}
             </span>
             <span className="pt-fam-s"><Badge tone={statusTone[m.status]}>{m.status}</Badge><small>{m.access}</small></span>
             <span className="pt-fam-a">
@@ -452,7 +487,7 @@ function Family({ rec, convos, own, canText, onMessage, onPatch, onInvite, focus
         <section className="sx-card sx-card-body rs-sec rs-member">
           <header className="rs-member-h">
             <Initials name={rec.name} size={36} color="var(--slate)" />
-            <span className="pt-fam-t"><b>{rec.name} (resident)</b><small>{rec.channel} · {rec.lang}</small></span>
+            <span className="pt-fam-t"><b>{rec.name} (resident)</b><small>{rec.channel} · {rec.lang}</small>{sentCount(rec.name) > 0 && <button type="button" className="sx-link rs-kin" onClick={() => onSent(rec.name)}>Messages Kinlight sent ({sentCount(rec.name)})</button>}</span>
             <span className="pt-fam-a">{sendBtns(rec.name, false)}</span>
           </header>
           <Thread msgs={own} lang={rec.lang} empty="No messages yet." />
@@ -631,7 +666,7 @@ function Report({ p, community, visits }: { p: ResidentProfile; community: strin
       <ul className="rs-att">
         {[...att].reverse().slice(0, 40).map((a, i) => <li key={i}><span>{a.title}</span><small>{a.catLabel} · {new Date(a.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })}</small></li>)}
       </ul>
-      <p className="sx-hint">From attendance and QR check-ins. <Link className="sx-link" href={`/staff/reports/attendance?resident=${encodeURIComponent(p.record.name)}`}>Open in Reports</Link> for any dates, by activity or category, with export. Nothing here is sent to family automatically.</p>
+      <p className="sx-hint">From attendance and card scans. <Link className="sx-link" href={`/staff/reports/attendance?resident=${encodeURIComponent(p.record.name)}`}>Open in Reports</Link> for any dates, by activity or category, with export. Nothing here is sent to family automatically.</p>
     </section>
   );
 }

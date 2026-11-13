@@ -17,7 +17,7 @@ import { useStaffCommunity } from "./StaffCommunity";
 /** An event kept as a template ("we'll need this again"): its shape, without a date. */
 export interface SavedTemplate {
   k: string; label: string; title: string; kind: EventKind; time: string; minutes: number; room: string;
-  cap?: number; interests: Interest[]; photos: number; desc?: string; cost?: string; areas: string[]; leader?: string;
+  cap?: number; interests: Interest[]; photos: boolean; desc?: string; cost?: string; areas: string[]; leader?: string;
 }
 export interface SeriesChange { from: string; patch: Partial<CalEvent>; shift?: number }
 export interface ResidentBooking { key: string; name: string; via: string }

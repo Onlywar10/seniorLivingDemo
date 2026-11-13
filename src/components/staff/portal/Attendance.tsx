@@ -1,12 +1,13 @@
 "use client";
 
 // Taking attendance for one activity, in the event sheet. Three ways: a tap list (who's booked first, a search for
-// anyone else, and "Everyone booked came"), the QR code full-screen on a phone or tablet with a live count as people
-// scan it, or a photo of the paper sign-in sheet. Voice attendance comes in Beta. Saved in this browser only.
+// anyone else, and "Everyone booked came"), scanning residents' check-in cards with this phone's camera as they come
+// in, or a photo of the paper sign-in sheet. Residents never scan anything themselves: many would struggle to open the
+// camera and hold it steady, so staff scan the card. Voice attendance comes in Beta. Saved in this browser only.
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../Icon";
 import { Badge } from "../ui";
-import { QrBlock } from "./Qr";
+import { CheckInCard } from "./Qr";
 
 export interface AttendanceEvent { id: string; title: string; when: string; place: string; lantern?: boolean }
 
@@ -18,7 +19,7 @@ export function Attendance({ ev, booked, bookedLabel = "Booked", everyone, qrIn 
   booked: string[]; bookedLabel?: string;
   /** Everyone else who can be checked in, for the search. */
   everyone: string[];
-  /** Already checked themselves in by QR. */
+  /** Already checked in by a scan of their card. */
   qrIn?: string[];
   onSaved: (n: number, names: string[]) => void;
 }) {
@@ -39,7 +40,7 @@ export function Attendance({ ev, booked, bookedLabel = "Booked", everyone, qrIn 
   const add = (n: string) => { setExtra((x) => [...x, n]); setHere((s) => new Set(s).add(n)); setQ(""); };
   const allCame = booked.every((n) => here.has(n));
 
-  // The QR code on screen: people scan it as they arrive and the count goes up.
+  // The camera open: each card scanned at the door checks one resident in and the count goes up.
   useEffect(() => {
     if (!full || ev.lantern) return;
     const id = window.setInterval(() => {
@@ -72,7 +73,7 @@ export function Attendance({ ev, booked, bookedLabel = "Booked", everyone, qrIn 
     <div className="at2">
       <div className="sx-seg at2-modes" role="group" aria-label="How to take attendance">
         <button type="button" aria-pressed={mode === "tap"} onClick={() => setMode("tap")}><Icon name="check" /> Tap list</button>
-        {!ev.lantern && <button type="button" aria-pressed={mode === "qr"} onClick={() => setMode("qr")}><Icon name="phone" /> QR code</button>}
+        {!ev.lantern && <button type="button" aria-pressed={mode === "qr"} onClick={() => setMode("qr")}><Icon name="phone" /> Scan cards</button>}
         <button type="button" aria-pressed={mode === "photo"} onClick={() => setMode("photo")}><Icon name="image" /> Photo of the sheet</button>
         <button type="button" disabled aria-disabled="true" title="Coming in Beta"><Icon name="sms" /> Voice <small>Beta</small></button>
       </div>
@@ -80,7 +81,7 @@ export function Attendance({ ev, booked, bookedLabel = "Booked", everyone, qrIn 
       {mode === "tap" && (
         <>
           <div className="at2-top">
-            <p><b>{here.size}</b> here <span className="sx-hint">· {booked.length} {bookedLabel.toLowerCase()}{byQr.size ? ` · ${byQr.size} by QR` : ""}</span></p>
+            <p><b>{here.size}</b> here <span className="sx-hint">· {booked.length} {bookedLabel.toLowerCase()}{byQr.size ? ` · ${byQr.size} by card` : ""}</span></p>
             <button type="button" className="sx-btn sx-btn-sm" disabled={allCame} onClick={() => setHere((s) => new Set([...s, ...booked]))}><Icon name="check" /> Everyone {bookedLabel === "Booked" ? "booked" : "on the list"} came</button>
           </div>
           <h4 className="at2-h">{bookedLabel} ({booked.length})</h4>
@@ -90,7 +91,7 @@ export function Attendance({ ev, booked, bookedLabel = "Booked", everyone, qrIn 
                 <button type="button" aria-pressed={here.has(n)} onClick={() => toggle(n)}>
                   <span className="at-box" aria-hidden="true">{here.has(n) && <Icon name="check" />}</span>
                   {n}
-                  {byQr.has(n) && <span className="at-qr">QR</span>}
+                  {byQr.has(n) && <span className="at-qr">Card</span>}
                 </button>
               </li>
             ))}
@@ -123,12 +124,12 @@ export function Attendance({ ev, booked, bookedLabel = "Booked", everyone, qrIn 
 
       {mode === "qr" && (
         <div className="at2-qr">
-          <QrBlock seed={ev.id} className="pc-qr at2-qr-mini" />
+          <CheckInCard name={booked[0] ?? "Resident name"} />
           <div>
-            <p><b>{byQr.size} checked in</b> by QR so far.</p>
-            <p className="sx-hint">Show the code on a phone or tablet at the door. Residents scan it with their own camera: no app, no login.</p>
+            <p><b>{byQr.size} checked in</b> by card so far.</p>
+            <p className="sx-hint">Every resident has a check-in card with their own code, on a lanyard or key ring. Stand at the door and point this phone at each card as they come in: they don’t need a phone. Anyone without their card, tap in.</p>
             <div className="pt-act">
-              <button type="button" className="sx-btn sx-btn-primary" onClick={() => setFull(true)}><Icon name="eye" /> Show full-screen</button>
+              <button type="button" className="sx-btn sx-btn-primary" onClick={() => setFull(true)}><Icon name="phone" /> Start scanning</button>
               <button type="button" className="sx-btn" onClick={() => setMode("tap")}>Tap in the rest</button>
             </div>
           </div>
@@ -153,10 +154,12 @@ export function Attendance({ ev, booked, bookedLabel = "Booked", everyone, qrIn 
       )}
 
       {full && (
-        <div className="at2-full" role="dialog" aria-modal="true" aria-label={`Check in to ${ev.title}`}>
+        <div className="at2-full at2-scan" role="dialog" aria-modal="true" aria-label={`Scanning cards for ${ev.title}`}>
           <p className="at2-full-t">{ev.title}</p>
-          <p className="at2-full-s">Scan with your phone’s camera to check in</p>
-          <QrBlock seed={ev.id} className="pc-qr at2-full-qr" />
+          <p className="at2-full-s">Point the camera at a resident’s card</p>
+          <div className="at2-viewfinder" aria-hidden="true">
+            <CheckInCard key={latest[0] ?? "none"} name={latest[0] ?? booked[0] ?? "Resident name"} className="at2-vf-card" />
+          </div>
           <p className="at2-full-n" aria-live="polite"><b>{byQr.size}</b> checked in</p>
           <ul className="at2-full-names">{latest.map((n) => <li key={n}><Icon name="check" /> {n.split(" ")[0]}</li>)}</ul>
           <button type="button" className="sx-btn sx-btn-lg" onClick={() => { setFull(false); setMode("tap"); }} autoFocus>Done</button>

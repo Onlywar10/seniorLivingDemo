@@ -1,9 +1,11 @@
 "use client";
 
-// Prospects, for sales: this week's tours (and the outcome of each one, the one sales task the alpha asks for) and the
-// waitlist, grouped by floor plan. Availability and prices live in Website → Apartments and prices (WebsiteApartments.tsx).
+// Apartments (the front desk): this week's tours, counted (did it happen? that's all), and the waitlist, grouped by
+// floor plan. Tours, the outcome list (Tours) and ProspectInbox are sales, hidden in the alpha. Availability and prices live in Website → Apartments and prices (WebsiteApartments.tsx).
 // The outcomes are kept by the Prospects list (ProspectInbox.tsx), so each one confirms with Undo. Changes stay in this browser.
+import { useState } from "react";
 import { Icon } from "../../Icon";
+import { say } from "../store";
 import { Badge } from "../ui";
 
 export interface TourRow { id: string; who: string; forWhom: string; interest: string; source: string; day: string; time: string; done: boolean; with: string; /** The person's id in the Prospects list, to open their panel. */ person: string }
@@ -78,5 +80,53 @@ export function Waitlist({ plans }: { plans: WaitPlan[] }) {
         </section>
       ))}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------ tour count (front desk) */
+
+export interface TourCountRow { id: string; who: string; interest: string; source: string; day: string; time: string; done: boolean }
+
+/** This week's tours, booked through the website chat and the tour page. Only whether each one happened: no notes. */
+export function TourCount({ tours, month }: { tours: TourCountRow[]; month: { label: string; now: number; prev: number; prevLabel: string } }) {
+  const [came, setCame] = useState<Record<string, boolean>>({});
+  const counted = Object.values(came).filter(Boolean).length;
+  const mark = (t: TourCountRow, v: boolean) => {
+    setCame((c) => ({ ...c, [t.id]: v }));
+    say(v ? `Counted: ${t.who}’s tour. ${month.label}: ${month.now + counted + 1} tours.` : `Noted: ${t.who} didn’t come.`, () => setCame((c) => { const n = { ...c }; delete n[t.id]; return n; }));
+  };
+  return (
+    <>
+      <ul className="fb-sum ap-tour-sum" aria-label="Tour numbers">
+        <li><span><b>{month.now + counted}</b><span>tours in {month.label}</span></span></li>
+        <li><span><b>{month.prev}</b><span>in {month.prevLabel}</span></span></li>
+        <li><span><b>{tours.length}</b><span>booked this week</span></span></li>
+      </ul>
+      {!tours.length ? <p className="sx-empty">No tours booked this week.</p> : (
+        <ul className="pt-tours">
+          {tours.map((t, i) => (
+            <li key={t.id}>
+              {(i === 0 || t.day !== tours[i - 1].day) && <h3 className="tour-day">{t.day}</h3>}
+              <div className={`pt-tour${t.done ? " done" : ""}`}>
+                <time>{t.time}</time>
+                <span><b>{t.who}</b><small>{t.interest} · {t.source}</small></span>
+                {t.done && (
+                  <span className="pt-outcome">
+                    {t.id in came ? (
+                      <Badge tone={came[t.id] ? "good" : "neutral"}><Icon name={came[t.id] ? "check" : "x"} /> {came[t.id] ? "Counted" : "Didn’t come"}</Badge>
+                    ) : (
+                      <span className="sx-seg" role="group" aria-label={`Did ${t.who}’s tour happen?`}>
+                        <button type="button" onClick={() => mark(t, true)}>It happened</button>
+                        <button type="button" onClick={() => mark(t, false)}>Didn’t come</button>
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }

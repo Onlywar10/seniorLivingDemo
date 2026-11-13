@@ -86,9 +86,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
       title={<>Apartments and prices <Help label="About apartments and prices">
         <p>Floor plans, what’s included, care levels, starting prices, availability and photos, as they show on the floor plans page.</p>
         <p>Marking one open texts everyone on that plan’s waitlist.</p>
-        <p>{as === "manager" ? "Your changes go live straight away; changes from sales wait for you. A price change waiting for you is also on Today: deciding it in either place clears both." : `Price and availability changes go to ${approver} before they show.`}</p>
+        <p>{as === "manager" ? "Your changes go live straight away. The front desk marks floor plans open or taken in Apartments; prices are yours." : `Price and availability changes go to ${approver} before they show.`}</p>
       </Help></>}
-      action={<Link className="sx-btn sx-btn-sm sx-btn-quiet" href="/staff/prospects#waitlist">Waitlist</Link>}
+      action={<Link className="sx-btn sx-btn-sm sx-btn-quiet" href="/staff/prospects#waitlist">Apartments and waitlist</Link>}
     >
       <WebsiteApartments plans={plansForWebsite(slug)} approver={approver} isApprover={as === "manager"} pending={pending} />
     </Card>

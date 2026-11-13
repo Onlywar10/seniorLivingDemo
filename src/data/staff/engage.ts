@@ -10,6 +10,7 @@ import { addDays, dayShort, fmtTime, fromIso, hash, iso, nowMinutes, shortDate, 
 import { getStaffData } from "./index";
 import { ago, type StaffData } from "./shared";
 import { weekNumbers } from "./week";
+import { surveyConcern, surveyThanks } from "./surveys";
 
 const first = (n = "") => n.split(" ")[0];
 const last = (n = "") => n.split(" ").slice(-1)[0];
@@ -149,7 +150,7 @@ export function invitesFor(slug: CommunitySlug, e: Pick<CalEvent, "id" | "title"
 
 /* ------------------------------------------------------------ QR check-ins */
 
-/** How people were checked in to an activity: by scanning the QR sign with their own phone, or tapped in by staff. */
+/** How people were checked in to an activity: by staff scanning their check-in card at the door, or tapped in by staff. */
 export function checkIns(id: string, came: number) {
   const qr = Math.round(came * (0.4 + (hash(id) % 25) / 100));
   return { qr, staff: came - qr };
@@ -175,8 +176,8 @@ export interface TodayActivity {
   /** The reminder Kinlight sends before it starts. */
   reminder?: string;
   justEnded: boolean;
-  /** Photos staff wanted from it, and how many are attached so far. */
-  photosWanted: number;
+  /** Whether staff asked for photos from it, and how many are attached so far. */
+  photosWanted: boolean;
   photosAttached: number;
 }
 
@@ -208,7 +209,7 @@ export function todayActivities(slug: CommunitySlug, offset = 0): TodayActivity[
         reminder: booked ? `Reminder to ${booked} booked at ${fmtTime(Math.max(8 * 60 + 30, e.start - 60))}` : undefined,
         justEnded: state === "done" && now - end < 90 && !offset,
         photosWanted: photosWanted(e),
-        photosAttached: state === "done" && h % 2 === 1 ? photosWanted(e) + (h % 4) : 0,
+        photosAttached: state === "done" && h % 2 === 1 && photosWanted(e) ? 2 + (h % 4) : 0,
       };
     })
     .sort((a, b) => a.start - b.start);
@@ -286,7 +287,7 @@ export interface Concern {
   id: string; from: string; relation: string; resident: string; text: string;
   topic: "Care" | "Billing" | "Dining" | "Housekeeping" | "Activities";
   owner: string; ownerName: string; status: ConcernStatus; mins: number; ago: string;
-  how: "The AI recognised it as a concern" | "Marked as a concern by staff";
+  how: "The AI recognised it as a concern" | "Marked as a concern by staff" | "From a survey answer";
   log: string[];
   /** Care and safety: not held by Kinlight. Routed to the care team, recorded in the community's own care system. */
   care?: { team: string; system: string; at: string };
@@ -307,6 +308,9 @@ export function concerns(slug: CommunitySlug): Concern[] {
     { id: "c5", ...who(pick(4)), text: `${first(pick(4).resident)} says Bingo has been too loud since it moved to the theater room, and she’s stopped going. Could she sit somewhere quieter?`, topic: "Activities", owner: s.roles.calendar, status: "Open", mins: 60 * 3, how: "The AI recognised it as a concern", log: ["Not answered by the AI. Passed to the activities director."] },
     { id: "c4", ...who(pick(3)), text: `${first(pick(3).resident)}’s bathroom hasn’t been cleaned this week.`, topic: "Housekeeping", owner: s.roles.approver, status: "Resolved", mins: 60 * 74, how: "The AI recognised it as a concern", log: ["Passed to the executive director.", "Housekeeping visited the same afternoon.", "Family told by text. Marked resolved."] },
   ];
+  // A written answer in a named survey that's a concern becomes one straight away, with an owner.
+  const sv = surveyConcern(slug);
+  if (sv) list.push({ id: "c-survey", from: sv.from, relation: sv.relation, resident: sv.resident, text: sv.text, topic: "Dining", owner: dineKey, status: "Open", mins: 60 * 20, how: "From a survey answer", log: [`Written in the Dining experience survey. Passed to ${first(P(dineKey))}, who owns dining concerns.`] });
   return list.map((c) => ({ ...c, ownerName: P(c.owner), ago: ago(c.mins) }));
   // (care concerns keep only the routing: who it went to and when, never the care record itself)
   function who(c: (typeof fam)[number]) { return { from: c.contact, relation: c.relation, resident: c.resident }; }
@@ -325,11 +329,15 @@ export function thankYous(slug: CommunitySlug): ThankYou[] {
     { k: s.roles.lantern, text: (r: string) => `Thank you for taking such good care of ${first(r)}.` },
     { k: s.roles.menus, text: (r: string) => `The Sunday brunch was wonderful. ${first(r)} hasn’t stopped talking about the crab cakes.` },
   ];
-  return rows.map((x, i) => {
+  const out = rows.map((x, i) => {
     const c = fam[(i * 7 + 2) % fam.length];
     const mins = 60 * (3 + i * 19);
     return { id: `ty${i}`, from: c.contact, relation: c.relation, resident: c.resident, text: x.text(c.resident), staff: x.k, staffName: P(x.k), mins, ago: ago(mins), passed: i > 0 };
   });
+  // Thank-yous written in a named survey go to the person they name, as they do from a text.
+  const ty = surveyThanks(slug);
+  if (ty) out.push({ id: "ty-survey", from: ty.from, relation: ty.relation, resident: ty.resident, text: ty.text, staff: s.roles.desk, staffName: P(s.roles.desk), mins: 60 * 30, ago: ago(60 * 30), passed: true });
+  return out;
 }
 
 /* ------------------------------------------------------------ what worked */
@@ -419,10 +427,10 @@ export const timeOf = (m: number) => fmtTime(m);
 
 /* ------------------------------------------------------------ photos wanted */
 
-/** How many photos staff want from an event (0: don't nag). Set on the event when it's added. */
-export function photosWanted(e: Pick<CalEvent, "id" | "cat" | "special" | "title"> & { kind?: CalEvent["kind"] }): number {
-  if (e.cat === "faith" || e.cat === "movies") return 0;
+/** Whether staff want photos from an event (yes or no; no: don't nag). Set on the event when it's added. */
+export function photosWanted(e: Pick<CalEvent, "id" | "cat" | "special" | "title"> & { kind?: CalEvent["kind"] }): boolean {
+  if (e.cat === "faith" || e.cat === "movies") return false;
   const k = kindOf(e as CalEvent);
-  if (e.special || k !== "resident" || e.cat === "trips") return 6 + (hash(e.id) % 5);
-  return e.cat === "music" || /paint|craft|pumpkin|bak|garden|party|concert|happy hour|social|dance|cook|wreath|card making/i.test(e.title) ? 3 + (hash(e.id) % 4) : 0;
+  if (e.special || k !== "resident" || e.cat === "trips") return true;
+  return e.cat === "music" || /paint|craft|pumpkin|bak|garden|party|concert|happy hour|social|dance|cook|wreath|card making/i.test(e.title);
 }
