@@ -61,7 +61,7 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
       id: `ph-${r}`, signal: "photos", for: [r], owner: r, type: "Photos wanted", icon: "image", mins: 90,
       title: evs.length === 1 ? `Photos from ${evs[0].title}` : `Photos from ${evs.length} activities`,
       context: evs.length === 1 ? "Photos wanted, none added yet" : "Each asked for photos when it was added",
-      lines: evs.length > 1 ? evs.map((e) => `${e.title} · ${e.wanted} wanted`) : undefined,
+      lines: evs.length > 1 ? evs.map((e) => e.title) : undefined,
       why: r === "fitness" && !evs.some((e) => roleOfName(e.leader) === "fitness") ? "You run the fitness classes, and they asked for photos" : "You led it, and it asked for photos", ifNot: "or this week’s newsletter goes without them",
       help: "Kinlight suggests who’s in each photo from who came, checks consent and writes the caption.",
       due: 1439, dueLabel: "by the end of today",

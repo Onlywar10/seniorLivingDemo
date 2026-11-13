@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import Link from "@/i18n/Link";
 import { useT, usePath } from "@/i18n/client";
 import { communities, communitySlugs } from "@/data/communities";
@@ -104,7 +105,9 @@ export function WrenhavenHeader() {
           <Icon name="menu" />
         </button>
       </div>
-      {open && (
+      {/* On the page itself, not inside the header: the header's backdrop-filter would trap a fixed panel in its own
+          88px box, so the phone menu opened as a thin strip. */}
+      {open && createPortal(
         <div className="mnav" role="dialog" aria-modal="true" aria-label={t("Menu")}>
           <div className="mnav-top">
             <WrenhavenLogo />
@@ -139,7 +142,8 @@ export function WrenhavenHeader() {
           <a className="btn btn-ghost btn-lg" href={corporate.phoneHref}>
             <Icon name="phone" /> {t(`Call ${corporate.phone}`)}
           </a>
-        </div>
+        </div>,
+        document.body,
       )}
     </header>
   );
