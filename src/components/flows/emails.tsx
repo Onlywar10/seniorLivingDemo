@@ -329,7 +329,7 @@ export function prospectEmails(slug: CommunitySlug): Record<"inquiry" | "tour" |
 
   const inquirySubject = msgs[1].subject ?? `Thank you for your interest in ${name}`;
   const inquiry: FlowEmail = {
-    label: "The instant reply",
+    label: "The acknowledgement",
     subject: inquirySubject,
     node: (
       <EmailDoc from={name} domain={domain} to={to} subject={inquirySubject} when="Today, 9:52 PM" name={name} foot={foot}>
@@ -559,7 +559,7 @@ export function staffEmails(slug: CommunitySlug): Record<"post" | "approve" | "i
   const t = today();
   const nora = s.people[s.roles.calendar];
   const boss = s.people[s.roles.approver];
-  const rep = s.people[s.roles.tours];
+  const desk = s.people[s.roles.desk];
   const { f, me, mom } = family(slug);
   const soon = upcomingEvents(slug, 7).filter((e) => !e.lantern && (e.special || e.cat === "trips" || e.cat === "music")).slice(0, 4);
   const musical = upcomingEvents(slug, 10).find((e) => e.cat === "music") ?? soon[0];
@@ -631,19 +631,19 @@ export function staffEmails(slug: CommunitySlug): Record<"post" | "approve" | "i
   };
 
   const lead: FlowEmail = {
-    label: "The new-lead alert",
-    subject: "New inquiry: Laura Bennett · Independent Living",
+    label: "The front-desk alert",
+    subject: "A question: Laura Bennett · Independent Living",
     node: (
-      <EmailDoc from="Kinlight" domain={kin} to={rep.name} subject="New inquiry: Laura Bennett · Independent Living" when="Today, 9:52 PM" name={name} foot={kinFoot}>
+      <EmailDoc from="Kinlight" domain={kin} to={desk.name} subject="A question: Laura Bennett · Independent Living" when="Today, 9:52 PM" name={name} foot={kinFoot}>
         <section className="em-sec">
-          <p>Hi {first(rep.name)}, a new inquiry came in from the website.</p>
+          <p>Hi {first(desk.name)}, a question came in from the website. It’s in Communications for you to answer.</p>
           <div className="em-card em-details">
             <span><small>Who</small>Laura Bennett · (916) 555-0186 · laura.bennett@gmail.com</span>
             <span><small>Interested in</small>Independent Living, this spring</span>
             <span><small>Message</small>“My mother is looking at Independent Living. What’s available this spring?”</span>
-            <span><small>Already sent</small>✓ Instant reply by text and email</span>
+            <span><small>Already sent</small>✓ The acknowledgement by text and email</span>
           </div>
-          <span className="em-btn">Call Laura</span> <span className="em-btn em-btn-alt">Open in the CRM</span>
+          <span className="em-btn">Reply to Laura</span> <span className="em-btn em-btn-alt">Call Laura</span>
         </section>
       </EmailDoc>
     ),

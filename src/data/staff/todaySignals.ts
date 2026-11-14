@@ -115,16 +115,22 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
   for (const r of STAFF_ROLES) {
     const mine = convos.filter((c) => c.owner === r);
     if (!mine.length) continue;
-    const lead = mine.filter((c) => r === ("sales" as StaffRole) && /assisted living|move|moving/i.test(c.msgs.map((m) => m.text).join(" ")));
-    const rest = mine.filter((c) => !lead.includes(c));
-    for (const c of lead) {
+    // Questions from people thinking of living here: the front desk answers them. Kinlight already sent one
+    // acknowledgement; this is "answer the question", never a sales follow-up.
+    const asked = mine.filter((c) => c.relation === "Asked about living here");
+    const rest = mine.filter((c) => !asked.includes(c));
+    if (asked.length) {
+      const oldest = Math.max(...asked.map((c) => c.last ?? 60));
+      const one = asked.length === 1 ? asked[0] : undefined;
       task({
-        id: `lead-${c.id}`, signal: "sales-lead", for: ["sales"], owner: "sales", type: "Moving-in question", icon: "building", mins: c.last ?? 60,
-        title: `${c.name} asked about more care for ${first(c.resident)}`, context: `${c.relation} of ${c.resident} · in Communications`,
-        quote: [...c.msgs].reverse().find((m) => !m.me)?.text,
-        why: "Questions about moving in or more care go to sales", ifNot: "or the family is left wondering",
-        help: "Kinlight spotted that it’s about moving to assisted living and sent it to you, not the activities team. Nothing about care itself is answered here.",
-        due: Math.max(now + 90, 1439 - 60), main: { label: "Reply", href: "/staff/messages" },
+        id: `asked-${r}`, signal: "inquiry", for: [r], owner: r, type: "Question to answer", icon: "building", mins: oldest,
+        title: one ? `${one.name} asked about ${one.resident}` : `${asked.length} questions about living here`,
+        context: one ? `From the website · the acknowledgement went straight away` : "From the website and the chat · each got the acknowledgement straight away",
+        quote: one ? [...one.msgs].reverse().find((m) => !m.me)?.text : undefined,
+        lines: one ? undefined : asked.map((c) => `${c.name} (${c.resident}): “${[...c.msgs].reverse().find((m) => !m.me)?.text ?? ""}”`),
+        why: "Questions from people thinking of living here come to the front desk", ifNot: "or it shows as overdue to your manager",
+        help: "Kinlight sends one automatic acknowledgement, day or night, and passes the question to you within 5 minutes. A person answers; there are no automatic follow-ups.",
+        due: Math.max(now + 60, 1439 - 60), main: { label: one ? "Reply" : "Open Communications", href: "/staff/messages" },
       });
     }
     if (rest.length) {

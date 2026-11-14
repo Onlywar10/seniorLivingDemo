@@ -60,6 +60,7 @@ export const SIGNALS: SignalRule[] = [
   { key: "holiday-menu", label: "Holiday menu", section: "Menus", to: "manager", level: "active", text: false },
   { key: "page-due", label: "Page to update", section: "Website", to: "owner", level: "active", text: false },
   { key: "price-change", label: "Price change", section: "Website", to: "manager", level: "active", text: false },
+  { key: "inquiry", label: "Question about living here", section: "Communications", to: "desk", level: "active", text: false },
   { key: "tour", label: "Tours to count", section: "Apartments", to: "desk", level: "active", text: false },
   // Inquiries, moving-in questions and waitlist follow-ups are sales, which is hidden in the alpha.
   // Kinlight's own promise to the community: Kinlight fixes it, so it's in the Friday summary and Reports, not a task.

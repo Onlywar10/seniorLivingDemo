@@ -13,7 +13,7 @@ export const PROMISES = [
   { code: "D5", name: "Changes arrive fast (15 min)" },
   { code: "D6", name: "Messages arrive (95%+, in the family’s language)" },
   { code: "D7", name: "Nothing wrong goes out (zero sends without approval)" },
-  { code: "D8", name: "No inquiry left waiting (instant reply, team told in 5 min)" },
+  { code: "D8", name: "No question left waiting (acknowledged day or night, at the front desk in 5 min)" },
   { code: "D9", name: "Easy to find (live facts, Google profile, monthly AI report)" },
   { code: "D10", name: "It stays up (99.5%)" },
   { code: "D11", name: "They can see it working (monthly scorecard, export tested)" },

@@ -1,6 +1,6 @@
 // Automations: every message Kinlight sends to residents, families and prospects on its own. Each one follows on
 // from something already approved, booked, chosen or asked (a confirmation, a reminder, the morning menu, the
-// instant reply to an inquiry), so none of them waits for a person. Posts, the newsletter and announcements live in
+// acknowledgement to a question about living here), so none of them waits for a person. Posts, the newsletter and announcements live in
 // Post and Newsletter; alerts to staff live in Settings → Approvals and alerts. Neither is here.
 //
 // What's here: the list of automations (who gets each one, how and when, its wording in three languages, who owns
@@ -187,8 +187,8 @@ function ctxOf(slug: CommunitySlug): Ctx {
   };
 }
 
-/** Sales automations that are hidden in the alpha: Kinlight doesn't answer inquiries or public sign-ups yet. */
-const HIDDEN = new Set(["s-instant", "s-public"]);
+/** Hidden in the alpha: public sign-ups as leads are sales, which Kinlight doesn't do yet. Inquiries get one acknowledgement (s-instant) and go to the front desk. */
+const HIDDEN = new Set(["s-public"]);
 
 function defsOf(x: Ctx): Omit<AutoDef, "impact" | "reach">[] {
   return allDefsOf(x).filter((d) => !HIDDEN.has(d.id));
@@ -412,15 +412,15 @@ function allDefsOf(x: Ctx): Omit<AutoDef, "impact" | "reach">[] {
 
     /* ---------- sales */
     {
-      id: "s-instant", group: "sales", name: "Instant reply to a new inquiry", fires: "When someone asks about moving in (website, chat, phone, referral)", who: "The prospect", audience: ["Prospects"], channel: "Text + email", when: "Right away, day or night",
-      quiet: "Sends at any hour: it answers their own question.", owner: "sales",
+      id: "s-instant", group: "sales", name: "Inquiry acknowledgement", fires: "When someone asks a question on the website, in the chat or by text", who: "The person asking", audience: ["Prospects"], channel: "Text + email", when: "Right away, day or night",
+      quiet: "Sends at any hour: it answers their own question. One message, no follow-ups.", owner: "desk",
       text: {
-        en: "Hi {first name}, thanks for asking about {interest} at {community}. {rep} will call you shortly. Want to see it in person? Book a tour any time: {link}. Reply STOP to opt out.",
-        es: "Hola, {first name}: gracias por su interés en {interest} en {community}. {rep} le llamará en breve. ¿Quiere conocerlo en persona? Reserve una visita cuando quiera: {link}. Responda STOP para no recibir más mensajes.",
-        zh: "{first name}您好，感谢您咨询 {community} 的{interest}。{rep} 会尽快给您打电话。想亲自参观吗？随时预约参观：{link}。回复 STOP 退订。",
+        en: "Hi {first name}, thanks for your question about {interest} at {community}. Our front desk has it and will get back to you soon. Want to see it in person? Book a tour any time: {link}. Reply STOP to opt out.",
+        es: "Hola, {first name}: gracias por su pregunta sobre {interest} en {community}. Nuestra recepción ya la tiene y le responderá pronto. ¿Quiere conocerlo en persona? Reserve una visita cuando quiera: {link}. Responda STOP para no recibir más mensajes.",
+        zh: "{first name}您好，感谢您咨询 {community} 的{interest}。我们的前台已收到您的问题，会尽快回复您。想亲自参观吗？随时预约参观：{link}。回复 STOP 退订。",
       },
-      subject: { en: "Thank you for your interest in {community}", es: "Gracias por su interés en {community}", zh: "感谢您关注 {community}" },
-      links: [{ label: "Prospects", href: "/staff/prospects" }],
+      subject: { en: "We have your question, {community}", es: "Recibimos su pregunta, {community}", zh: "{community} 已收到您的问题" },
+      links: [{ label: "The conversation in Communications", href: "/staff/messages" }],
     },
     {
       id: "s-tour", group: "sales", name: "Tour confirmed, reminder, thank-you after", fires: "When a tour is booked, the day before, and after the visit", who: "The prospect", audience: ["Prospects"], channel: "Text + email", when: "When booked, day before at 4:00 pm, after the tour",
@@ -437,7 +437,7 @@ function allDefsOf(x: Ctx): Omit<AutoDef, "impact" | "reach">[] {
       subject: { en: "Your tour of {community}", es: "Su visita a {community}", zh: "您的 {community} 参观预约" },
     },
     {
-      id: "s-open", group: "sales", name: "“An apartment you’re waiting for is open”", fires: "When the front desk marks a floor plan available", who: "The waitlist for that floor plan, longest waiting first", audience: ["Prospects"], channel: "Text + email", when: "When sales marks it open",
+      id: "s-open", group: "sales", name: "“An apartment you’re waiting for is open”", fires: "When the front desk marks a floor plan available", who: "The waitlist for that floor plan, longest waiting first", audience: ["Prospects"], channel: "Text + email", when: "When the front desk marks it open",
       quiet: "Waits until 8:00 am.", owner: "desk",
       text: {
         en: "Good news, {first name}: a {plan} apartment is open at {community}. You’re on the waitlist, so you hear first. Reply YES and we’ll call you today.",
@@ -759,7 +759,7 @@ function buildLog(slug: CommunitySlug): { rows: LogRow[]; changeEvent?: { title:
     diners.filter((p) => hash(p.name + "swap" + sw.back) % 6 === 0).slice(0, 7).forEach((p, i) => send("d-swap", p, -sw.back * DAY + sw.at + i, (l) => ({ restaurant: c.venues[k].name, dish: tr(l, m.special.name).toLowerCase(), instead: tr(l, sw.instead(m)) })));
   }
 
-  /* ---------- tours and the waitlist (instant replies and public sign-ups are sales: hidden in the alpha) */
+  /* ---------- inquiries (one acknowledgement), tours and the waitlist. Public sign-ups as leads are sales: hidden in the alpha */
   for (const e of s.enquiries) {
     if (e.mins > 6 * DAY || HIDDEN.has("s-instant")) continue;
     const p = byName.get(e.name);
@@ -1071,7 +1071,7 @@ export function automations(slug: CommunitySlug, as: StaffRole = "manager"): Aut
     "d-holiday": "Thanksgiving bookings still go to the kitchen, but families won’t get a confirmation with the seating time and prices.",
     "d-swap": "If the kitchen swaps a dish, people booked won’t know until they sit down.",
     "d-lunch": "Texts asking what’s on will go to the kitchen to answer by hand.",
-    "s-instant": "New inquiries won’t get an instant reply. Promise D8, “No inquiry left waiting”, depends on it.",
+    "s-instant": "Questions from the website won’t be acknowledged. Promise D8, “No question left waiting”, depends on it.",
     "s-tour": "Prospects won’t get a confirmation, a reminder or a thank-you. More tours are missed without the reminder.",
     "s-open": `The waitlist won’t hear when an apartment opens: ${plural(s.waitlist.length, "household")} are waiting.`,
     "s-public": "People who sign up for an open event won’t get the time and directions.",

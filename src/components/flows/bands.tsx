@@ -143,8 +143,8 @@ export function buildBands(slug: CommunitySlug): Band[] {
     { do: "point", sel: ".fp-alert button[type=submit]" },
   ]);
   // The staff workspace, in the same desktop browser window, showing this community, signed in as the right person:
-  // the events lead (Nora), sales (Priya) or the manager (Renata).
-  type As = "events" | "sales" | "manager" | "kitchen" | "desk";
+  // the events lead (Nora), the front desk (Bea) or the manager (Renata).
+  type As = "events" | "manager" | "kitchen" | "desk";
   const team = (path: string, actions: SiteAction[], as: As = "events"): Preview => ({ frames: [{ kind: "site", path: `/staff${path}`, host: `${domain}/staff`, actions, staff: slug, as }] });
   // The cards a text alert opens: the photo post to approve, a family RSVP the resident said yes to, a resident who
   // hasn't answered, a new family member to check.
@@ -249,22 +249,22 @@ export function buildBands(slug: CommunitySlug): Band[] {
   ]);
   const tTours = team("/prospects", [
     { do: "wait", ms: 700 },
-    { do: "scroll", sel: ".sx-card", text: "Tours this week" },
+    { do: "scroll", sel: "#tours" },
     { do: "point", sel: ".pt-outcome", n: 0 },
     { do: "wait", ms: 900 },
-  ], "sales");
-  const tApartments = team("/website", [
+  ], "desk");
+  const tApartments = team("/prospects", [
     { do: "wait", ms: 700 },
     { do: "scroll", sel: ".pt-plans li", text: plan.code },
     { do: "click", sel: ".pt-plans li button", text: plan.code },
     { do: "wait", ms: 400 },
     { do: "point", sel: ".pt-plan-f button[type=submit]" },
-  ], "sales");
+  ], "desk");
   const tWaitlist = team("/prospects", [
     { do: "wait", ms: 700 },
     { do: "scroll", sel: ".pt-wait" },
     { do: "point", sel: ".pt-wait li", n: 0 },
-  ], "sales");
+  ], "desk");
   const tInbox = team(`/card/${cardOf("reply", (x) => x.kind === "reply" && x.for.includes("events"))}`, [
     { do: "wait", ms: 900 },
     { do: "point", sel: ".pt-quote" },
@@ -447,7 +447,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
   const proOpen: TourStep[] = [
     {
       label: "You’re registered",
-      caption: "Every public sign-up gets a confirmation, and lands with the sales team as a lead.",
+      caption: "Every public sign-up gets a confirmation, and the team sees who’s coming.",
       screen: (
         <Mail name={name} domain={domain} to="Laura" subject={`You’re registered: ${fair.title}, ${dayShort(fromIso(fair.date))}`} time="8:31 PM">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -631,7 +631,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
           hook: "Pick a time on the website, no back-and-forth. The confirmation and a reminder the day before come by text.",
           steps: [
             { id: "p-tour-book", scene: "calendar", label: "Picks a time", actor: "prospect", via: "Website form", preview: webTour },
-            { id: "p-tour-conf", scene: "text", label: "Tour confirmed", actor: "auto", when: "Straight away", text: "Tour booked ✓", preview: phones(proTour[0]), next: { tab: "staff", flow: "s-leads", text: `${first(rep.name)} sees it` } },
+            { id: "p-tour-conf", scene: "text", label: "Tour confirmed", actor: "auto", when: "Straight away", text: "Tour booked ✓", preview: phones(proTour[0]), next: { tab: "staff", flow: "s-leads", text: "The front desk sees it" } },
             { id: "p-tour-rem", scene: "bell", label: "A reminder", actor: "auto", when: "The day before, 4 pm", text: "See you tomorrow!", preview: phones(proTour[1]) },
           ],
         },
@@ -639,10 +639,10 @@ export function buildBands(slug: CommunitySlug): Band[] {
           id: "p-open",
           email: pe.open,
           title: "Come to public events",
-          hook: "Some events are open to everyone, like a holiday craft fair. Anyone can sign up on the website, and every sign-up is also a lead for sales.",
+          hook: "Some events are open to everyone, like a holiday craft fair. Anyone can sign up on the website, and the team sees who’s coming.",
           steps: [
             { id: "p-open-form", scene: "web", label: "Signs up on the website", actor: "prospect", via: "Website form", preview: webPublic },
-            { id: "p-open-conf", scene: "email", label: "You’re registered", actor: "auto", when: "Straight away", text: fair.title, preview: phones(proOpen[0]), next: { tab: "staff", flow: "s-leads", text: "Sales get a lead" } },
+            { id: "p-open-conf", scene: "email", label: "You’re registered", actor: "auto", when: "Straight away", text: fair.title, preview: phones(proOpen[0]), next: { tab: "staff", flow: "s-leads", text: "The front desk sees it" } },
             { id: "p-open-rem", scene: "bell", label: "A reminder", actor: "auto", when: "The day before", text: `See you at ${fmtTime(fair.start).replace(":00", "")}!`, preview: phones(proOpen[1]) },
           ],
         },
@@ -800,11 +800,11 @@ export function buildBands(slug: CommunitySlug): Band[] {
         {
           id: "s-leads",
           email: se.lead,
-          title: "Follow up new leads",
-          hook: "Inquiries, tours and open-house sign-ups arrive with the instant reply already sent. Marking an apartment available tells the waitlist.",
+          title: "Questions, tours and the waitlist",
+          hook: "The front desk’s part. Questions from the website arrive with one acknowledgement already sent, and a person answers; nothing follows up automatically. Tours booked online are counted on the day, and marking an apartment available tells the waitlist.",
           steps: [
-            { id: "s-leads-alert", scene: "bell", label: "A new lead", actor: "auto", via: "Alert", when: "Instant reply already sent", text: "New inquiry: Laura", preview: phones(x.alertsSales) },
-            { id: "s-leads-call", scene: "call", label: "Call them back", actor: "staff", when: "Follow-ups due, in one list", preview: tTours },
+            { id: "s-leads-alert", scene: "bell", label: "A question comes in", actor: "auto", via: "Alert", when: "Acknowledgement already sent", text: "Question: Laura", preview: phones(x.alertsSales) },
+            { id: "s-leads-call", scene: "list", label: "Count the day’s tours", actor: "staff", when: "Did it happen?", preview: tTours },
             { id: "s-leads-mark", scene: "home", label: "Mark an apartment available", actor: "staff", via: "Staff workspace", preview: tApartments },
             { id: "s-leads-wait", scene: "send", label: "The waitlist is told", actor: "auto", text: `${plan.waitlist} on the list`, preview: tWaitlist, next: { tab: "prospect", flow: "p-wait", text: "What they get" } },
           ],

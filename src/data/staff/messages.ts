@@ -9,7 +9,7 @@ import { careLogin, placements } from "./areas";
 import { handledByAI } from "./engage";
 import { getStaffData, planRows } from "./index";
 import { baseQueue, type QItem } from "./portal";
-import { STAFF_ROLES, fitnessKey, type StaffRole } from "./shared";
+import { fitnessKey, type StaffRole } from "./shared";
 import type { Problem } from "./automations";
 
 /**
@@ -128,6 +128,11 @@ export function inbox(slug: CommunitySlug, as: StaffRole): { convos: Convo[]; pe
     return { convos, people: pp };
   }
   const people: Reachable[] = s.contacts.map((c) => ({ name: c.contact, relation: c.relation, resident: c.resident, lang: c.lang, channel: chan(c), phone: c.phone, email: c.email }));
+  // The front desk also answers people who asked about living here, and the waitlist.
+  if (as === "desk" || as === "manager") {
+    s.enquiries.forEach((e) => people.push({ name: e.name, relation: "Asked about living here", resident: e.interest, lang: "English", channel: "Text and email", phone: prospectPhone(s, e.name), email: "" }));
+    s.waitlist.forEach((w) => people.push({ name: w.name, relation: "On the waitlist", resident: planRows(slug).find((p) => p.code === w.plan)?.name ?? w.plan, lang: "English", channel: "Text and email", phone: prospectPhone(s, w.name), email: "" }));
+  }
   const seen = new Set<string>();
   for (const c of s.contacts) {
     if (seen.has(c.resident) || c.lantern) continue;
@@ -148,7 +153,7 @@ type Line = [mins: number, them: boolean, text: string];
 /**
  * The everyday conversations each person is in charge of, written from this community's own families, residents
  * and prospects: the front desk (visits, deliveries, lost and found), the kitchen (diets, special orders), the
- * executive director (billing, a move to more care, thanks), sales (prospects and the waitlist) and the care partners
+ * executive director (billing, a move to more care, thanks), the front desk (questions from people thinking of living here, and the waitlist) and the care partners
  * (the families of the residents they look after). A few wait for a reply; the rest are answered.
  */
 function authored(slug: CommunitySlug, taken: Convo[]): Convo[] {
@@ -217,26 +222,35 @@ function authored(slug: CommunitySlug, taken: Convo[]): Convo[] {
     [60 * 68, false, `Thank you, ${f}. That means a lot to everyone here. I’ve shared it with the team.`],
   ]);
 
-  // Sales: prospects (hidden in the alpha: Kinlight doesn't do sales yet) and the waitlist, which the front desk keeps.
-  const salesOn = STAFF_ROLES.includes("sales");
+  // Questions from people thinking of living here, and the waitlist: the front desk answers them like any message.
+  // Kinlight sends one automatic acknowledgement; there is no sales pipeline and nobody is told to "follow up".
+  const ASKED = "Asked about living here";
   const pr = (name: string, relation: string, resident: string): Who => ({ name, relation, resident, phone: prospectPhone(s, name), email: "", channel: "Text and email", lang: "English" });
+  const ack = (name: string, interest: string) => `Hi ${first(name)}, thanks for your question about ${interest} at ${c.site.name}. Our front desk has it and will get back to you soon.`;
+  const fresh = s.enquiries.filter((e) => e.status === "New");
   const e1 = s.enquiries.find((e) => e.status === "Contacted") ?? s.enquiries[0];
   const e2 = s.enquiries.find((e) => e.status === "Tour booked" && e !== e1) ?? s.enquiries[1];
   const e3 = s.enquiries.find((e) => e.status === "Nurturing" && e !== e1 && e !== e2) ?? s.enquiries[2];
   const w1 = [...s.waitlist].sort((a, b) => b.joinedDays - a.joinedDays)[0];
   const planName = (code: string) => planRows(slug).find((p) => p.code === code)?.name ?? code;
-  if (e1 && salesOn) convo("sales", pr(e1.name, "Prospect", e1.interest), true, "A prospect’s question, which sales answers.", [
-    [60 * 5, false, `Hi ${first(e1.name)}, thanks for your interest in ${c.site.name}. I’d love to show you around. Would a tour this week suit you?`],
+  // New questions from the website or the chat: the acknowledgement went straight away; a person answers.
+  fresh.forEach((e) => convo("desk", pr(e.name, ASKED, e.interest), true, `A question from the ${e.source.toLowerCase()}, which the front desk answers.`, [
+    [e.mins, true, e.msg],
+    [e.mins - 1, false, ack(e.name, e.interest)],
+  ], [`Hi ${first(e.name)}, thanks for asking. I’ll check and text you back today.`, `Hi ${first(e.name)}, could I call you to talk it through? What time suits you?`]));
+  if (e1) convo("desk", pr(e1.name, ASKED, e1.interest), true, "A tour question, which the front desk answers.", [
+    [60 * 5, false, `Hi ${first(e1.name)}, thanks for your question. You can pick a time for a tour on our website, or I can book one for you.`],
     [55, true, "Thanks! Before we book, can my brother join the tour too? He helps with the decisions."],
   ], [`Hi ${first(e1.name)}, of course, he’s very welcome. What day suits you both?`]);
-  if (e2 && salesOn) convo("sales", pr(e2.name, "Prospect", e2.interest), false, undefined, [
+  if (e2) convo("desk", pr(e2.name, ASKED, e2.interest), false, undefined, [
     [60 * 30, false, `Hi ${first(e2.name)}, your tour is booked. We’ll meet you at the front desk; parking is by the main entrance.`],
     [60 * 29, true, "See you then. Can my son join on a video call?"],
     [60 * 28, false, "Of course. Send me his email and I’ll add him to the invite."],
   ]);
-  if (e3 && salesOn) convo("sales", pr(e3.name, "Prospect", e3.interest), false, undefined, [
-    [60 * 24 * 6, false, `Hi ${first(e3.name)}, just checking in. Our next open house is coming up, if you’d like to see the apartments again.`],
-    [60 * 24 * 5, true, "Thank you, we’re still deciding. Please keep us posted."],
+  if (e3) convo("desk", pr(e3.name, ASKED, e3.interest), false, undefined, [
+    [60 * 24 * 6, true, "Do you allow small dogs in the apartments?"],
+    [60 * 24 * 6 - 40, false, `Hi ${first(e3.name)}, yes: one small dog or cat is welcome in every apartment. Our floor plans on the website show which have patios.`],
+    [60 * 24 * 5, true, "Thank you, that helps."],
   ]);
   if (w1) convo("desk", pr(w1.name, "On the waitlist", planName(w1.plan)), true, "A waitlist question, which the front desk answers.", [
     [60 * 8, true, `Any news on the ${planName(w1.plan)}? We’ve been on the list a while now.`],

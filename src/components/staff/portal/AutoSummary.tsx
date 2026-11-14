@@ -13,8 +13,8 @@ export function AutoSummaryCard({ w, link }: { w: WeekSummary; link: boolean }) 
       sub="The last 7 days"
       action={
         <Help label="About automatic messages" align="end">
-          <p>Reminders, invites, confirmations, the morning menu and the instant reply to inquiries: everything Kinlight sends without anyone pressing send. Posts and the newsletter aren’t counted.</p>
-          <p>Promise D8 (“No inquiry left waiting”) and T6 (“Families stay subscribed”) are checked from this log.</p>
+          <p>Reminders, invites, confirmations, the morning menu and the acknowledgement to questions about living here: everything Kinlight sends without anyone pressing send. Posts and the newsletter aren’t counted.</p>
+          <p>Promise D8 (“No question left waiting”) and T6 (“Families stay subscribed”) are checked from this log.</p>
         </Help>
       }
     >

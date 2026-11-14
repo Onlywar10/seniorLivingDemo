@@ -1,6 +1,6 @@
 // The phone screens and printed sheets the message workflows need beyond the phone stories (stories.tsx): a resident's
 // own texts and emails (residents who opt in hear about their own events, and about family who want to join them),
-// the family's "we’ll check with the resident first" step, the prospect's instant inquiry reply, and the staff screens where
+// the family's "we’ll check with the resident first" step, the acknowledgement to a website question, and the staff screens where
 // every hand-off lands. Server only: everything comes from the community's own data, so Kestrel Point gets its own.
 import type { ReactNode } from "react";
 import { LockScreen, MailMessage, SmsThread, type TourStep } from "@/components/phone/Phone";
@@ -68,6 +68,7 @@ export function moreScreens(slug: CommunitySlug) {
   const t = today();
   const nora = s.people[s.roles.calendar];
   const rep = s.people[s.roles.tours];
+  const desk = s.people[s.roles.desk];
   const fam = family(slug);
   const { f, me, mom, party } = fam;
   const resident = f.resident;
@@ -423,9 +424,9 @@ export function moreScreens(slug: CommunitySlug) {
 
   const msgs = prospectMessages(slug, { name: "Laura Bennett", interest: "Independent Living" });
   const proInstantText: TourStep = {
-    label: "An instant text",
+    label: "An acknowledgement",
     time: "9:52",
-    caption: "Within a minute, at any hour, by text and email. The staff alert says so too, so nobody sends a second “thanks for asking”.",
+    caption: "Within a minute, at any hour, by text and email. It says the front desk has the question; a person answers it, and nothing else follows automatically.",
     screen: <SmsThread {...th} bubbles={[{ time: "Today 9:52 PM", text: msgs[0].text }]} />,
   };
   const proInstantMail: TourStep = {
@@ -453,16 +454,16 @@ export function moreScreens(slug: CommunitySlug) {
     label: "Inquiries and tours",
     time: "9:53",
     dark: true,
-    caption: `Prospect alerts go to ${rep.name}: who, what they want, and that the instant reply already went.`,
+    caption: `Questions and tours go to the front desk (${desk.name}): who, what they asked, and that the acknowledgement already went.`,
     screen: (
       <LockScreen
         date={longDate(t)}
         time="9:53"
         wallpaper="/img/lantern-garden.jpg"
         notices={[
-          { app: "Kinlight", title: `New inquiry · ${name}`, text: "Laura Bennett, Independent Living for her mother. Instant reply sent. Call her by tomorrow morning.", time: "now" },
+          { app: "Kinlight", title: `A question · ${name}`, text: "Laura Bennett asked about Independent Living for her mother. Acknowledgement sent. Reply today.", time: "now" },
           { app: "Kinlight", title: "Tour booked", text: `Laura Bennett · ${dayShort(addDays(t, 2))}, 10:00 am with ${first(rep.name)}`, time: "2m ago" },
-          { app: "Kinlight", title: "Open house sign-up", text: "A new lead: 2 places for the Open House & Lunch.", time: "1h ago" },
+          { app: "Kinlight", title: "Open house sign-up", text: "2 places for the Open House & Lunch.", time: "1h ago" },
         ]}
       />
     ),
@@ -546,7 +547,7 @@ export function moreScreens(slug: CommunitySlug) {
     caption: `One switch on the apartment. Everyone on the ${plan.name} waitlist gets a text, in order, and the website updates.`,
     screen: (
       <div className="ph-staff">
-        <StaffHead title="Apartments" sub={`${name} · ${rep.name}`} />
+        <StaffHead title="Apartments" sub={`${name} · ${desk.name}`} />
         <div className="ph-staff-body">
           <div className="ph-staff-card">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -557,7 +558,7 @@ export function moreScreens(slug: CommunitySlug) {
             <p>Waitlist: {plan.waitlist} {plan.waitlist === 1 ? "person" : "people"}</p>
             <span className="ph-staff-btn green">Mark available and tell the waitlist</span>
           </div>
-          <div className="phx-toast">✓ {plan.waitlist} texted. Calls go to {first(rep.name)}.</div>
+          <div className="phx-toast">✓ {plan.waitlist} texted. Replies go to {first(desk.name)}.</div>
         </div>
       </div>
     ),

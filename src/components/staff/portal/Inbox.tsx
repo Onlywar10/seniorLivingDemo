@@ -17,8 +17,8 @@ import { Badge, Initials } from "../ui";
 type Show = "reply" | "all" | "done";
 const first = (n = "") => n.split(" ")[0];
 const tel = (p: string) => `tel:+1${p.replace(/\D/g, "")}`;
-const prospect = (c: { relation: string }) => c.relation === "Prospect" || c.relation === "On the waitlist";
-/** "Daughter of Rosa Hernández", "Resident", or "Prospect · Assisted Living". */
+const prospect = (c: { relation: string }) => c.relation === "Prospect" || c.relation === "Asked about living here" || c.relation === "On the waitlist";
+/** "Daughter of Rosa Hernández", "Resident", or "Asked about living here · Assisted Living". */
 const sub = (c: { relation: string; resident: string }) => (c.relation === "Resident" ? "Resident" : prospect(c) ? `${c.relation} · ${c.resident}` : `${c.relation} of ${c.resident}`);
 
 export function Inbox({ convos: initial, people, as, me, initialOpen }: { convos: Convo[]; people: Reachable[]; as: StaffRole; me: string;

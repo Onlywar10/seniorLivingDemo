@@ -106,7 +106,7 @@ export function eventRequests(slug: CommunitySlug): EventRequest[] {
     });
   });
 
-  // Public sign-ups for the open house: each one is also a lead in Tours & enquiries.
+  // Public sign-ups for the open house, listed on the event.
   const people = [
     ["Carol Benedetti", "her mother", "(916) 555-0193", "carol.benedetti@gmail.com"],
     ["Tom & Ruth Alvarez", "themselves", "(916) 555-0127", ""],
@@ -297,7 +297,7 @@ export function promises(slug: CommunitySlug): KPromise[] {
     { code: "D5", promise: "Changes arrive fast", target: "Website and families updated within 15 minutes", status: "Kept", evidence: "Slowest change this month: 6 minutes" },
     { code: "D6", promise: "Messages arrive", target: "95% or more delivered, in the family’s language", status: "Kept", evidence: `${s.weekKpis.deliveredRate}% delivered; ${s.languages.length} languages` },
     { code: "D7", promise: "Nothing wrong goes out", target: "Nothing goes out without the approval your rules require (resident photos, prices, special menus, family requests); emergencies only skip it", status: "Kept", evidence: "Every resident photo, price, special menu and family request approved first; 0 exceptions (approval log)" },
-    { code: "D8", promise: "No inquiry left waiting", target: "Instant reply day or night; your team told within 5 minutes", status: "Kept", evidence: `${s.scoreRows.find((r) => r.k === "Enquiries")?.now ?? 50} inquiries, all answered instantly; slowest hand-off 2 min`, href: "/staff/automations?tab=log&auto=s-instant", hrefLabel: "Every instant reply, in Automations" },
+    { code: "D8", promise: "No question left waiting", target: "Every website inquiry and tour request acknowledged day or night, and at the front desk within 5 minutes", status: "Kept", evidence: `${s.scoreRows.find((r) => r.k === "Enquiries")?.now ?? 50} inquiries and tour requests, all acknowledged straight away; slowest hand-off to the front desk 2 min`, href: "/staff/automations?tab=log&auto=s-instant", hrefLabel: "Every acknowledgement, in Automations" },
     { code: "D9", promise: "Easy to find", target: "Live-facts feed and Google Business Profile accurate; monthly AI-answer report", status: slug === "alder-bend" ? "Kept" : "At risk", evidence: slug === "alder-bend" ? "Feed and profile accurate; AI-answer report sent" : "One AI answer still shows the old Lantern price; correction submitted" },
     { code: "D10", promise: "It stays up", target: "99.5% uptime or better", status: "Kept", evidence: "99.98% this month" },
     { code: "D11", promise: "You can see it working", target: "Scorecard sent every month; full export tested once", status: "Kept", evidence: "This scorecard; export tested on day 21" },
@@ -341,9 +341,9 @@ export function evidence(slug: CommunitySlug): EvidenceRow[] {
   const h = hash(slug);
   const calls = Math.round(s.community.residents * 2.1) + (h % 40);
   return [
-    pick2("Enquiries", "Inquiries", { prospect: true, note: "Form, website chat, Google, AI search, referrals and public event sign-ups" }),
-    { label: "Share of inquiries after hours", now: 41, prev: 33, fmt: "pct", prospect: true, note: "Answered instantly all the same" },
-    { label: "Time to first human reply (minutes)", now: slug === "alder-bend" ? 11 : 14, prev: slug === "alder-bend" ? 194 : 171, prospect: true, note: "Median, after the instant reply" },
+    pick2("Enquiries", "Inquiries", { prospect: true, note: "Form, website chat, Google, AI search and referrals" }),
+    { label: "Share of inquiries after hours", now: 41, prev: 33, fmt: "pct", prospect: true, note: "Acknowledged straight away all the same" },
+    { label: "Time to first human reply (minutes)", now: slug === "alder-bend" ? 11 : 14, prev: slug === "alder-bend" ? 194 : 171, prospect: true, note: "Median, by the front desk, after the acknowledgement" },
     pick2("Tours", "Tours", { prospect: true }),
     pick2("Move-ins", "Move-ins", { prospect: true }),
     { label: "New Google reviews", now: s.gbp.newReviews, prev: Math.max(1, s.gbp.newReviews - 2), note: `${s.gbp.rating} stars from ${s.gbp.reviews} reviews` },
@@ -358,15 +358,15 @@ export function evidence(slug: CommunitySlug): EvidenceRow[] {
 
 export interface ProspectMsg { channel: "Text" | "Email"; at: string; text: string; subject?: string }
 
-/** The instant reply after an inquiry, and the confirmation and reminder after a tour is booked. */
+/** The one automatic acknowledgement after a question (the front desk answers it), and the tour confirmation and reminder. */
 export function prospectMessages(slug: CommunitySlug, p: { name: string; interest: string; tour?: { days: number; time: number }; mins?: number }): ProspectMsg[] {
   const s = getStaffData(slug);
   const c = communities[slug];
   const rep = staffName(s, s.roles.tours);
   const fn = first(p.name.replace(/&.*$/, "").trim());
   const out: ProspectMsg[] = [
-    { channel: "Text", at: p.mins !== undefined ? `${Math.max(1, Math.round(p.mins))} min ago` : "Just now", text: `Hi ${fn}, thanks for asking about ${p.interest} at ${c.site.name}. ${first(rep)} will call you shortly. Want to see it in person? Book a tour any time: ${s.brand.domain}/tour. Reply STOP to opt out.` },
-    { channel: "Email", at: p.mins !== undefined ? `${Math.max(1, Math.round(p.mins))} min ago` : "Just now", subject: `Thank you for your interest in ${c.site.name}`, text: `Dear ${fn},\n\nThank you for reaching out about ${p.interest}. ${rep}, our ${s.people[s.roles.tours]?.role ?? "Community Relations Director"}, will be in touch today. In the meantime, here is this week’s menu, the activity calendar and our floor plans with starting prices.\n\nWarmly,\nThe ${c.site.name} team · ${s.brand.phone}` },
+    { channel: "Text", at: p.mins !== undefined ? `${Math.max(1, Math.round(p.mins))} min ago` : "Just now", text: `Hi ${fn}, thanks for your question about ${p.interest} at ${c.site.name}. Our front desk has it and will get back to you soon. Want to see it in person? Book a tour any time: ${s.brand.domain}/tour. Reply STOP to opt out.` },
+    { channel: "Email", at: p.mins !== undefined ? `${Math.max(1, Math.round(p.mins))} min ago` : "Just now", subject: `We have your question, ${c.site.name}`, text: `Dear ${fn},\n\nThank you for your question about ${p.interest}. Our front desk has it and will reply soon. In the meantime, here is this week’s menu, the activity calendar and our floor plans.\n\nWarmly,\nThe ${c.site.name} front desk · ${s.brand.phone}` },
   ];
   if (p.tour) {
     const d = dayShort(addDays(today(), p.tour.days));
@@ -407,7 +407,7 @@ export function alertSettings(slug: CommunitySlug): AlertSetting[] {
     { kind: "verify", label: "A new family member to verify", detail: "They signed up themselves; check with the resident.", expected: "Within 2 business days", who: [p(r.calendar, [area])] },
     { kind: "reply", label: "A reply the AI couldn’t handle", detail: "Goes to the right person by topic. Urgent ones tell the family to call the front desk.", expected: "No promised time", urgent: true, who: [p(r.calendar, [area]), p(r.tours, [area]), p(r.desk, ["Text", area])] },
     { kind: "concern", label: "A family concern", detail: "Care, billing, dining or housekeeping, each to its owner.", expected: "Until resolved", urgent: true, who: [p(r.lantern, ["Text", area]), p(billing, ["Email", area]), p(dining, ["Email", area]), p(r.approver, ["Email"])] },
-    { kind: "inquiry", label: "A new inquiry or tour booked", detail: "The instant reply has already gone.", expected: "Call within the day", who: [p(r.tours, ["Text", area]), p(r.approver, ["Email"])] },
+    { kind: "inquiry", label: "A question about living here, or a tour booked", detail: "The acknowledgement has already gone. A person answers; nothing follows up automatically.", expected: "Reply the same day", who: [p(r.desk, ["Text", area]), p(r.approver, ["Email"])] },
     { kind: "review", label: "Something ready to review", detail: "The newsletter, an imported calendar, the week’s menus.", expected: "Before it publishes", who: [p(r.calendar, ["Email", area]), p(r.menus, ["Email", area]), p(r.approver, [area])] },
     { kind: "stale", label: "A page going stale", detail: "A page hasn’t changed for longer than it should.", expected: "Before the due date", who: [p(r.calendar, ["Email"]), p(r.menus, ["Email"])] },
     { kind: "welcome", label: "A new resident to welcome", detail: "Their messages, interests, consent and a welcome post.", expected: "First week", who: [p(r.calendar, [area]), p(r.desk, [area])] },
