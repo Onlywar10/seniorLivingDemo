@@ -15,7 +15,7 @@ import { communities } from "@/data/communities";
 import { sectionAccess } from "@/data/staff/access";
 import { getStaffCommunity } from "@/data/staff/server";
 import { accessOf } from "@/data/staff/shared";
-import { results, surveyById, surveysOf, trend, type Answer, type Survey } from "@/data/staff/surveys";
+import { mayManage, results, surveyById, surveysOf, trend, type Answer, type Survey } from "@/data/staff/surveys";
 import { communitySlugs } from "@/lib/sites";
 
 export const metadata: Metadata = { title: "Surveys" };
@@ -26,12 +26,19 @@ const fill = (s: string, community: string, event?: string) => s.replace("{commu
  *  5 or more answered), the trend over each send, and themes from written answers, each linked to its answers. */
 export default async function SurveyResultsPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
   const { as, access } = await sectionAccess("reports");
-  if (!access) return <NotYours section="Reports" />;
-  if (!mayOpen(access, "surveys")) return <NotThisReport title="Surveys" access={access} />;
+  // Anyone who makes surveys sees the results of their own, even without Reports.
+  const own = !access || !mayOpen(access, "surveys");
+  if (own && !accessOf(as, "surveys")) return access ? <NotThisReport title="Surveys" access={access} /> : <NotYours section="Reports" />;
   const sc = await getStaffCommunity();
   if (!sc) return <PickCommunity screen="Surveys" />;
   const { s, c } = sc;
-  const list = surveysOf(s.slug).filter((x) => x.answered > 0);
+  const list = surveysOf(s.slug).filter((x) => x.answered > 0 && (!own || mayManage(as, x)));
+  if (!list.length) return (
+    <>
+      <PageHead title="Survey results" sub={`${s.brand.name}: your surveys’ results`} />
+      <p className="pt-empty">No answers yet to a survey of yours. Results show here as soon as people reply. <Link className="sx-link" href="/staff/surveys">Your surveys</Link></p>
+    </>
+  );
   const id = (await searchParams).id;
   const sv: Survey = (id && list.find((x) => x.id === id)) || list[0];
   const r = results(sv);
@@ -43,7 +50,7 @@ export default async function SurveyResultsPage({ searchParams }: { searchParams
   const textQs = sv.questions.filter((q) => q.type === "text");
   const written = (a: Answer) => Object.entries(a.answers).filter(([k]) => textQs.some((x) => x.id === k)).map(([, v]) => String(v)).join(" ");
   // The same template, side by side across communities.
-  const across = access === "full"
+  const across = !own && access === "full"
     ? communitySlugs.map((slug) => { const x = surveyById(slug, sv.id); return x && x.answered ? { name: communities[slug].site.name, rate: results(x).rate, avg: results(x).avg } : null; }).filter((x): x is { name: string; rate: number; avg: number } => !!x)
     : [];
   const head = ["Answered", "Group", "How", "Language", ...(sv.anonymous ? [] : ["Name"]), ...sv.questions.map((q) => fill(q.text.en, c.site.name, ev))];
@@ -55,7 +62,7 @@ export default async function SurveyResultsPage({ searchParams }: { searchParams
         <Help label="Where results go" align="end"><p>The family and resident satisfaction surveys are the monthly scorecard’s survey evidence. Results are built only from real answers, and a group is never shown with fewer than 5 answers.</p></Help>
         {canSurveys && <Link href="/staff/surveys" className="sx-btn"><Icon name="list" /> Surveys</Link>}
       </PageHead>
-      <ReportTabs access={access} />
+      {!own && access && <ReportTabs access={access} />}
       <nav className="su-pick" aria-label="Survey">
         {list.map((x) => <Link key={x.id} href={`/staff/reports/surveys?id=${x.id}`} className={`su-pick-l${x.id === sv.id ? " on" : ""}`} aria-current={x.id === sv.id ? "page" : undefined}>{x.title}</Link>)}
       </nav>

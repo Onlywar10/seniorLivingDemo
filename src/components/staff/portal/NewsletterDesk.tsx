@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import "@/components/phone/phone.css";
 import { Icon } from "@/components/Icon";
 import type { Addable, Issue, Reader, Story } from "@/data/staff/newsletter";
+import type { StaffRole } from "@/data/staff/shared";
 import { say } from "../store";
 import { Badge, Kpi } from "../ui";
 import { Help } from "./Help";
@@ -27,7 +28,11 @@ interface Live extends Story {
  * the versions and when it sends. `canApprove`: the approver and the administrator; the
  * front desk reaches it from the Today card and can change it, not approve it.
  */
-export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issue; me: string; canApprove: boolean; viaCard: boolean }) {
+export function NewsletterDesk({ issue, me, as, canApprove, viaCard }: { issue: Issue; me: string; as: StaffRole; canApprove: boolean; viaCard: boolean }) {
+  // Each person works on and approves their own section; the executive director can change any of it.
+  const all = as === "manager";
+  const isMine = (x: { owner?: StaffRole }) => all || !x.owner || x.owner === as;
+  const ownerFirst = (x: { owner?: StaffRole }) => first(issue.owners[(x.owner ?? "events") as keyof Issue["owners"]] ?? "");
   const [stories, setStories] = useState<Live[]>(() =>
     issue.stories.map((s) => ({ ...s, cur: s.changed?.text ?? s.text, photoCur: s.photo, removed: false, by: s.changed ? first(s.changed.by) : undefined, changes: s.changed ? [`rewrote it, ${s.changed.when}`] : [], showOrig: false })),
   );
@@ -179,7 +184,7 @@ export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issu
   };
   const approve = () => {
     setApproved(true);
-    say(`Approved · sends ${issue.timeline.sendsShort}`, () => setApproved(false));
+    say(all ? `Approved · sends ${issue.timeline.sendsShort}` : `Your section is approved · sends ${issue.timeline.sendsShort}`, () => setApproved(false));
   };
   /** Add a section Kinlight drafted from an event: before "Just for fun" if it's last, otherwise at the end. */
   const addSection = (a: Addable, thenEdit: boolean) => {
@@ -221,10 +226,10 @@ export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issu
           <ul>
             <li>A week is Sunday to Saturday. Until Thursday, this is the draft so far: it fills in as photos and attendance come in.</li>
             <li>Thursday: Kinlight builds and writes it from the week’s events, photos and menus, using only those facts.</li>
-            <li>Friday: it’s ready to review on {issue.approverFirst}’s Today. Anyone allowed can change any part.</li>
+            <li>Friday: each section is ready on its owner’s Today: events and activities for {first(issue.owners.events)}, the menu for {first(issue.owners.kitchen)}, the director’s note for {first(issue.owners.manager)}. Each changes and approves their own.</li>
             <li>Sunday, 5 pm: it sends. After that it can’t be edited; only a correction can be sent.</li>
           </ul>
-          {viaCard && <p>You opened this from your Today card: you can change any part until it sends; {issue.approverFirst} approves it.</p>}
+          {viaCard && <p>You opened this from your Today card: change your section until it sends, then approve it.</p>}
         </Help>
       </div>
 
@@ -242,7 +247,7 @@ export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issu
           <section className={`sx-card nl-approve${approved ? " ok" : ""}`} aria-live="polite">
             <div className="sx-card-body">
               {approved ? (
-                <p className="nl-approved"><Icon name="check" /> <span><b>Approved by {me}.</b> Sends {issue.timeline.sendsShort}. Still editable until then.</span></p>
+                <p className="nl-approved"><Icon name="check" /> <span><b>{all ? `Approved by ${me}.` : `Your section is approved, ${me}.`}</b> Sends {issue.timeline.sendsShort}. Still editable until then.</span></p>
               ) : (
                 <>
                   <div>
@@ -252,7 +257,7 @@ export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issu
                   {building ? (
                     <Badge tone="neutral">Still being written</Badge>
                   ) : canApprove ? (
-                    <button type="button" className="sx-btn sx-btn-primary sx-btn-lg" onClick={approve}><Icon name="check" /> Looks good</button>
+                    <button type="button" className="sx-btn sx-btn-primary sx-btn-lg" onClick={approve}><Icon name="check" /> {all ? "Looks good" : `Approve your section (${stories.filter((x) => !x.removed && isMine(x)).length})`}</button>
                   ) : (
                     <Badge tone="warn">Approval: {issue.approverFirst}</Badge>
                   )}
@@ -285,7 +290,7 @@ export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issu
                 data-id={s.id}
                 style={drag ? { transform: `translateY(${drag.id === s.id ? drag.dy : shiftOf(i)}px)` } : undefined}
               >
-                {!s.removed && (
+                {!s.removed && isMine(s) && (
                   <span
                     className="nl-grip"
                     title="Drag to move"
@@ -314,6 +319,7 @@ export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issu
                       <span className="nl-badges">
                         {s.by ? <Badge tone="accent"><Icon name="edit" /> Changed by {s.by}</Badge> : <Badge tone="info"><Icon name="sparkle" /> AI wrote this</Badge>}
                         {s.addedBy && <Badge tone="neutral"><Icon name="plus" /> Added by {first(s.addedBy)}</Badge>}
+                        {!isMine(s) && <Badge tone="neutral"><Icon name="lock" /> {ownerFirst(s)}’s section</Badge>}
                       </span>
                     </div>
 
@@ -362,13 +368,13 @@ export function NewsletterDesk({ issue, me, canApprove, viaCard }: { issue: Issu
                       {s.publicNote && <Help label="About the public version"><p>{s.publicNote}</p></Help>}
                     </div>
 
-                    <div className="nl-acts">
+                    {isMine(s) && <div className="nl-acts">
                       <button type="button" className="sx-btn sx-btn-sm" onClick={() => setEdit({ id: s.id, text: s.cur })}><Icon name="edit" /> Rewrite</button>
                       {s.photos.length > 1 && <button type="button" className="sx-btn sx-btn-sm" aria-expanded={swap === s.id} onClick={() => setSwap(swap === s.id ? null : s.id)}><Icon name="image" /> Swap photo</button>}
                       <button type="button" className="sx-btn sx-btn-sm" disabled={i === 0} onClick={() => move(s.id, -1)} aria-label={`Move ${s.title} up`}>↑</button>
                       <button type="button" className="sx-btn sx-btn-sm" disabled={i === stories.length - 1} onClick={() => move(s.id, 1)} aria-label={`Move ${s.title} down`}>↓</button>
                       <button type="button" className="sx-btn sx-btn-sm sx-btn-quiet" onClick={() => change(s.id, (x) => ({ ...mark(x, "removed it"), removed: true }), `Removed “${s.title}”`)}><Icon name="x" /> Remove</button>
-                    </div>
+                    </div>}
                   </>
                 )}
               </li>

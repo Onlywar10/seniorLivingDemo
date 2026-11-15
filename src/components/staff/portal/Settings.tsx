@@ -16,7 +16,7 @@ export interface TeamMember { key: string; name: string; title: string; preset: 
 const PRESETS: Preset[] = ["Poster", "Front desk", "Approver", "Kitchen", "Administrator", "Caregiver"];
 const sectionName: Record<Section, string> = {
   today: "Today", messages: "Communications", automations: "Automations", post: "Post", calendar: "Calendar", menus: "Menus", newsletter: "Newsletter", website: "Website",
-  people: "People", feedback: "Feedback", surveys: "Surveys", prospects: "Prospects", reports: "Reports", settings: "Settings",
+  people: "People", feedback: "Feedback", surveys: "Surveys", prospects: "Apartments", tours: "Tours", reports: "Reports", settings: "Settings",
 };
 /** What each preset may open: the Roles table (the same rules the menu uses). */
 const presetAccess = Object.fromEntries(

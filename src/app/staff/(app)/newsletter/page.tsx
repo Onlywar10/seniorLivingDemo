@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   return (
     <>
       <PageHead title="Newsletter" sub="Kinlight builds and writes it every Thursday from the week’s events, photos and menus. Check it, change anything, and it sends on Sunday at 5 pm." />
-      <NewsletterDesk issue={issue} me={me.first} canApprove={access === "full"} viaCard={viaCard} />
+      <NewsletterDesk issue={issue} me={me.first} as={as} canApprove={access === "full"} viaCard={viaCard} />
     </>
   );
 }

@@ -13,7 +13,6 @@ const staffMoves: [string, string][] = [
   ["attendance", "today"],
   ["suggestions", "calendar"],
   ["families", "people"],
-  ["tours", "prospects"],
   ["apartments", "prospects"],
   ["scorecard", "reports"],
   ["seo", "reports/search"],

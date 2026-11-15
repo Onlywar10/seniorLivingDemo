@@ -55,7 +55,7 @@ export function QueueList({ items, empty, me, owners = [], openEvent, replies = 
   /** Conversations waiting on this person in Communications. */
   replies?: number;
   /** Opens the event sheet in place (Today); without it, the event opens in Calendar. */
-  openEvent?: (id: string, date: string) => void;
+  openEvent?: (id: string, date: string, photos?: boolean, attend?: boolean) => void;
 }) {
   const patches = useConcernPatches();
   const { moves } = useTodayState();
@@ -192,7 +192,7 @@ function titleOf(q: QItem): string {
 /* ------------------------------------------------------------ one card */
 
 export function QueueCard({ q, me, owners = [], taken = false, onTake, act, openEvent, now, onSnooze, onReassign }: {
-  q: QItem; me?: QueueMe; owners?: ConcernOwner[]; taken?: boolean; onTake?: () => void; act: Act; openEvent?: (id: string, date: string) => void;
+  q: QItem; me?: QueueMe; owners?: ConcernOwner[]; taken?: boolean; onTake?: () => void; act: Act; openEvent?: (id: string, date: string, photos?: boolean, attend?: boolean) => void;
   /** Minutes since midnight, for "Due in 40 min". */
   now?: number;
   onSnooze?: (until: number, label: string) => void; onReassign?: (to: StaffRole) => void;
@@ -301,6 +301,8 @@ export function QueueCard({ q, me, owners = [], taken = false, onTake, act, open
       return <ConcernCard q={q} frame={frame} act={act} me={me} owners={owners} />;
 
     case "task":
+      if (q.events?.length) return <EventsTask q={q} frame={frame} openEvent={openEvent} />;
+      if (q.invite) return <InviteTask q={q} frame={frame} act={act} />;
       return frame(
         <>{q.title}</>,
         q.context,
@@ -333,6 +335,78 @@ export function QueueCard({ q, me, owners = [], taken = false, onTake, act, open
       );
     }
   }
+}
+
+/** Kinlight's draft of a personal invite, from the staff member, for the class chosen. */
+const inviteText = (inv: NonNullable<Extract<QItem, { kind: "task" }>["invite"]>, e: NonNullable<Extract<QItem, { kind: "task" }>["invite"]>["events"][number]) =>
+  `Hi ${first(inv.resident)}, it’s ${first(inv.from)} from ${inv.team}. We’ve missed you at ${inv.missed}! ${e.title} is ${e.day} at ${e.time} in ${/^the /i.test(e.room) ? e.room : `the ${e.room}`}. Would you like me to save you a spot? Just reply YES.`;
+
+/**
+ * "Hasn't been lately": a resident with an interest who hasn't come to that kind of activity in a while. Pick one of
+ * the classes coming up, change the words if you like, and it opens in Communications to send from you.
+ */
+function InviteTask({ q, frame, act }: { q: Extract<QItem, { kind: "task" }>; frame: Frame; act: Act }) {
+  const inv = q.invite!;
+  // Small until opened: the classes and the drafted text show only when the staff member chooses to look.
+  const [open, setOpen] = useState(false);
+  const [pick, setPick] = useState(0);
+  const [text, setText] = useState(() => inviteText(inv, inv.events[0]));
+  const [touched, setTouched] = useState(false);
+  const choose = (i: number) => { setPick(i); if (!touched) setText(inviteText(inv, inv.events[i])); };
+  const fn = first(inv.resident);
+  const href = `/staff/messages?to=${encodeURIComponent(inv.resident)}&draft=${encodeURIComponent(text)}`;
+  return frame(
+    <><ResidentLink name={inv.resident} />{q.title.slice(inv.resident.split(" ")[0].length)}</>,
+    q.context,
+    <p>{q.help}</p>,
+    open ? <div className="pt-invite">
+      <p className="sx-lbl">Invite {fn} to</p>
+      <div className="sx-chips" role="group" aria-label="Which class">
+        {inv.events.map((e, i) => <button key={e.id + e.date} type="button" aria-pressed={pick === i} onClick={() => choose(i)}>{e.title} · {e.day.replace(/^\w/, (x) => x.toUpperCase())} {e.time}</button>)}
+      </div>
+      <label className="pt-invite-text">
+        <span className="sx-lbl">Your text to {fn} <small className="sx-hint">Kinlight’s draft, from you. Change anything.</small></span>
+        <textarea rows={4} value={text} onChange={(e) => { setText(e.target.value); setTouched(true); }} />
+      </label>
+    </div> : null,
+    open
+      ? <Link className="sx-btn sx-btn-primary pt-big" href={href} onClick={() => window.setTimeout(() => act(`Opened in Communications. Send it to ${fn} from there.`), 300)}><Icon name="send" /> {q.main.label}</Link>
+      : <button type="button" className="sx-btn sx-btn-primary pt-big" aria-expanded={false} onClick={() => setOpen(true)}><Icon name="eye" /> Open</button>,
+    open
+      ? <button type="button" className="sx-btn pt-second" onClick={() => setOpen(false)}>Close</button>
+      : q.second ? <button type="button" className="sx-btn pt-second" onClick={() => act(q.second!.done ?? "Done.")}>{q.second.label}</button> : undefined,
+  );
+}
+
+/**
+ * A card about several events (attendance to take, photos to add): the main button lists them, and each one opens
+ * that event, at its attendance or photos. With one event, the button opens it straight away.
+ */
+function EventsTask({ q, frame, openEvent }: { q: Extract<QItem, { kind: "task" }>; frame: Frame; openEvent?: (id: string, date: string, photos?: boolean, attend?: boolean) => void }) {
+  const [open, setOpen] = useState(false);
+  const evs = q.events ?? [];
+  const photos = q.focus === "photos", attend = q.focus === "attend";
+  const href = (e: { id: string; date: string }) => `/staff/calendar?event=${encodeURIComponent(e.id)}&date=${e.date}${photos ? "&photos=1" : attend ? "&attend=1" : ""}`;
+  const go = (e: { id: string; date: string }, label: ReactNode, cls: string) =>
+    openEvent ? (
+      <button type="button" className={cls} onClick={() => openEvent(e.id, e.date, photos, attend)}>{label}</button>
+    ) : (
+      <Link className={cls} href={href(e)}>{label}</Link>
+    );
+  return frame(
+    <>{q.title}</>,
+    q.context,
+    <p>{q.help}</p>,
+    evs.length > 1 && open ? (
+      <ul className="pt-task-events">
+        {evs.map((e) => <li key={e.id + e.date}>{go(e, <><span><b>{e.title}</b><small>{e.when}</small></span><Icon name="right" /></>, "pt-task-ev")}</li>)}
+      </ul>
+    ) : evs.length > 1 ? <ul className="pt-task-lines">{evs.slice(0, 6).map((e) => <li key={e.id + e.date}>{e.title} · {e.when}</li>)}{evs.length > 6 && <li className="sx-hint">and {evs.length - 6} more</li>}</ul> : null,
+    evs.length === 1
+      ? go(evs[0], q.main.label, "sx-btn sx-btn-primary pt-big")
+      : <button type="button" className="sx-btn sx-btn-primary pt-big" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? "Hide the list" : q.main.label}</button>,
+    undefined,
+  );
 }
 
 /** The two small actions on every card: snooze until a time, or hand it to someone else. */
@@ -410,9 +484,11 @@ function PostCard({ q, frame, act }: { q: Extract<QItem, { kind: "post" }>; fram
             {q.diff && <p className="pt-diff"><s>{q.diff[0]}</s> <Icon name="arrow" /> <b>{q.diff[1]}</b></p>}
           </div>
         </div>,
-        <button type="button" className="sx-btn sx-btn-primary pt-big" onClick={() => { decide(q.id, "approved"); act(`Approved and published. ${by} is told.`, { undo: () => decide(q.id, null) }); }}><Icon name="check" /> Approve</button>,
-        <button type="button" className="sx-btn pt-second" aria-expanded={back} onClick={() => setBack((b) => !b)}>Send back</button>,
-        back ? (
+        q.open
+          ? <Link className="sx-btn sx-btn-primary pt-big" href={q.open}><Icon name="eye" /> Open</Link>
+          : <button type="button" className="sx-btn sx-btn-primary pt-big" onClick={() => { decide(q.id, "approved"); act(`Approved and published. ${by} is told.`, { undo: () => decide(q.id, null) }); }}><Icon name="check" /> Approve</button>,
+        q.open ? undefined : <button type="button" className="sx-btn pt-second" aria-expanded={back} onClick={() => setBack((b) => !b)}>Send back</button>,
+        back && !q.open ? (
           <form className="pt-back sx-form" onSubmit={(e) => { e.preventDefault(); decide(q.id, "declined"); act(`Sent back to ${by}${why.length ? `: ${why.join(", ").toLowerCase()}` : ""}. Nothing went out.`, { undo: () => decide(q.id, null) }); }}>
             <span className="sx-lbl">Why? {by} sees this.</span>
             <div className="sx-chips" role="group" aria-label="Reasons">
@@ -567,7 +643,7 @@ function GroupCard({ q, frame, act, ev }: { q: Extract<QItem, { kind: "group" }>
   return frame(
     <>{left.length} family RSVPs for {ev(q.event)}</>,
     `${q.event.when} · residents all said yes · ${people} people`,
-    <p>Each resident said yes by text first. Approving tells every family in their own language, by the way they like to hear.</p>,
+    <p>This event needs the resident’s yes and yours. Each resident said yes on their action page or by text; approving tells every family in their own language, by the way they like to hear.</p>,
     open ? (
       <ul className="pt-group-list">
         {q.items.map((x: RsvpItem) => (
@@ -653,7 +729,7 @@ function AskCard({ q, frame, act, me, ev }: { q: Ask; frame: Frame; act: Act; me
   return frame(
     <>Ask <ResidentLink name={q.resident} />{q.apt ? <small className="pt-apt"> · {q.apt}</small> : null}</>,
     <>{n > 1 ? `${n} questions for ${res}` : "1 question"} · {q.asked}</>,
-    <p>{q.lantern ? `Lantern residents aren’t asked by text, so ask ${res} in person.` : `${res} was asked by text and hasn’t answered, so ask in person.`} {afterYes(me).line} It’s also on “My rounds”.</p>,
+    <p>{q.lantern ? `Lantern residents aren’t asked by text, so ask ${res} in person.` : `${res} was asked on their action page and by text, and hasn’t answered. The event is less than a week away, so ask in person.`} However the family asked (a text, the family page or a call to the front desk), the resident is always asked first. {afterYes(me).line} It’s also on “My rounds”.</p>,
     <AskList q={q} me={me} ev={ev} onDone={(t) => act(t)} />,
     null,
     undefined,

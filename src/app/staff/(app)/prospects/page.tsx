@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "@/app/staff/reports.css";
 import "@/app/staff/prospects.css";
 import { NotYours } from "@/components/staff/portal/NotYours";
-import { scorecardMonths, sectionsFor } from "@/data/staff/shared";
+import { sectionsFor } from "@/data/staff/shared";
 import { getStaffRole as getRole } from "@/data/staff/server";
 import { Icon } from "@/components/Icon";
 import { Help } from "@/components/staff/portal/Help";
-import { TourCount, Waitlist, type TourCountRow, type WaitPlan } from "@/components/staff/portal/Sales";
+import { Waitlist, type WaitPlan } from "@/components/staff/portal/Sales";
 import { WebsiteApartments } from "@/components/staff/portal/WebsiteApartments";
 import { PickCommunity } from "@/components/staff/StaffCommunity";
 import { Card, PageHead } from "@/components/staff/ui";
-import { dayLabel, siteHref } from "@/data/staff";
-import { evidence } from "@/data/staff/alpha";
+import { siteHref } from "@/data/staff";
 import { availability } from "@/data/staff/portal";
 import { getStaffCommunity } from "@/data/staff/server";
 import { plansForWebsite } from "@/data/staff/website";
-import { addDays, fmtTime, nowMinutes, shortDate, today } from "@/lib/clock";
+import { addDays, shortDate, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Apartments" };
 
@@ -33,15 +33,7 @@ export default async function ApartmentsPage() {
   const sc = await getStaffCommunity();
   if (!sc) return <PickCommunity screen="Apartments" />;
   const { s } = sc;
-  const now = nowMinutes();
   const approver = s.people[s.roles.approver].name;
-
-  const tours: TourCountRow[] = s.tours
-    .filter((t) => t.days < 7)
-    .sort((a, b) => a.days - b.days || a.time - b.time)
-    .map((t) => ({ id: t.who, who: t.who, interest: t.interest, source: t.source, day: dayLabel(t.days), time: fmtTime(t.time), done: t.days === 0 && t.time + 60 <= now }));
-  const m = scorecardMonths();
-  const tourRow = evidence(s.slug).find((r) => r.label === "Tours");
 
   // The waitlist by floor plan, longest waiting first. Names and how long they've waited only: no notes or deposits.
   const plans = availability(s.slug);
@@ -57,7 +49,7 @@ export default async function ApartmentsPage() {
 
   return (
     <>
-      <PageHead title="Apartments" sub="Which floor plans are open, the waitlist and tours">
+      <PageHead title="Apartments" sub="Which floor plans are open, and the waitlist">
         <a className="sx-btn" href={siteHref(s.slug, "/tour")} target="_blank" rel="noopener"><Icon name="globe" /> Tour booking page</a>
       </PageHead>
 
@@ -75,11 +67,9 @@ export default async function ApartmentsPage() {
         </Help></>} sub={`${s.waitlist.length} people, by floor plan`}>
           <Waitlist plans={waitPlans} />
         </Card>
-        <Card id="tours" title={<>Tours <Help label="About tours" align="end">
-          <p>Visitors book tours themselves, through the website chat and the tour page, and get a confirmation and a reminder automatically.</p>
-          <p>After each tour, tap whether it happened. That’s the tour number on the monthly scorecard.</p>
-        </Help></>} sub="This week">
-          <TourCount tours={tours} month={{ label: m.month, now: tourRow?.now ?? 0, prev: tourRow?.prev ?? 0, prevLabel: m.prev }} />
+        <Card id="tours" title="Tours" sub="Who’s visiting, and who came">
+          <p className="sx-hint">Every tour booked, with who it’s for, the floor plan they asked about and attendance, is on its own page.</p>
+          <p><Link className="sx-btn sx-btn-primary" href="/staff/tours"><Icon name="users" /> Open Tours</Link></p>
         </Card>
       </div>
     </>

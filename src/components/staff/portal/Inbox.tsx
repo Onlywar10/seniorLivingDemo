@@ -21,13 +21,19 @@ const prospect = (c: { relation: string }) => c.relation === "Prospect" || c.rel
 /** "Daughter of Rosa Hernández", "Resident", or "Asked about living here · Assisted Living". */
 const sub = (c: { relation: string; resident: string }) => (c.relation === "Resident" ? "Resident" : prospect(c) ? `${c.relation} · ${c.resident}` : `${c.relation} of ${c.resident}`);
 
-export function Inbox({ convos: initial, people, as, me, initialOpen }: { convos: Convo[]; people: Reachable[]; as: StaffRole; me: string;
+export function Inbox({ convos: initial, people, as, me, initialOpen: openParam, startWith }: { convos: Convo[]; people: Reachable[]; as: StaffRole; me: string;
   /** A conversation to open straight away (from a link in Automations → Problems). */
-  initialOpen?: string }) {
-  const [convos, setConvos] = useState(initial);
+  initialOpen?: string;
+  /** From a Today card: start (or open) a conversation with this person, with a drafted message in the box. */
+  startWith?: { to: string; draft: string } }) {
+  // A drafted invite from Today: open their conversation (a new one if there isn't one yet) with the draft ready to send.
+  const startP = startWith ? people.find((p) => p.name === startWith.to) : undefined;
+  const startC = startP ? initial.find((c) => c.name === startP.name) ?? { id: `new-${startP.name}`, name: startP.name, relation: startP.relation, resident: startP.resident, lang: startP.lang, channel: startP.channel, phone: startP.phone, email: startP.email, needsReply: false, last: 0, msgs: [] } : undefined;
+  const [convos, setConvos] = useState(startC && !initial.includes(startC) ? [startC, ...initial] : initial);
+  const initialOpen = openParam ?? startC?.id;
   const mine = (c: Convo) => c.needsReply && c.owner === as;
-  const linked = initialOpen ? initial.find((c) => c.id === initialOpen) : undefined;
-  const [show, setShow] = useState<Show>(linked && !mine(linked) ? "all" : initial.some(mine) ? "reply" : "all");
+  const linked = initialOpen ? [...(startC ? [startC] : []), ...initial].find((c) => c.id === initialOpen) : undefined;
+  const [show, setShow] = useState<Show>(startC || (linked && !mine(linked)) ? "all" : initial.some(mine) ? "reply" : "all");
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(linked?.id ?? initial.find(mine)?.id ?? initial[0]?.id ?? null);
   const [starting, setStarting] = useState(false);
@@ -99,7 +105,7 @@ export function Inbox({ convos: initial, people, as, me, initialOpen }: { convos
       </aside>
 
       <section className="sx-card ib-thread" aria-label={open ? `Conversation with ${open.name}` : "Conversation"}>
-        {open ? <Thread key={open.id} c={open} as={as} onSend={send} onDone={done} onBack={() => setPhoneList(true)} /> : <p className="pt-empty">Choose a conversation, or start a new one.</p>}
+        {open ? <Thread key={open.id} c={open} as={as} onSend={send} onDone={done} onBack={() => setPhoneList(true)} draft={startC && open.id === startC.id ? startWith?.draft : undefined} /> : <p className="pt-empty">Choose a conversation, or start a new one.</p>}
       </section>
 
       {starting && <NewMessage people={people} onPick={start} onClose={() => setStarting(false)} />}
@@ -107,11 +113,11 @@ export function Inbox({ convos: initial, people, as, me, initialOpen }: { convos
   );
 }
 
-function Thread({ c, as, onSend, onDone, onBack }: { c: Convo; as: StaffRole; onSend: (c: Convo, text: string, via: string) => void; onDone: (c: Convo, why: string) => void; onBack: () => void }) {
+function Thread({ c, as, onSend, onDone, onBack, draft }: { c: Convo; as: StaffRole; onSend: (c: Convo, text: string, via: string) => void; onDone: (c: Convo, why: string) => void; onBack: () => void; /** Drafted on a Today card. */ draft?: string }) {
   const canText = c.channel !== "Email" && !!c.phone;
   const canEmail = c.channel !== "Text" && !!c.email;
   const [via, setVia] = useState<"Text" | "Email">(canText || !canEmail ? "Text" : "Email");
-  const [text, setText] = useState(c.needsReply ? c.quick?.[0] ?? "" : "");
+  const [text, setText] = useState(draft || (c.needsReply ? c.quick?.[0] ?? "" : ""));
   const [others, setOthers] = useState(false);
   const yours = c.needsReply && c.owner === as;
   return (

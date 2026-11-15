@@ -239,3 +239,12 @@ export interface FaqItem { q: string; a: string }
 export interface FaqGroup { title: string; items: FaqItem[] }
 
 export const telHref = (n: string) => "tel:+1" + n.replace(/\D/g, "");
+
+/**
+ * Who has to say yes before a family member can come: the resident (asked on their action page or by text), staff, or
+ * both. Set on the event. Family events and anything with limited seats need both; a family member joining an
+ * ordinary resident activity needs only the resident.
+ */
+export type FamilyOk = "resident" | "staff" | "both";
+export const familyOkLabel: Record<FamilyOk, string> = { resident: "The resident says yes", staff: "Staff approve", both: "The resident says yes, then staff approve" };
+export const familyOkOf = (e: { kind?: EventKind; cap?: number; familyOk?: FamilyOk }): FamilyOk => e.familyOk ?? (e.kind === "family" || e.cap ? "both" : "resident");

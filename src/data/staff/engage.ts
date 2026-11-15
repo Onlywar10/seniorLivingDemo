@@ -9,7 +9,6 @@ import { kindOf, type CalEvent, type Cat } from "@/data/shared";
 import { addDays, dayShort, fmtTime, fromIso, hash, iso, nowMinutes, shortDate, today } from "@/lib/clock";
 import { getStaffData } from "./index";
 import { ago, type StaffData } from "./shared";
-import { weekNumbers } from "./week";
 import { surveyConcern, surveyThanks } from "./surveys";
 
 const first = (n = "") => n.split(" ")[0];
@@ -403,19 +402,15 @@ export function handledByAI(slug: CommunitySlug): Handled[] {
 export interface Review { id: string; kind: "newsletter" | "import" | "menus" | "captions"; title: string; detail: string; href: string; for: string[]; due: string; flagged: number }
 
 export function readyToReview(slug: CommunitySlug): Review[] {
-  const wk = weekNumbers(slug);
   const t = today();
   const next = addDays(t, 30 - t.getUTCDate() + 2);
   const month = next.toLocaleString("en-US", { month: "long", timeZone: "UTC" });
   const sunday = addDays(t, (7 - t.getUTCDay()) % 7 || 7);
-  // The newsletter is built on Thursday: Monday to Wednesday there's nothing to review yet.
-  const built = ![1, 2, 3].includes(t.getUTCDay());
   return [
-    ...(built ? [{ id: "rv-news", kind: "newsletter" as const, title: "This week’s newsletter is ready", detail: `Kinlight wrote it from this week’s ${wk.activities} activities and ${wk.photos} photos, next week’s events and the menu highlights. Sends ${dayShort(sunday)} at 5 pm.`, href: "/staff/newsletter", for: ["manager"], due: `Sends ${dayShort(sunday).split(",")[0]} 5 pm`, flagged: 0 }] : []),
+    // The newsletter is a task for the activities director (todaySignals), approved as one issue: stories, photos, captions.
     // Importing a calendar now happens in Post (Import), where the changes are confirmed as they're read.
     { id: "rv-import", kind: "import", title: `The ${month} calendar, read from paper`, detail: `312 events read, 6 to check. 41 repeating activities spotted.`, href: "/staff/post?type=import", for: [], due: `Before ${shortDate(addDays(next, -1))}`, flagged: 6 },
     { id: "rv-menus", kind: "menus", title: "Coming up: next week’s menus", detail: "Already filled from each restaurant’s template. 2 things to check: a dietary tag and one line of the chef’s text.", href: "/staff/menus", for: [] /* the kitchen sees "For you in Menus" on Today instead */, due: `Before ${dayShort(sunday).split(",")[0]}`, flagged: 2 },
-    { id: "rv-captions", kind: "captions", title: "Photo captions to check", detail: "Kinlight captioned 12 photos from today’s activities. 1 mentions a name to confirm.", href: "/staff/calendar?photos=1", for: [], due: "Today", flagged: 1 },
   ];
 }
 

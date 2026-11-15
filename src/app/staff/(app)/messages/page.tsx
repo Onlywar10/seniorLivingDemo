@@ -11,16 +11,17 @@ import { getStaffCommunity } from "@/data/staff/server";
 export const metadata: Metadata = { title: "Communications" };
 
 /** Every text and email conversation with families and residents, and replying to them. */
-export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ open?: string }> }) {
+export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ open?: string; to?: string; draft?: string }> }) {
   const { as, access } = await sectionAccess("messages");
   if (!access) return <NotYours section="Communications" />;
   const sc = await getStaffCommunity();
   if (!sc) return <PickCommunity screen="Communications" />;
   const { convos, people } = inbox(sc.s.slug, as);
+  const q = await searchParams;
   return (
     <>
       <PageHead title="Communications" sub={access === "assigned" ? "Conversations assigned to you, by text and email." : "Every conversation with families and residents, by text and email."} />
-      <Inbox convos={convos} people={people} as={as} me={viewer(sc.s.slug, as).name} initialOpen={(await searchParams).open} />
+      <Inbox convos={convos} people={people} as={as} me={viewer(sc.s.slug, as).name} initialOpen={q.open} startWith={q.to ? { to: q.to, draft: q.draft ?? "" } : undefined} />
     </>
   );
 }

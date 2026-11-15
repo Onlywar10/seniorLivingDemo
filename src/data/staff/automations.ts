@@ -431,8 +431,8 @@ function allDefsOf(x: Ctx): Omit<AutoDef, "impact" | "reach">[] {
         zh: "{community}：您的参观已预约在{day}{time}，由 {rep} 接待。午餐由我们招待。地址：{address}。需要更改？请回复此短信或致电 {phone}。",
       },
       variants: {
-        reminder: { label: "Day before", text: { en: "Reminder from {community}: we’ll see you tomorrow at {time}. Park by the main entrance and ask for {rep} at the front desk.", es: "Recordatorio de {community}: le esperamos mañana a las {time}. Estacione junto a la entrada principal y pregunte por {rep} en la recepción.", zh: "{community} 提醒：我们明天{time}恭候您。请在主入口旁停车，并到前台找 {rep}。" } },
-        thanks: { label: "After the tour", text: { en: "Thank you for visiting {community} today, {first name}. It was lovely to meet you. Questions? Reply here or call {phone}.", es: "Gracias por visitar {community} hoy, {first name}. Fue un gusto conocerle. ¿Preguntas? Responda aquí o llame al {phone}.", zh: "{first name}，感谢您今天参观 {community}，很高兴认识您。有任何问题请回复此短信或致电 {phone}。" } },
+        reminder: { label: "Day before", text: { en: "Reminder from {community}: we’ll see you tomorrow at {time}. Park by the main entrance and ask for {rep} at the front desk. When you arrive, reply HERE so we know you’re in.", es: "Recordatorio de {community}: le esperamos mañana a las {time}. Estacione junto a la entrada principal y pregunte por {rep} en la recepción. Al llegar, responda AQUÍ para saber que ya está aquí.", zh: "{community} 提醒：我们明天{time}恭候您。请在主入口旁停车，并到前台找 {rep}。到达时请回复“到了”，让我们知道您已到。" } },
+        thanks: { label: "After the tour (once they’ve checked in)", text: { en: "Thank you for visiting {community} today, {first name}. It was lovely to meet you. Questions? Reply here or call {phone}.", es: "Gracias por visitar {community} hoy, {first name}. Fue un gusto conocerle. ¿Preguntas? Responda aquí o llame al {phone}.", zh: "{first name}，感谢您今天参观 {community}，很高兴认识您。有任何问题请回复此短信或致电 {phone}。" } },
       },
       subject: { en: "Your tour of {community}", es: "Su visita a {community}", zh: "您的 {community} 参观预约" },
     },
@@ -1153,28 +1153,16 @@ export function automationProblems(slug: CommunitySlug): Problem[] {
       });
     }
     if (r.status === "opted-out") {
-      // Did that leave the family with no way to be reached by text?
-      const res = r.resident;
-      const others = res ? [...ppl.values()].filter((q) => q.kind === "family" && q.resident === res && q.name !== r.to && q.text) : [];
-      const stillEmail = !!p?.mail;
-      const nobody = p?.kind === "family" && others.length === 0 && !stillEmail;
+      // Not a task for anyone: STOP is honoured at once and marked on their record. Shown here so staff can see it.
       out.push({
-        id: `pb-stop-${r.to}`, kind: nobody ? "unreachable" : "opted-out", who: r.to, rel: r.rel, resident: r.resident,
-        title: nobody ? `${first(res)}’s family can’t be reached` : `${r.to} opted out of texts`,
-        detail: nobody
-          ? `${r.to} replied STOP to “${name}”. They were the only family member on file who takes texts, and has no email, so nobody can reach ${first(res)}’s family by text now. A call to check how they’d like to hear from us?`
-          : `Replied STOP to “${name}”. Kinlight confirmed it and won’t text them again.${stillEmail ? " They still get email." : ""}`,
-        // A family nobody can reach is an operations problem, not an activities one: it goes to the executive director.
-        when: whenOf(r.reply?.at ?? r.at), at: r.reply?.at ?? r.at, owner: nobody ? "manager" : owner, ownerName: nm(nobody ? "manager" : owner), action: nobody ? "call" : "done", phone: p?.phone, email: p?.email, auto: r.auto,
+        id: `pb-stop-${r.to}`, kind: "opted-out", who: r.to, rel: r.rel, resident: r.resident,
+        title: `${r.to} opted out of texts`,
+        detail: `Replied STOP to “${name}”. Marked on their record: no automatic texts. Kinlight won’t text them again unless they reply START.${p?.mail ? " They still get email." : ""}`,
+        when: whenOf(r.reply?.at ?? r.at), at: r.reply?.at ?? r.at, owner, ownerName: nm(owner), action: "done", phone: p?.phone, email: p?.email, auto: r.auto,
       });
     }
   }
   return out.sort((a, b) => b.at - a.at);
-}
-
-/** Families nobody can reach by text any more, for the resident's owner's Today ("Can't reach"). */
-export function unreachableFamilies(slug: CommunitySlug) {
-  return automationProblems(slug).filter((p) => p.kind === "unreachable");
 }
 
 /* ------------------------------------------------------------ the next 24 hours */

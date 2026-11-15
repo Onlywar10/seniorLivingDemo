@@ -804,7 +804,7 @@ export function buildBands(slug: CommunitySlug): Band[] {
           hook: "The front desk’s part. Questions from the website arrive with one acknowledgement already sent, and a person answers; nothing follows up automatically. Tours booked online are counted on the day, and marking an apartment available tells the waitlist.",
           steps: [
             { id: "s-leads-alert", scene: "bell", label: "A question comes in", actor: "auto", via: "Alert", when: "Acknowledgement already sent", text: "Question: Laura", preview: phones(x.alertsSales) },
-            { id: "s-leads-call", scene: "list", label: "Count the day’s tours", actor: "staff", when: "Did it happen?", preview: tTours },
+            { id: "s-leads-call", scene: "list", label: "A tour with no check-in", actor: "staff", when: "Came, or a no-show?", preview: tTours },
             { id: "s-leads-mark", scene: "home", label: "Mark an apartment available", actor: "staff", via: "Staff workspace", preview: tApartments },
             { id: "s-leads-wait", scene: "send", label: "The waitlist is told", actor: "auto", text: `${plan.waitlist} on the list`, preview: tWaitlist, next: { tab: "prospect", flow: "p-wait", text: "What they get" } },
           ],

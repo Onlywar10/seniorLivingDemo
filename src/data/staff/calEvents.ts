@@ -3,12 +3,12 @@
 // Server only (reads the community's staff data).
 import type { CommunitySlug } from "@/data/communities";
 import { communities } from "@/data/communities";
-import { cats, isLantern, kindOf, type EventKind } from "@/data/shared";
+import { cats, isLantern, kindOf, type EventKind, type FamilyOk } from "@/data/shared";
 import { rsvpFor, getStaffData } from "./index";
 import { attendance, eventRequests, suggestions } from "./alpha";
 import { checkIns, engagement, eventInterests, invitesFor, photosWanted } from "./engage";
 import { cameTo } from "./post";
-import { WEEKDAYS, hash, iso, today } from "@/lib/clock";
+import { WEEKDAYS, addDays, hash, iso, today } from "@/lib/clock";
 import { demoTripPlan, demoTripStops, isDemoTrip } from "@/data/communities/demoTrip";
 
 export interface Booking { name: string; via: string }
@@ -41,6 +41,8 @@ export interface CalEvent {
   idea?: string;
   /** Waiting for the approver (it has a price). */
   approval?: boolean;
+  /** Who says yes before a family member can come (unset: the default for its kind, see familyOkOf). */
+  familyOk?: FamilyOk;
   cancelled?: boolean;
   /** Running late: how many minutes. */
   late?: number;
@@ -218,4 +220,20 @@ export function leaders(slug: CommunitySlug): string[] {
 export function inviteData(slug: CommunitySlug): { lantern: string[]; interestsOf: Record<string, string[]> } {
   const s = getStaffData(slug);
   return { lantern: s.lanternNames, interestsOf: Object.fromEntries(Object.values(engagement(slug)).map((r) => [r.name, r.interests])) };
+}
+
+/**
+ * An event someone sent for approval, as it will be on the calendar: its next date on that weekday. Opened from the
+ * approver's Today card, in the same form as any event, with Approve and Send back above it.
+ */
+export function pendingEvent(slug: CommunitySlug, approvalId: string): CalEvent | undefined {
+  const a = getStaffData(slug).approvals.find((x) => x.id === approvalId);
+  if (!a?.event) return undefined;
+  const t = today();
+  const x = a.event;
+  const date = iso(addDays(t, (x.day - t.getUTCDay() + 7) % 7 || 7));
+  return {
+    id: `pending-${a.id}`, date, start: x.start, end: x.end, title: a.title, room: x.room, cat: x.cat, color: cats[x.cat].color, catLabel: cats[x.cat].label,
+    kind: x.kind, cap: x.cap, taken: x.cap ? 0 : undefined, booked: x.cap ? [] : undefined, desc: x.desc, approval: true, wanted: true, photos: a.photo ? [a.photo] : undefined,
+  };
 }

@@ -539,3 +539,54 @@ button.ep-ev[aria-pressed="true"] { outline: 2px solid var(--green-deep); outlin
 
 .oc-short { grid-column: 1 / -1; margin: 0; }
 .oc-short span { font-size: 14px; }
+
+/* An event waiting for approval: who sent it, then Approve or Send back, above the event's form. */
+.po-approve { display: grid; gap: 12px; margin-bottom: 16px; border-left: 4px solid var(--sx-warn); }
+.po-approve.done { border-left-color: var(--sx-good); }
+.po-approve-h { display: flex; gap: 14px; align-items: flex-start; }
+.po-approve-h img { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; flex: none; }
+.po-approve-h p { margin: 0 0 4px; }
+.po-approve-back label { display: grid; gap: 6px; }
+@media (max-width: 560px) { .po-approve-h { flex-direction: column; } .po-approve-h img { width: 100%; height: 140px; } }
+
+/* Post → Time: the calendar at the side, while the form stays usable. On a wide screen the page makes room for it. */
+.po-calbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sc-side { position: fixed; top: 0; right: 0; bottom: 0; z-index: 70; width: min(400px, 100%); background: var(--sx-card); border-left: 1px solid var(--sx-line); box-shadow: -16px 0 32px -24px rgba(0, 0, 0, 0.35); display: grid; grid-template-rows: auto auto 1fr auto; animation: drawerIn 0.25s var(--ease); }
+@media (min-width: 1100px) { body.po-cal-open .sx-page { padding-right: 424px; } }
+.sc-h { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; }
+.sc-h h2 { margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+.sc-bar { display: grid; gap: 10px; padding: 6px 16px 12px; border-bottom: 1px solid var(--sx-line-2); }
+.sc-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sc-nav b { font-size: 15px; text-align: center; }
+.sc-back { justify-self: start; }
+.sc-b { overflow-y: auto; padding: 12px 16px; display: grid; gap: 12px; align-content: start; }
+.sc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sc-list li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--sx-soft); font-size: 14px; }
+.sc-list li span:last-child { display: grid; gap: 2px; min-width: 0; }
+.sc-list small { color: var(--sx-ink-2); font-size: 12.5px; }
+.sc-list .sc-t { color: var(--sx-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sc-list li.mine { background: var(--sx-good-tint); outline: 2px solid var(--sx-good); }
+.sc-list li.clash { background: var(--sx-warn-tint); outline: 1px solid var(--sx-warn); }
+.sc-list.compact li { grid-template-columns: 70px minmax(0, 1fr); padding: 5px 8px; font-size: 13px; }
+.sc-list.compact b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-none { margin: 0; color: var(--sx-ink-3); font-size: 13px; }
+.sc-use { justify-self: start; }
+.sc-week { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.sc-week > li { display: grid; gap: 6px; }
+.sc-week > li.sel .sc-wd b { text-decoration: underline; text-underline-offset: 3px; }
+.sc-wd { all: unset; cursor: pointer; display: flex; gap: 6px; align-items: baseline; font-size: 14px; }
+.sc-wd span { color: var(--sx-ink-2); font-size: 13px; }
+.sc-wd:focus-visible { outline: 2px solid var(--sx-ink-3); outline-offset: 2px; border-radius: 4px; }
+.sc-month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.sc-mh { text-align: center; font-size: 12px; color: var(--sx-ink-2); padding-bottom: 2px; }
+.sc-day { aspect-ratio: 1; border: 1px solid var(--sx-line-2); border-radius: 8px; background: var(--sx-card); display: grid; align-content: space-between; justify-items: start; padding: 5px 6px; font: inherit; font-size: 13px; cursor: pointer; color: inherit; }
+.sc-day small { justify-self: end; font-size: 11px; color: var(--sx-ink-2); }
+.sc-day.out { opacity: 0.45; }
+.sc-day.today span { font-weight: 700; }
+.sc-day.sel { border-color: var(--sx-ink); border-width: 2px; }
+.sc-day.mine { background: var(--sx-good-tint); }
+.sc-day:hover, .sc-day:focus-visible { border-color: var(--sx-ink-3); }
+.sc-foot { margin: 0; padding: 10px 16px 14px; border-top: 1px solid var(--sx-line-2); }
+/* Calendar → Add: the form is in a slide-out, so the calendar sits just left of it (over it on a narrow screen). */
+.sc-side.in-drawer { z-index: 90; }
+@media (min-width: 1040px) { .sc-side.in-drawer { right: min(620px, 100%); border-right: 1px solid var(--sx-line); } }

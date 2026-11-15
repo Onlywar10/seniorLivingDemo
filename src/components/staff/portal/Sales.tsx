@@ -85,15 +85,16 @@ export function Waitlist({ plans }: { plans: WaitPlan[] }) {
 
 /* ------------------------------------------------------------ tour count (front desk) */
 
-export interface TourCountRow { id: string; who: string; interest: string; source: string; day: string; time: string; done: boolean }
+export interface TourCountRow { id: string; who: string; interest: string; source: string; day: string; time: string; done: boolean; /** "Checked in 10:24 am": counted automatically. */ checkedIn?: string }
 
-/** This week's tours, booked through the website chat and the tour page. Only whether each one happened: no notes. */
+/** This week's tours, booked through the website chat and the tour page. A check-in counts a tour by itself; one with
+ * no check-in asks whether they came. No notes about the visitor. */
 export function TourCount({ tours, month }: { tours: TourCountRow[]; month: { label: string; now: number; prev: number; prevLabel: string } }) {
   const [came, setCame] = useState<Record<string, boolean>>({});
   const counted = Object.values(came).filter(Boolean).length;
   const mark = (t: TourCountRow, v: boolean) => {
     setCame((c) => ({ ...c, [t.id]: v }));
-    say(v ? `Counted: ${t.who}’s tour. ${month.label}: ${month.now + counted + 1} tours.` : `Noted: ${t.who} didn’t come.`, () => setCame((c) => { const n = { ...c }; delete n[t.id]; return n; }));
+    say(v ? `Counted: ${t.who}’s tour. ${month.label}: ${month.now + counted + 1} tours.` : `Noted: ${t.who} was a no-show.`, () => setCame((c) => { const n = { ...c }; delete n[t.id]; return n; }));
   };
   return (
     <>
@@ -110,14 +111,15 @@ export function TourCount({ tours, month }: { tours: TourCountRow[]; month: { la
               <div className={`pt-tour${t.done ? " done" : ""}`}>
                 <time>{t.time}</time>
                 <span><b>{t.who}</b><small>{t.interest} · {t.source}</small></span>
-                {t.done && (
+                {t.checkedIn && !(t.id in came) && <span className="pt-outcome"><Badge tone="good"><Icon name="check" /> {t.checkedIn} · counted</Badge></span>}
+                {t.done && !t.checkedIn && (
                   <span className="pt-outcome">
                     {t.id in came ? (
-                      <Badge tone={came[t.id] ? "good" : "neutral"}><Icon name={came[t.id] ? "check" : "x"} /> {came[t.id] ? "Counted" : "Didn’t come"}</Badge>
+                      <Badge tone={came[t.id] ? "good" : "neutral"}><Icon name={came[t.id] ? "check" : "x"} /> {came[t.id] ? "Counted" : "No-show"}</Badge>
                     ) : (
-                      <span className="sx-seg" role="group" aria-label={`Did ${t.who}’s tour happen?`}>
-                        <button type="button" onClick={() => mark(t, true)}>It happened</button>
-                        <button type="button" onClick={() => mark(t, false)}>Didn’t come</button>
+                      <span className="sx-seg" role="group" aria-label={`No check-in for ${t.who}: did they come?`}>
+                        <button type="button" onClick={() => mark(t, true)}>They came</button>
+                        <button type="button" onClick={() => mark(t, false)}>No-show</button>
                       </span>
                     )}
                   </span>
@@ -129,4 +131,13 @@ export function TourCount({ tours, month }: { tours: TourCountRow[]; month: { la
       )}
     </>
   );
+}
+
+/** Today on the front desk: tap Arrived when a visitor walks in, and the tour counts itself. */
+export function TourArrived({ who, checkedIn, started, ended }: { who: string; checkedIn?: string; started: boolean; ended: boolean }) {
+  const [here, setHere] = useState(false);
+  if (checkedIn) return <Badge tone="good"><Icon name="check" /> {checkedIn}</Badge>;
+  if (here) return <Badge tone="good"><Icon name="check" /> Arrived</Badge>;
+  if (ended) return <Badge tone="warn">No check-in</Badge>;
+  return <button type="button" className="sx-btn sx-btn-sm" onClick={() => { setHere(true); say(`${who} is here. The tour is counted.`, () => setHere(false)); }}>{started ? "Arrived" : "Arrived early"}</button>;
 }

@@ -17,7 +17,8 @@ export const metadata: Metadata = { title: "Surveys" };
 
 /**
  * Surveys: staff make, send and repeat their own surveys, the way they make an event. The administrator and approvers
- * make any survey; area owners make surveys for their own area (dining, Lantern). Results are in Reports.
+ * make any survey; area owners make surveys for their own area (dining, Lantern); everyone else makes their own.
+ * Results are in Reports.
  */
 export default async function SurveysPage() {
   const { as, access } = await sectionAccess("surveys");
@@ -30,7 +31,7 @@ export default async function SurveysPage() {
   const approver = s.people[s.roles.approver]?.name ?? "";
   return (
     <>
-      <PageHead title="Surveys" sub={area === "all" ? `Ask residents, families and staff at ${s.brand.name}. Results are in Reports.` : `Surveys for ${area === "dining" ? "dining" : area === "lantern" ? "Lantern" : "your area"} at ${s.brand.name}. Results are in Reports.`}>
+      <PageHead title="Surveys" sub={area === "all" ? `Ask residents, families and staff at ${s.brand.name}. Results are in Reports.` : area ? `Surveys for ${area === "dining" ? "dining" : area === "lantern" ? "Lantern" : "your area"} at ${s.brand.name}. Results are in Reports.` : `Your own surveys at ${s.brand.name}: make one, send it, and see the answers under Results.`}>
         <Help label="How surveys work" align="end">
           <p>Each survey is a short invitation by text or email with a personal link to a survey page. No app, no login. A printed copy with a QR code is ready for anyone who prefers paper, and staff can read it aloud.</p>
           <p>A new survey goes to {approver.split(" ")[0]} once before it first sends. Approved templates send without asking again.</p>

@@ -31,7 +31,8 @@ const info: Record<Section, { href: string; label: string; icon?: IconName; x?: 
   people: { href: "/staff/people", label: "People", icon: "users", hint: "Residents and families" },
   feedback: { href: "/staff/feedback", label: "Feedback", icon: "heart", hint: "Ideas, concerns, thank-yous" },
   surveys: { href: "/staff/surveys", label: "Surveys", icon: "list", hint: "Ask residents, families and staff" },
-  prospects: { href: "/staff/prospects", label: "Apartments", x: "door", hint: "Availability, waitlist, tours" },
+  prospects: { href: "/staff/prospects", label: "Apartments", x: "door", hint: "Availability and the waitlist" },
+  tours: { href: "/staff/tours", label: "Tours", icon: "users", hint: "Who's visiting, and who came" },
   reports: { href: "/staff/reports", label: "Reports", icon: "chart", hint: "Read monthly" },
   settings: { href: "/staff/settings", label: "Settings", x: "shield", hint: "Team, alerts, print" },
 };

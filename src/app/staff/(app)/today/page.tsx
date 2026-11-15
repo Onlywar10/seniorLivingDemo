@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TourArrived } from "@/components/staff/portal/Sales";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { OpenCommunity } from "@/components/staff/portal/OpenCommunity";
@@ -14,7 +15,7 @@ import { placements } from "@/data/staff/areas";
 import { surveySignals } from "@/data/staff/surveys";
 import { diningRequests } from "@/data/staff/dining";
 import { getAlertRules, getAreaState, getStaffCommunity, getStaffRole } from "@/data/staff/server";
-import { accessOf, type StaffRole } from "@/data/staff/shared";
+import { accessOf, type StaffRole, tourCheckIns } from "@/data/staff/shared";
 import { counts, groupOf } from "@/data/staff/signals";
 import { didThisWeek, weekNumbers } from "@/data/staff/week";
 import { dayName, fmtTime, fromIso, greeting, iso, longDate, nowMinutes, today } from "@/lib/clock";
@@ -56,18 +57,19 @@ export default async function TodayPage() {
 
   /* ---------- Your day, by role */
   const tours = s.tours.filter((x) => x.days === 0).sort((a, b) => a.time - b.time);
+  const ins = tourCheckIns(s.tours, now);
   const reqs = diningRequests(slug).requests;
   const mealGuests = reqs.filter((r) => (r.kind === "guest" || r.kind === "family" || r.kind === "reservation") && r.meal?.startsWith(todayShort) && r.status !== "waitlist");
   const holidayAsks = reqs.filter((r) => r.kind === "holiday");
   const buses = calendarEvents(slug, t, 2).filter((e) => !e.cancelled && (e.stops?.length || e.cat === "trips") && (e.date > iso(t) || e.start > now - 30)).slice(0, 4);
   const toursCard = (
     <section className="sx-card pt-tcard" aria-labelledby="pt-tours-h">
-      <header className="pt-tcard-h"><h2 id="pt-tours-h">Tours today</h2></header>
+      <header className="pt-tcard-h"><h2 id="pt-tours-h">Tours today</h2><Link className="sx-link" href="/staff/tours">All tours</Link></header>
       <ul className="pt-week">
         {tours.map((x) => (
           <li key={x.who}>
             <span><b>{fmtTime(x.time)} · {x.who}</b><small>{x.interest}{x.for ? ` · for ${x.for}` : ""} · with {s.people[x.with]?.name.split(" ")[0] ?? "the team"}{x.lunch ? " · staying for lunch" : ""}</small></span>
-            <span>{x.time + 60 <= now ? <Badge tone="good">Done</Badge> : <Badge tone="info">{x.time <= now ? "On now" : "Later"}</Badge>}</span>
+            <span><TourArrived who={x.who} checkedIn={ins.has(x.who) ? `Checked in ${fmtTime(ins.get(x.who)!.at)}` : undefined} started={x.time <= now} ended={x.time + 60 <= now} /></span>
           </li>
         ))}
         {!tours.length && <li><span className="sx-hint">No tours today.</span></li>}

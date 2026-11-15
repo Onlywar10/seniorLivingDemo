@@ -10,7 +10,7 @@ import { celebrations, thankYous, welcomes } from "./engage";
 import { getStaffData } from "./index";
 import { residents, type ResidentRecord } from "./portal";
 import { residentProfile } from "./resident";
-import { rsvpFor } from "./shared";
+import { rsvpFor, type StaffRole } from "./shared";
 import { weekNumbers } from "./week";
 
 const first = (n = "") => n.split(" ")[0];
@@ -42,7 +42,12 @@ export interface Story {
   sign?: string;
   /** A person already changed it: their text, and when. The original stays in `text`. */
   changed?: { by: string; text: string; when: string };
+  /** Whose section it is: they check and approve it. Events and activities are the activities director's; the menu is
+   * the kitchen's; the director's note and the team spotlight are the executive director's. */
+  owner?: StaffRole;
 }
+
+const ownerOfKind = (k: StoryKind): StaffRole => (k === "menu" ? "kitchen" : k === "note" || k === "team" ? "manager" : "events");
 
 /** One resident's week for their family's email: photos they're in and activities they came to this week (from their
  * page in People), and what they're booked on next week. */
@@ -110,6 +115,8 @@ export interface Issue {
   weekLabel: string;
   approver: string;
   approverFirst: string;
+  /** Who owns each section, by name. */
+  owners: Record<"events" | "kitchen" | "manager", string>;
   /** "building": Sunday evening to Wednesday, the draft so far (it builds on Thursday). "ready": built, on or before today. */
   timeline: { built: string; card: string; sends: string; sendsShort: string; afterLabel: string; stage: "building" | "ready" };
   stories: Story[];
@@ -262,7 +269,8 @@ export function newsletter(slug: CommunitySlug): Issue {
   const nextStart = sunday;
   const chef = s.people[s.roles.menus].name;
   const editor = s.people[s.roles.calendar].name;
-  const approver = s.people[s.roles.approver].name;
+  // The activities director approves it: it is made from their events and photos.
+  const approver = s.people[s.roles.calendar].name;
   const done = (e: CalEvent) => e.date < iso(t) || (e.date === iso(t) && (e.end ?? e.start + 60) <= now);
 
   const wk = weekNumbers(slug);
@@ -543,7 +551,8 @@ export function newsletter(slug: CommunitySlug): Issue {
       sendsShort: iso(sunday) === iso(t) ? "today at 5 pm" : iso(sunday) === iso(addDays(t, 1)) ? "tomorrow at 5 pm" : `${dayName(sunday)} at 5 pm`,
       afterLabel: `${dayShort(addDays(sunday, 1))}`, stage: ready ? "ready" : "building",
     },
-    stories, readers, addable,
+    stories: stories.map((x) => ({ ...x, owner: ownerOfKind(x.kind) })), readers, addable: addable.map((a) => ({ ...a, story: { ...a.story, owner: "events" as const } })),
+    owners: { events: editor, kitchen: chef, manager: s.people[s.roles.approver].name },
     used: {
       activities: thisWeek.filter((e) => e.cat !== "faith" && e.cat !== "movies").length, photos: week.reduce((n, a) => n + a.photos, 0), photoEvents: week.length,
       stories: stories.length, next: pub.length, family: familyEvents.length, menus: `${c.venueOrder.length} restaurants`,

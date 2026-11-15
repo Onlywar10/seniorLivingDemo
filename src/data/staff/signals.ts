@@ -22,7 +22,7 @@ export type SignalKey =
   | "attendance" | "clash" | "few-signups" | "photos" | "idea" | "thanks"
   | "message" | "sales-lead" | "unreachable" | "sent-back" | "import-check"
   | "menu-missing" | "menu-checks" | "dining-request" | "holiday-menu"
-  | "page-due" | "price-change" | "tour" | "waitlist" | "promise" | "unseen" | "try-new" | "survey-approve" | "survey-closing" | "survey-results";
+  | "page-due" | "price-change" | "tour" | "waitlist" | "promise" | "unseen" | "try-new" | "lapsed" | "survey-approve" | "survey-closing" | "survey-results";
 
 export interface SignalRule {
   key: SignalKey;
@@ -51,14 +51,12 @@ export const SIGNALS: SignalRule[] = [
   { key: "idea", label: "Resident idea", section: "Feedback", to: "events", level: "active", text: false },
   { key: "thanks", label: "A thank-you", section: "Feedback", to: "owner", level: "passive", text: false },
   { key: "message", label: "Message to answer", section: "Communications", to: "owner", level: "active", text: false },
-  { key: "unreachable", label: "Can’t reach", section: "Automations", to: "owner", level: "active", text: false },
   { key: "sent-back", label: "Sent back to you", section: "Post", to: "owner", level: "active", text: false },
   { key: "import-check", label: "Import to check", section: "Post", to: "owner", level: "active", text: false },
   { key: "menu-missing", label: "Menu not up", section: "Menus", to: "kitchen", level: "time", text: true },
   { key: "menu-checks", label: "Menu checks", section: "Menus", to: "kitchen", level: "active", text: false },
   { key: "dining-request", label: "Dining request", section: "Menus", to: "kitchen", level: "active", text: false },
   { key: "holiday-menu", label: "Holiday menu", section: "Menus", to: "manager", level: "active", text: false },
-  { key: "page-due", label: "Page to update", section: "Website", to: "owner", level: "active", text: false },
   { key: "price-change", label: "Price change", section: "Website", to: "manager", level: "active", text: false },
   { key: "inquiry", label: "Question about living here", section: "Communications", to: "desk", level: "active", text: false },
   { key: "tour", label: "Tours to count", section: "Apartments", to: "desk", level: "active", text: false },
@@ -70,6 +68,7 @@ export const SIGNALS: SignalRule[] = [
   { key: "survey-results", label: "Survey results are in", section: "Surveys", to: "owner", level: "passive", text: false },
   { key: "unseen", label: "Haven’t seen lately", section: "People", to: "owner", level: "active", text: false },
   { key: "try-new", label: "Might enjoy", section: "People", to: "owner", level: "active", text: false },
+  { key: "lapsed", label: "Hasn’t been lately (an interest)", section: "People", to: "owner", level: "active", text: false },
 ];
 export const signalOf = (k: SignalKey) => SIGNALS.find((s) => s.key === k)!;
 

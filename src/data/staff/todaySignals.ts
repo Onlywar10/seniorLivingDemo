@@ -4,21 +4,22 @@
 // isn't done. Everything comes from the demo's own data; signals with no data (a post sent back, failing texts, a
 // menu missing at 5 am) simply don't appear. Server Components only.
 import type { CommunitySlug } from "@/data/communities";
-import { addDays, dayShort, fmtTime, fromIso, iso, nowMinutes, today } from "@/lib/clock";
-import { promises, suggestions } from "./alpha";
+import { addDays, dayName, dayShort, fmtTime, fromIso, iso, nowMinutes, today } from "@/lib/clock";
+import { promises } from "./alpha";
+import { engagement } from "./engage";
 import { calendarEvents } from "./calEvents";
 import { diningRequests } from "./dining";
 import { getStaffData } from "./index";
 import { menuBoard } from "./menus";
 import { inbox } from "./messages";
 import type { QItem } from "./portal";
-import { ago, STAFF_ROLES, type StaffRole } from "./shared";
-import { sitePages } from "./website";
-import { unreachableFamilies } from "./automations";
+import { ago, STAFF_ROLES, tourCheckIns, type StaffRole } from "./shared";
+import { newsletter } from "./newsletter";
 import { surveySignals } from "./surveys";
 
 type Task = Extract<QItem, { kind: "task" }>;
 const first = (n = "") => n.split(" ")[0];
+const hashOf = (x: string) => { let h = 0; for (let i = 0; i < x.length; i++) h = (h * 31 + x.charCodeAt(i)) | 0; return Math.abs(h); };
 
 export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) => StaffRole | undefined, names: Record<StaffRole, string>): QItem[] {
   const s = getStaffData(slug);
@@ -53,7 +54,8 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
       ifNot: "or Reports and “what worked” miss who came",
       help: "Tap the names, scan residents’ check-in cards, or photograph the paper sheet. Families are never told about attendance automatically.",
       due: 1439, dueLabel: "by the end of today",
-      main: { label: "Take attendance", href: evs.length === 1 ? `/staff/calendar?event=${encodeURIComponent(evs[0].id)}&date=${evs[0].date}` : "/staff/calendar" },
+      main: { label: "Take attendance", href: `/staff/calendar?event=${encodeURIComponent(evs[0].id)}&date=${evs[0].date}` },
+      events: evs.map((e) => ({ id: e.id, date: e.date, title: e.title, when: `${dayShort(fromIso(e.date))}, ${fmtTime(e.start)}` })), focus: "attend",
     });
   }
   for (const [r, evs] of byOwner(noPhotos)) {
@@ -65,8 +67,43 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
       why: r === "fitness" && !evs.some((e) => roleOfName(e.leader) === "fitness") ? "You run the fitness classes, and they asked for photos" : "You led it, and it asked for photos", ifNot: "or this week’s newsletter goes without them",
       help: "Kinlight suggests who’s in each photo from who came, checks consent and writes the caption.",
       due: 1439, dueLabel: "by the end of today",
-      main: { label: "Add photos", href: evs.length === 1 ? `/staff/calendar?event=${encodeURIComponent(evs[0].id)}&date=${evs[0].date}&photos=1` : "/staff/calendar?photos=1" },
+      main: { label: "Add photos", href: `/staff/calendar?event=${encodeURIComponent(evs[0].id)}&date=${evs[0].date}&photos=1` },
+      events: evs.map((e) => ({ id: e.id, date: e.date, title: e.title, when: `${dayShort(fromIso(e.date))}, ${fmtTime(e.start)}` })), focus: "photos",
     });
+  }
+
+  /* ---------- People: a resident who likes fitness but hasn't been to a fitness class in three weeks or more. The
+     fitness director is asked whether to send a personal invite to a class coming up; Kinlight drafts the text, and it
+     goes from Communications, from them. Optional: nothing is sent unless they choose to, and families aren't told. */
+  {
+    const eng = engagement(slug);
+    const lantern = new Set(s.lanternNames);
+    const past = calendarEvents(slug, addDays(t, -28), 28).filter((e) => e.cat === "fitness" && !e.lantern && e.date < todayIso);
+    const next = calendarEvents(slug, t, 7)
+      .filter((e) => e.cat === "fitness" && !e.lantern && !e.cancelled && (e.date > todayIso || e.start > now + 120) && (!e.cap || (e.taken ?? 0) < e.cap))
+      .filter((e, i, a) => a.findIndex((x) => x.title === e.title) === i)
+      .slice(0, 3);
+    const lapsed = Object.values(eng)
+      .filter((r) => !lantern.has(r.name) && r.interests.includes("Fitness") && hashOf(r.name + "fit") % 4 === 0)
+      .map((r) => ({ r, days: 21 + (hashOf(r.name) % 19), missed: past[hashOf(r.name) % Math.max(1, past.length)]?.title ?? "the fitness classes" }))
+      .sort((a, b) => b.days - a.days)
+      .slice(0, 2);
+    const from = names.fitness;
+    if (next.length && from) for (const { r, days, missed } of lapsed) {
+      const fn = first(r.name);
+      task({
+        id: `lapsed-fit-${hashOf(r.name)}`, signal: "lapsed", for: ["fitness"], owner: "fitness", about: r.name, type: "Hasn’t been lately", icon: "heart",
+        mins: days * 1440, ago: `${days} days`,
+        title: `${fn} hasn’t been to a fitness class in ${days} days`,
+        context: `Fitness is one of ${fn}’s interests · last came to ${missed}`,
+        why: "You run the fitness classes, and fitness is one of their interests",
+        help: `Kinlight noticed ${fn} hasn’t signed up for or come to a fitness class in ${days} days, though they told us they like it. A personal invite from you often works better than a reminder. Pick a class, change the words if you like, and it opens in Communications to send from you. Nothing is sent unless you send it, and families aren’t told.`,
+        due: 1440 + 17 * 60, dueLabel: "by tomorrow",
+        main: { label: "Review and send" },
+        second: { label: "Not now", done: `Noted. ${fn} won’t come up again for two weeks.` },
+        invite: { resident: r.name, from, team: "the fitness team", missed, events: next.map((e) => ({ id: e.id, date: e.date, title: e.title, day: e.date === todayIso ? "today" : e.date === iso(addDays(t, 1)) ? "tomorrow" : dayName(fromIso(e.date)), time: fmtTime(e.start).replace(":00", ""), room: e.room })) },
+      });
+    }
   }
 
   /* ---------- Calendar: room clashes in the next two days, and events coming up with few sign-ups */
@@ -95,24 +132,13 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
     });
   }
 
-  /* ---------- Feedback: residents' ideas waiting for an answer */
-  const ideas = suggestions(slug).filter((x) => x.status === "New");
-  if (ideas.length) {
-    const oldest = Math.max(...ideas.map((x) => x.days));
-    task({
-      id: "ideas", signal: "idea", for: ["events"], owner: "events", type: "Resident idea", icon: "heart", mins: oldest * 1440,
-      title: ideas.length === 1 ? `“${ideas[0].text}”` : `${ideas.length} resident ideas waiting`,
-      context: ideas.length === 1 ? `From ${ideas[0].who ?? "a resident"}` : "Each one hears back once you reply or put it on the calendar",
-      lines: ideas.length > 1 ? ideas.map((x) => `“${x.text}”${x.who ? ` · ${x.who}` : ""}`) : undefined,
-      why: "You look after residents’ ideas", ifNot: "or residents stop suggesting things",
-      help: "Reply to say thank you, or schedule it: the resident hears “your idea made the calendar”.",
-      due: Math.max(1440 + 17 * 60, (7 - oldest) * 1440 + 17 * 60), main: { label: "Reply or schedule", href: "/staff/feedback?tab=ideas" },
-    });
-  }
+  // Residents' ideas aren't a Today card for now: they wait in Feedback, Ideas.
 
   /* ---------- Communications: questions the AI can't answer, each with one owner by topic */
   const convos = inbox(slug, "manager").convos.filter((c) => c.needsReply && c.owner);
   for (const r of STAFF_ROLES) {
+    // The activities director answers family messages in Communications; there's no Today card for them.
+    if (r === "events") continue;
     const mine = convos.filter((c) => c.owner === r);
     if (!mine.length) continue;
     // Questions from people thinking of living here: the front desk answers them. Kinlight already sent one
@@ -148,20 +174,25 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
     }
   }
 
-  /* ---------- Automations: a family nobody can reach by text any more (they replied STOP, with no email on file) */
-  for (const pb of unreachableFamilies(slug)) {
-    const r = pb.owner;
+  // A family member who replied STOP isn't a card: Kinlight stops texting them at once and marks it on their record
+  // ("No automatic texts: replied STOP"). Staff see it there and in Automations, and nothing needs doing.
+
+  /* ---------- Newsletter: built on Thursday, sent Sunday 5 pm. The activities director approves the issue as a whole:
+     the events Kinlight picked, with the photos and captions it chose. Photo captions aren't a card of their own. */
+  const nl = newsletter(slug);
+  if (nl.timeline.stage === "ready") {
+    const toSun = (7 - t.getUTCDay()) % 7 || 7;
+    const shown = nl.stories.filter((x) => x.owner === "events");
+    const pics = shown.filter((x) => x.photo).length;
     task({
-      id: `unreach-${pb.who}`, signal: "unreachable", for: [r], owner: r, about: pb.resident, type: "Can’t reach", icon: "sms",
-      mins: Math.max(30, now - pb.at),
-      title: `${first(pb.resident)}’s family can’t be reached by text`,
-      context: `${pb.who}, ${pb.rel.toLowerCase()}, replied STOP`,
-      why: "A family nobody can reach is an operations matter, so it comes to you",
-      ifNot: `or ${first(pb.resident)}’s family hears nothing from us: no reminders, no family events`,
-      help: "They were the only family member on file who takes texts. A call to ask how they’d like to hear from us: email, another family member, or texts again (they reply START).",
-      due: 1439, dueLabel: "today",
-      main: { label: "Call them", href: pb.phone ? `tel:+1${pb.phone.replace(/\D/g, "")}` : "/staff/automations?tab=problems", done: `Called about ${first(pb.resident)}’s family` },
-      second: { label: "Open in Automations", href: "/staff/automations?tab=problems" },
+      id: "newsletter", signal: "review", for: ["events"], owner: "events", type: "Newsletter to approve", icon: "check", mins: 60 * 30,
+      title: "Your section of this week’s newsletter",
+      context: `Sends ${nl.timeline.sendsShort} · Kinlight picked ${shown.length} event stories and ${pics} photos, with captions`,
+      lines: shown.map((x) => `${x.title}${x.photo ? " · with a photo" : ""}`),
+      why: "You run the activities, and the newsletter is made from them",
+      ifNot: "or your section sends as Kinlight wrote it",
+      help: "Only the stories about events and activities are yours. The kitchen checks the menu, and the executive director their own note. Change any story, photo or caption of yours, then approve your section.",
+      due: toSun * 1440 + 12 * 60, main: { label: "Open the newsletter", href: "/staff/newsletter?from=card" },
     });
   }
 
@@ -209,36 +240,23 @@ export function todaySignals(slug: CommunitySlug, roleOfName: (name?: string) =>
     });
   }
 
-  /* ---------- Website: pages due for their update, for each page's owner */
-  const pages = sitePages(slug).filter((p) => p.dueIn <= 2);
-  for (const r of STAFF_ROLES) {
-    const mine = pages.filter((p) => p.ownerRole === r);
-    if (!mine.length) continue;
-    const soonest = Math.min(...mine.map((p) => p.dueIn));
-    task({
-      id: `pages-${r}`, signal: "page-due", for: [r], owner: r, type: "Page to update", icon: "globe", mins: 60 * 24,
-      title: mine.length === 1 ? `${mine[0].title} page` : `${mine.length} website pages due`,
-      context: mine.length === 1 ? `Updated ${mine[0].rhythm.toLowerCase()}` : "Each has a rhythm you set",
-      lines: mine.length > 1 ? mine.map((p) => `${p.title} · ${p.dueIn <= 0 ? "due now" : p.dueIn === 1 ? "due tomorrow" : `due in ${p.dueIn} days`}`) : undefined,
-      why: "It’s your page", ifNot: "or it shows out-of-date news to families and visitors",
-      help: "Each page has an owner and a rhythm; Kinlight reminds the owner before it goes stale.",
-      due: Math.max(now + 120, soonest * 1440 + 17 * 60), main: { label: "Update it", href: mine.length === 1 ? `/staff/website?page=${encodeURIComponent(mine[0].id)}` : "/staff/website" },
-    });
-  }
+  // No "page to update" card: the website's pages fill themselves from the calendar, menus and photos.
 
-  /* ---------- Apartments (front desk): today's finished tours, counted. Kinlight doesn't do sales in the alpha, so
-     the only thing asked is whether the tour happened: that's the tour number on the scorecard. The waitlist is told
-     about an opening automatically, so it needs nobody. */
-  const done = s.tours.filter((x) => x.days === 0 && x.time + 60 <= now);
-  if (done.length) {
+  /* ---------- Apartments (front desk): tours count themselves when the visitor checks in (they reply HERE to the
+     reminder, or the desk taps Arrived). Only a finished tour with no check-in comes here: did they come, or was it a
+     no-show? That's the tour number on the scorecard. The waitlist is told about an opening automatically. */
+  const ins = tourCheckIns(s.tours, now);
+  for (const x of s.tours.filter((y) => y.days === 0 && y.time + 60 <= now && !ins.has(y.who))) {
+    const rep = s.people[x.with]?.name.split(" ")[0];
     task({
-      id: "tours-today", signal: "tour", for: ["desk"], owner: "desk", type: "Tours to count", icon: "building", mins: now - (done[0].time + 60),
-      title: done.length === 1 ? `Did ${done[0].who}’s tour happen?` : `Did today’s ${done.length} tours happen?`,
-      context: done.length === 1 ? `${fmtTime(done[0].time)} · ${done[0].interest}` : "Booked through the website chat and the tour page",
-      lines: done.length > 1 ? done.map((x) => `${fmtTime(x.time)} · ${x.who}`) : undefined,
-      why: "You keep the tour count", ifNot: "or this month’s tour number is short",
-      help: "Only whether each tour happened, for the monthly tour number. No notes about the visitor.",
-      due: 1439, main: { label: done.length === 1 ? "It happened" : "Count them", href: "/staff/prospects#tours" },
+      id: `tour-${x.who}`, signal: "tour", for: ["desk"], owner: "desk", type: "No check-in", icon: "building", mins: Math.max(5, now - (x.time + 60)),
+      title: `${x.who} never checked in for their tour`,
+      context: `${fmtTime(x.time)} · ${x.interest}${rep ? ` · with ${rep}` : ""}`,
+      why: "You keep the tour count", ifNot: "or it isn’t in this month’s tour number",
+      help: "Visitors check in by replying HERE to their reminder text, or you tap Arrived when they come in, and the tour counts itself. This one has no check-in, so say whether they came. No notes about the visitor.",
+      due: 1439, dueLabel: "by the end of today",
+      main: { label: "They came", done: `Counted: ${x.who}’s tour.` },
+      second: { label: "No-show", done: `Noted: ${x.who} didn’t come. It isn’t counted.` },
     });
   }
 

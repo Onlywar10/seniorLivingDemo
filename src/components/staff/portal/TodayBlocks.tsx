@@ -293,7 +293,7 @@ export function Activities({ events, acts, me, attendance, open, title = "Today�
       id="pt-sched-h"
       title={title}
       className="pt-sched"
-      help={attendance ? <><p>Tap an activity for who’s booked, attendance (tap list, QR on a phone or tablet, or a photo of the sign-in sheet), photos, and “Something changed”.</p><p>Attendance feeds Reports and “what worked”. Families are never told about it automatically.</p></> : <p>What’s on today, to mention on a tour.</p>}
+      help={attendance ? <><p>Tap an activity for who’s booked, attendance (tap the names, scan residents’ check-in cards, or a photo of the sign-in sheet), photos, and “Something changed”.</p><p>Attendance feeds Reports and “what worked”. Families are never told about it automatically.</p></> : <p>What’s on today, to mention on a tour.</p>}
       action={attendance && myCount ? <small className="pt-tcard-n">{myCount} yours, at the top</small> : undefined}
     >
       <ol className="pt-sched-list pt-acts">

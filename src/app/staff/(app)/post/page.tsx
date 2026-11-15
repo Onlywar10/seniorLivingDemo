@@ -6,7 +6,7 @@ import { PostDesk, type EditTarget, type PostKind } from "@/components/staff/por
 import { OpenCommunity } from "@/components/staff/StaffCommunity";
 import { PageHead } from "@/components/staff/ui";
 import { communitySlugs } from "@/data/communities";
-import { calendarEvents } from "@/data/staff/calEvents";
+import { calendarEvents, pendingEvent } from "@/data/staff/calEvents";
 import { getStaffData } from "@/data/staff";
 import { sectionAccess } from "@/data/staff/access";
 import { announceSetup, ideaPrefill, importSetup, newEventSetup } from "@/data/staff/post";
@@ -20,7 +20,7 @@ const POST_KINDS: PostKind[] = ["event", "announcement", "import"];
 /** Old links still land on the right form. */
 const legacy: Record<string, PostKind> = { change: "announcement", alert: "announcement" };
 
-type Params = { type?: string; event?: string; idea?: string; c?: string; as?: string; edit?: string; date?: string; back?: string };
+type Params = { type?: string; event?: string; idea?: string; c?: string; as?: string; edit?: string; date?: string; back?: string; approve?: string };
 
 /** Photos now live on each event in Calendar, resources on the Website, menus in Menus. */
 function moved(q: Params): string | undefined {
@@ -75,14 +75,24 @@ export default async function PostPage({ searchParams }: { searchParams: Promise
       : { href: `/staff/calendar?event=${encodeURIComponent(q.edit)}&date=${q.date}`, label: "Back to the calendar" };
     edit = { id: q.edit, date: q.date, base, back };
   }
+  // An event someone sent for approval, from the approver's Today card: ?approve=<approval id>. The same form, with
+  // Approve and Send back above it; the approver can change anything first.
+  if (full && !edit && q.approve) {
+    const a = sc.s.approvals.find((x) => x.id === q.approve);
+    const base = pendingEvent(slug, q.approve);
+    if (a && base) {
+      const by = sc.s.people[a.by];
+      edit = { id: base.id, date: base.date, base, back: { href: "/staff/today", label: "Back to Today" }, approval: { card: `post-${a.id}`, by: by?.name ?? a.by, role: by?.role ?? "", kind: a.kind, note: a.note, photo: a.photo, channels: a.channels } };
+    }
+  }
   // Calendar's "+ Add" on a day: ?type=event&date=<day>.
   const onDay = !edit && q.date && /^\d{4}-\d{2}-\d{2}$/.test(q.date) ? q.date : undefined;
 
   return (
     <>
       <PageHead
-        title={edit ? "Edit event" : "Post"}
-        sub={edit ? "Changes go everywhere it is: the website, the newsletter, week pages and invites." : only ? "News for residents and families, in each person’s language." : "Add it once. Kinlight puts it everywhere it belongs."}
+        title={edit?.approval ? "Approve an event" : edit ? "Edit event" : "Post"}
+        sub={edit?.approval ? `${edit.approval.by} sent this for your approval. Change anything first, approve it, or send it back with a note.` : edit ? "Changes go everywhere it is: the website, the newsletter, week pages and invites." : only ? "News for residents and families, in each person’s language." : "Add it once. Kinlight puts it everywhere it belongs."}
       />
       <PostDesk
         initial={initial}

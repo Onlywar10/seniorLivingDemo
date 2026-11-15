@@ -14,7 +14,7 @@
 // repeating event asks whether the change is for that date only or for every date. Saved in this browser only.
 import Link from "next/link";
 import { useState } from "react";
-import { categoryOf, cats, type ActivityCategory, type Cat, type EventKind } from "@/data/shared";
+import { categoryOf, cats, familyOkLabel, familyOkOf, type ActivityCategory, type Cat, type EventKind, type FamilyOk } from "@/data/shared";
 import type { CalEvent } from "@/data/staff/calEvents";
 import type { Interest } from "@/data/staff/engage";
 import type { PreviewSetup } from "@/data/staff/pool";
@@ -29,11 +29,12 @@ import { useStaffCommunity } from "../StaffCommunity";
 import { useSetLeader } from "../store";
 import { EventPreview, type Draft } from "./EventPreview";
 import { OffCampus } from "./OffCampus";
+import { ScheduleSide } from "./ScheduleSide";
 import { Auto, Help } from "./Help";
 
 export { interestsFromTitle };
 
-export interface EventPrefill { title?: string; date?: string; time?: string; minutes?: number; kind?: EventKind; cap?: number; repeat?: boolean; room?: string; cat?: Cat; interests?: Interest[]; photos?: boolean; leader?: string; lantern?: boolean; desc?: string; cost?: string; areas?: string[]; plan?: PlanStep[]; stops?: Place[] }
+export interface EventPrefill { familyOk?: FamilyOk; title?: string; date?: string; time?: string; minutes?: number; kind?: EventKind; cap?: number; repeat?: boolean; room?: string; cat?: Cat; interests?: Interest[]; photos?: boolean; leader?: string; lantern?: boolean; desc?: string; cost?: string; areas?: string[]; plan?: PlanStep[]; stops?: Place[] }
 
 /** How an event repeats. */
 export type RepeatKind = "none" | "weekly" | "biweekly" | "monthly";
@@ -87,6 +88,8 @@ const TEMPLATES: (EventPrefill & { label: string })[] = [
 export interface SavedEvent {
   id: string; title: string; date: string; start: number; end: number; room: string; kind: EventKind; cat: Cat;
   cap?: number; repeat: boolean; lantern: boolean; interests: Interest[]; desc: string; cost?: string;
+  /** Who says yes before a family member can come. */
+  familyOk?: FamilyOk;
   /** "Every Tuesday and Thursday", "Monthly, 2nd Tuesday"; undefined for a one-off. */
   rule?: string;
   pattern: { k: RepeatKind; days: number[]; until?: string };
@@ -115,13 +118,13 @@ export function savedToCal(s: SavedEvent, date: string, id = s.id): CalEvent {
   return {
     id, date, kind: s.kind, start: s.start, end: s.end, title: s.title, room: s.room, cat: s.cat, color: cats[s.cat].color, catLabel: cats[s.cat].label,
     cap: s.cap, taken: s.cap ? 0 : undefined, booked: s.cap ? [] : undefined, lantern: s.lantern, rule: s.rule, desc: s.desc, cost: s.cost,
-    interests: s.interests, isNew: true, idea: s.idea, approval: s.approval || undefined, wanted: s.photos || undefined, newsletter: s.newsletter || undefined, plan: s.plan, stops: s.stops,
+    interests: s.interests, isNew: true, idea: s.idea, familyOk: s.familyOk, approval: s.approval || undefined, wanted: s.photos || undefined, newsletter: s.newsletter || undefined, plan: s.plan, stops: s.stops,
   };
 }
 /** What describes an event, for a change to it (not its date or repeat). */
 const describe = (s: SavedEvent): Partial<CalEvent> => ({
   title: s.title, start: s.start, end: s.end, room: s.room, kind: s.kind, cat: s.cat, color: cats[s.cat].color, catLabel: cats[s.cat].label,
-  cap: s.cap, lantern: s.lantern, desc: s.desc, cost: s.cost, interests: s.interests, wanted: s.photos || undefined, approval: s.approval || undefined, newsletter: s.newsletter || undefined, plan: s.plan, stops: s.stops,
+  cap: s.cap, lantern: s.lantern, desc: s.desc, cost: s.cost, interests: s.interests, familyOk: s.familyOk, wanted: s.photos || undefined, approval: s.approval || undefined, newsletter: s.newsletter || undefined, plan: s.plan, stops: s.stops,
 });
 
 const toMin = (s: string) => { const [h, m] = s.split(":").map(Number); return (h || 0) * 60 + (m || 0); };
@@ -191,11 +194,13 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
   // Post opens with a sample event, so the numbers below are real; Calendar's "+ Add" and ideas start from their own.
   const p: EventPrefill = prefill ?? (idea ? {} : { ...setup.sample });
   const [tab, setTab] = useState<Tab>("event");
+  const [calOpen, setCalOpen] = useState(false);
   const [f, setF] = useState({
     title: p.title ?? idea?.title ?? "", date: p.date ?? tomorrow, time: p.time ?? "14:00", end: hhmm(toMin(p.time ?? "14:00") + (p.minutes ?? 60)),
     room: p.room ?? setup.rooms.find((r) => /club|activity|living/i.test(r)) ?? setup.rooms[0], cap: p.cap ? String(p.cap) : "", cost: editing?.cost ?? p.cost ?? "",
   });
   const [kind, setKind] = useState<EventKind>(p.kind ?? "resident");
+  const [famOk, setFamOk] = useState<FamilyOk | null>(p.familyOk ?? null);
   const d0 = fromIso(p.date ?? tomorrow);
   const [initPat] = useState(() => ({ rk: (p.repeat ? "weekly" : "none") as RepeatKind, days: [d0.getUTCDay()] }));
   const [rk, setRk] = useState<RepeatKind>(initPat.rk);
@@ -285,7 +290,7 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
   const repeating = !!editing?.rule;
 
   const build = (): SavedEvent => ({
-    id: editing?.id ?? `new-${f.date}-${start}-${f.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, title: f.title, date: f.date, start, end, room: f.room, kind, cat: catOf(interests, lantern), cap, repeat, lantern, interests, desc: text, cost: f.cost || undefined, photos,
+    id: editing?.id ?? `new-${f.date}-${start}-${f.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, title: f.title, date: f.date, start, end, room: f.room, kind, cat: catOf(interests, lantern), cap, repeat, lantern, interests, desc: text, cost: f.cost || undefined, photos, familyOk: kind === "public" ? undefined : famOk ?? familyOkOf({ kind, cap }),
     idea: idea?.who ?? (idea ? "a resident" : undefined), approval, rule, pattern, category, areas, leader: leader || undefined, newsletter: news && !newsTooLate, template: keepTpl, plan, stops: offCampus ? stops : undefined,
   });
 
@@ -412,6 +417,14 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
       {offCampus && <OffCampus stops={stops} onChange={(x) => { setStops(x); if (!planSel) setPlan(null); }} from={setup.brand.name} minutes={end - start} />}
       <div className="sx-row">
         <label>Seats<input type="number" min={0} inputMode="numeric" value={f.cap} onChange={set("cap")} placeholder="No limit" /></label>
+        {kind !== "public" && !lantern && (
+          <label>
+            Before a family member can come
+            <select value={famOk ?? familyOkOf({ kind, cap })} onChange={(ev) => setFamOk(ev.target.value as FamilyOk)}>
+              {(["resident", "both", "staff"] as const).map((k) => <option key={k} value={k}>{familyOkLabel[k]}</option>)}
+            </select>
+          </label>
+        )}
       </div>
       <fieldset className="po-field">
         <legend className="sx-lbl">Interests</legend>
@@ -473,6 +486,20 @@ export function NewEvent({ setup, prefill, idea, inDrawer = false, extraBusy = [
 
   const timeTab = (
     <>
+      <div className="po-calbar">
+        <button type="button" className="sx-btn sx-btn-sm" aria-expanded={calOpen} onClick={() => setCalOpen((o) => !o)}><Icon name="calendar" /> {calOpen ? "Hide the calendar" : "See the calendar"}</button>
+        <span className="sx-hint">What else is on {dayName(d)}, that week or that month</span>
+      </div>
+      {calOpen && (
+        <ScheduleSide
+          busy={[...setup.busy, ...extraBusy].filter((b) => !(editing && b.title === editing.title && b.start === editing.start && b.date === editing.date))}
+          draft={{ title: f.title, date: f.date || tomorrow, start, end, room: offCampus ? "" : f.room, dates: known }}
+          todayIso={setup.todayIso}
+          onPick={(x) => setF({ ...f, date: x })}
+          onClose={() => setCalOpen(false)}
+          inDrawer={inDrawer}
+        />
+      )}
       <div className="sx-row3 po-when">
         <label>Day<input type="date" value={f.date} min={editing && editing.date < setup.todayIso ? editing.date : setup.todayIso} onChange={set("date")} required /></label>
         <label>Starts<input type="time" value={f.time} onChange={(ev) => { const s0 = toMin(ev.target.value); setF({ ...f, time: ev.target.value, end: hhmm(s0 + Math.max(15, end - start)) }); }} step={300} required /></label>

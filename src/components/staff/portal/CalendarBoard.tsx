@@ -31,7 +31,7 @@ const isPhone = () => window.matchMedia(phoneQuery).matches;
 const subMinute = (f: () => void) => { const id = window.setInterval(f, 60_000); return () => window.clearInterval(id); };
 
 /** Open the calendar on one event (and its Photos area), or on Plan. */
-export interface CalFocus { id?: string; date?: string; photos?: boolean; plan?: boolean; clash?: string }
+export interface CalFocus { id?: string; date?: string; photos?: boolean; attend?: boolean; plan?: boolean; clash?: string }
 
 type View = "week" | "month" | "day";
 type Filter = "all" | "mine" | "attendance" | "lantern" | "seats" | "open" | "conflicts";
@@ -61,6 +61,7 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<CalEvent | null>(focused ?? null);
   const [photoFocus, setPhotoFocus] = useState(!!(focused && focus?.photos));
+  const [attendFocus, setAttendFocus] = useState(!!(focused && focus?.attend));
   const [adding, setAdding] = useState<{ date: string; n: number; prefill?: EventPrefill; idea?: IdeaPrefill } | null>(null);
 
   const lastIso = iso(addDays(fromIso(weekStarts[weekStarts.length - 1]), 6));
@@ -110,7 +111,7 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
   const tomorrow = iso(addDays(fromIso(todayIso), 1));
   const tplPrefill = (t: Template): EventPrefill => ({ title: t.title, kind: t.kind, cat: t.cat, minutes: t.minutes, cap: t.cap, interests: t.interests, repeat: t.repeat, photos: !(t.kind === "resident" && !t.cap) });
   const fromTemplate = (t: Template) => add(tomorrow, { prefill: tplPrefill(t) });
-  const openEvent = (e: CalEvent) => { setPhotoFocus(false); setOpen(e); };
+  const openEvent = (e: CalEvent) => { setPhotoFocus(false); setAttendFocus(false); setOpen(e); };
 
   // The form puts it on the calendar (every date, if it repeats); here the calendar goes to its week.
   const saved = (s: SavedEvent) => {
@@ -309,7 +310,7 @@ export function CalendarBoard({ events: initial, weekStarts, todayIso, residents
         </div>
       )}
 
-      {open && <EventSheet key={open.id + open.date} e={open} residents={residents} staff={staff} me={me} todayIso={todayIso} readOnly={readOnly} brand={brand} kit={kit} photoFocus={photoFocus} onClose={() => setOpen(null)} onChange={update} onSeries={everyWeek} setup={setup} lantern={invite?.lantern} interestsOf={invite?.interestsOf} />}
+      {open && <EventSheet key={open.id + open.date} e={open} residents={residents} staff={staff} me={me} todayIso={todayIso} readOnly={readOnly} brand={brand} kit={kit} photoFocus={photoFocus} attendFocus={attendFocus} onClose={() => setOpen(null)} onChange={update} onSeries={everyWeek} setup={setup} lantern={invite?.lantern} interestsOf={invite?.interestsOf} />}
       {move && (
         <Drawer title={`Move ${move.e.title}?`} sub={`${dayName(fromIso(move.e.date))} → ${dayName(fromIso(move.to))}, ${monthName(fromIso(move.to)).slice(0, 3)} ${fromIso(move.to).getUTCDate()} · ${fmtTime(move.e.start)}`} onClose={() => setMove(null)}>
           <div className="sx-form pc-move">

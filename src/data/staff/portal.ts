@@ -5,7 +5,7 @@ import { communities, type CommunitySlug } from "@/data/communities";
 import { residentHref } from "@/components/staff/residentHref";
 import { addDays, dayName, dayShort, fmtTime, fromIso, hash, iso, nowMinutes, today } from "@/lib/clock";
 import { kindOf } from "@/data/shared";
-import { eventRequests, suggestions, when, type EventRequest } from "./alpha";
+import { eventRequests, familyOkOf, suggestions, when, type EventRequest } from "./alpha";
 import { concerns, handledByAI, readyToReview, type Concern, type Handled, type Review } from "./engage";
 import { getStaffData, planRows } from "./index";
 import { sitePages } from "./website";
@@ -67,7 +67,9 @@ export type RsvpItem = Base & RsvpFields;
 
 export type QItem = Base &
   (
-    | { kind: "post"; title: string; postKind: string; by: string; byRole: string; detail: string; photo?: string; channels: string[]; note?: string; diff?: [string, string] }
+    | { kind: "post"; title: string; postKind: string; by: string; byRole: string; detail: string; photo?: string; channels: string[]; note?: string; diff?: [string, string];
+        /** An event: the card opens it, with Approve and Send back at the top, instead of approving from the card. */
+        open?: string }
     | RsvpFields
     | { kind: "ask"; request: "rsvp" | "seat"; from: string; relation: string; resident: string; apt?: string; event: EventLine; party: number; asked: string; lang: string; how: string; lantern: boolean;
         /** Other requests about the same resident: staff ask once. */
@@ -84,7 +86,11 @@ export type QItem = Base &
     /** Anything else that needs a person, from another section: attendance, a room clash, ideas, pages, tours… */
     | { kind: "task"; type: string; icon: "users" | "image" | "alert" | "heart" | "sms" | "fork" | "globe" | "building" | "list" | "chart" | "check";
         title: string; context?: string; help: string; quote?: string; lines?: string[];
-        main: { label: string; href?: string; done?: string }; second?: { label: string; href?: string; done?: string } }
+        main: { label: string; href?: string; done?: string }; second?: { label: string; href?: string; done?: string };
+        /** Several events: the main button opens this list, and each one opens its own event (to take attendance, or add photos). */
+        events?: { id: string; date: string; title: string; when: string }[]; focus?: "attend" | "photos";
+        /** A personal invite to draft: the resident, the classes coming up, and who it's from. Sent from Communications. */
+        invite?: { resident: string; from: string; team: string; missed: string; events: { id: string; date: string; title: string; day: string; time: string; room: string }[] } }
   );
 
 /** How a family member hears back: their channel, in their language. */
@@ -97,6 +103,9 @@ const eventLine = (r: EventRequest): EventLine => ({
   id: r.event.id, date: r.event.date, start: r.event.start, title: r.event.title, when: when(r.event), place: r.event.place, cap: r.event.cap, waitlist: r.event.waitlist, kind: r.event.kind,
   seatsLeft: r.event.cap ? Math.max(0, r.event.cap - (r.event.taken ?? 0)) : undefined,
 });
+
+/** Whole days from today to a date (negative if it has passed). */
+const daysTo = (d: string) => Math.round((fromIso(d).getTime() - today().getTime()) / 864e5);
 
 /** A phone number in the community's area code for someone who wrote in (stable for the name). */
 const phoneFor = (s: StaffData, name: string) => `${s.brand.phone.slice(0, 5)} 555-0${String(100 + (hash(name) % 899)).padStart(3, "0")}`;
@@ -168,7 +177,7 @@ export function baseQueue(slug: CommunitySlug): QItem[] {
   // Posts waiting for approval: the activities team's posts with resident photos go to the activities director;
   // prices and special menus to the executive director.
   s.approvals.forEach((a) =>
-    out.push({ id: `post-${a.id}`, for: [a.to], mins: a.mins, ago: ago(a.mins), kind: "post", title: a.title, postKind: a.kind, by: ppl(a.by).name, byRole: ppl(a.by).role, detail: a.detail, photo: a.photo, channels: a.channels, note: a.note, diff: a.diff }),
+    out.push({ id: `post-${a.id}`, for: [a.to], mins: a.mins, ago: ago(a.mins), kind: "post", title: a.title, postKind: a.kind, by: ppl(a.by).name, byRole: ppl(a.by).role, detail: a.detail, photo: a.photo, channels: a.channels, note: a.note, diff: a.diff, open: a.event ? `/staff/post?approve=${a.id}` : undefined }),
   );
 
   // Family RSVPs and seat requests. The resident is asked first, by text; staff see them once the resident says yes,
@@ -186,9 +195,14 @@ export function baseQueue(slug: CommunitySlug): QItem[] {
       // A seat on an outing that's full: the resident goes on the waiting list automatically and the family is told.
       // Nobody needs to decide that, so there's no card; it shows on the event's sheet.
       if (ev.seatsLeft === 0) continue;
+      // The event says who approves: when the resident's yes is enough, it's confirmed and nobody gets a card.
+      if (familyOkOf(r.event) === "resident") continue;
       out.push({ id: `req-${r.id}`, for: ["events"], mins: r.mins, ago: ago(r.mins), kind: r.kind === "family-rsvp" ? "rsvp" : "seat", ...common, note: r.note, said: `${first(r.resident)} said yes by text, ${ago(Math.max(1, r.mins - 9))}`, full: ev.seatsLeft === 0 });
       continue;
     }
+    // Not answered yet: the resident is asked on their action page and by text, whoever took the request (a reply, the
+    // family page, or a call to the front desk). Staff are asked to check in person only once the event is within a week.
+    if (daysTo(r.event.date) > 7) continue;
     out.push({
         id: `ask-${r.id}`, for: [lantern ? "lantern" : "events"], mins: r.mins, ago: ago(r.mins), kind: "ask", request: r.kind === "family-rsvp" ? "rsvp" : "seat", ...common, lantern,
         apt: s.contacts.find((c) => c.resident === r.resident)?.apt,
@@ -239,16 +253,16 @@ export function baseQueue(slug: CommunitySlug): QItem[] {
     }));
 
   // Things Kinlight prepared that its owner must approve (the newsletter) or check (dishes it wasn't sure of).
-  // An import Kinlight read goes back to whoever imported it (the activities calendar); the photo captions to the
-  // activities team. Next week's menu checks come from Menus itself, below.
+  // An import Kinlight read goes back to whoever imported it (the activities calendar). The newsletter is its own card
+  // (todaySignals); next week's menu checks come from Menus itself.
   readyToReview(slug)
-    .map((r) => ({ r, to: (r.for.length ? r.for : r.kind === "import" || r.kind === "captions" ? ["events"] : []) as StaffRole[] }))
+    .map((r) => ({ r, to: (r.for.length ? r.for : r.kind === "import" ? ["events"] : []) as StaffRole[] }))
     .filter((x) => x.to.length > 0)
     .forEach(({ r, to }) => out.push({ id: r.id, for: to, mins: 60 * 6, ago: r.due, kind: "review", r, signal: r.kind === "import" ? "import-check" : "review" }));
 
-  // A family member who signed up from the QR poster, waiting for a check (their resident agreed by text).
+  // A family member who signed up, waiting for a check (their resident agreed by text): the front desk knows the families.
   const v = verifyCandidate(s);
-  out.push({ id: `verify-${hash(v.name)}`, for: ["events"], mins: 60 * 26, ago: ago(60 * 26), kind: "verify", ...v, signal: "family-member" });
+  out.push({ id: `verify-${hash(v.name)}`, for: ["desk"], mins: 60 * 26, ago: ago(60 * 26), kind: "verify", ...v, signal: "family-member" });
 
 
   return stamp(tidy(out.sort((a, b) => a.mins - b.mins)));
@@ -322,7 +336,7 @@ function stamp(items: QItem[]): QItem[] {
       case "ask": due = Math.min(at(q.event.date, q.event.start), ...q.more.map((m) => at(m.event.date, m.event.start)), got(q) + 2 * 1440); q.owner = "events"; break;
       case "inquiry": due = got(q) < 16 * 60 ? 17 * 60 : 1440 + 12 * 60; label = due < 1440 ? "today, while they’re keen" : by(due); q.owner = "sales"; break;
       case "reply": label = "within 1 business day"; q.owner = q.for[0]; break;
-      case "verify": due = got(q) + 2 * 1440; label = "within 2 days"; q.owner = "events"; break;
+      case "verify": due = got(q) + 2 * 1440; label = "within 2 days"; q.owner = "desk"; break;
       case "concern": label = "within 1 business day"; break;
       case "stale": due = toSunday * 1440 + 1440 + 9 * 60; q.owner = "desk"; break;
       case "review": {
@@ -351,7 +365,7 @@ function describe(q: QItem) {
     }
     case "rsvp": case "seat": case "group": q.signal ??= "family-request"; q.why = "You approve family requests"; q.ifNot = "or the family hears nothing before the event"; break;
     case "ask": q.signal ??= "ask"; q.why = q.lantern ? "Lantern residents are asked in person, by the Lantern team" : "The resident didn’t answer the text, so someone asks in person"; q.ifNot = "or the family hears nothing before the event"; break;
-    case "verify": q.signal ??= "family-member"; q.why = "You check who joins a resident’s family"; q.ifNot = `or ${q.name.split(" ")[0]} gets community news only`; break;
+    case "verify": q.signal ??= "family-member"; q.why = "The front desk knows the families, so you check who joins one"; q.ifNot = `or ${q.name.split(" ")[0]} gets community news only`; break;
     case "inquiry": q.signal ??= "inquiry"; q.why = "New inquiries come to sales"; q.ifNot = "or they go cold"; break;
     case "concern": q.signal ??= "concern"; q.why ??= `You own ${q.c.topic} concerns`; q.ifNot = "or it shows as overdue to your manager"; break;
     case "review": q.signal ??= "review"; q.why = q.r.kind === "newsletter" ? "You approve the newsletter" : "Kinlight prepared it for you to check"; q.ifNot = q.r.kind === "newsletter" ? "or it sends as it is" : "or it goes out with what Kinlight guessed"; break;

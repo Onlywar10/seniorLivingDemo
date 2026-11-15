@@ -211,6 +211,7 @@ const approvals: Approval[] = [
     detail: "Wednesday, November 18 · 3:00 pm · The Perch. Music, nutritious snacks and choreography. Four photos from October’s Happy Hour on the event page.",
     photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (186)", "Weekly email digest", "Large-print flyer"],
     note: "All 4 residents pictured have photo consent on file. Mocktail recipes in the description.",
+    event: { day: 3, start: 15 * 60, end: 16 * 60, room: "The Perch", kind: "resident", cat: "fitness", desc: "Music, nutritious snacks and choreography with Devin and Priya. Mocktail recipes to take home." },
   },
   {
     id: "a4", by: "rafael", to: "manager", mins: 60 * 30, kind: "Holiday menu", title: "Thanksgiving dinner menu, Thursday, November 26",
@@ -220,11 +221,11 @@ const approvals: Approval[] = [
 ];
 
 const approvedRecently = [
-  { title: "Honoring our veterans: news post with 6 photos", by: "nora", mins: 60 * 27, ok: true },
+  { title: "Honoring our veterans: event photos (6)", by: "nora", mins: 60 * 27, ok: true },
   { title: "Calder Valley Memory Walk: story and 14 photos", by: "maribel", mins: 60 * 28, ok: true },
   { title: "November activity calendar (312 events)", by: "nora", mins: 60 * 190, ok: true },
-  { title: "Paint and Sip with Talia: news post", by: "nora", mins: 60 * 24 * 19, ok: true },
-  { title: "Photo post: “Guess the pumpkin” contest", by: "nora", mins: 60 * 50, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
+  { title: "Paint and Sip with Talia: event with photos", by: "nora", mins: 60 * 24 * 19, ok: true },
+  { title: "Guess the pumpkin contest: event photos", by: "nora", mins: 60 * 50, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
 ];
 
 /* ------------------------------------------------------------ SEO */
@@ -403,13 +404,13 @@ const moves = {
 /* ------------------------------------------------------------ tours */
 
 const tours: Tour[] = [
-  { days: 0, time: 600, who: "Patricia Lund", for: "herself", interest: "Independent Living", source: "Google search", lunch: true, note: "Widowed last year; loves bridge", with: "priya" },
+  { days: 0, time: 600, who: "Patricia Lund", for: "herself", interest: "Independent Living", plan: "NB1C", source: "Google search", lunch: true, note: "Widowed last year; loves bridge", with: "priya" },
   { days: 0, time: 840, who: "David & Mei Chen", for: "David’s mother", interest: "Assisted Living", source: "AI search (ChatGPT)", note: "Asked about medication management", with: "priya" },
-  { days: 1, time: 660, who: "Frank Russo", for: "himself and his wife", interest: "Independent Living", source: "Referral: Harold Jensen", lunch: true, with: "priya" },
-  { days: 2, time: 600, who: "The Andersons", for: "Joan Anderson", interest: "Independent Living", source: "Google Business Profile", lunch: true, note: "Wants to see NC6 Two Bedroom Grand", with: "priya" },
+  { days: 1, time: 660, who: "Frank Russo", for: "himself and his wife", interest: "Independent Living", plan: "NC1", source: "Referral: Harold Jensen", lunch: true, with: "priya" },
+  { days: 2, time: 600, who: "The Andersons", for: "Joan Anderson", interest: "Independent Living", plan: "NC6", source: "Google Business Profile", lunch: true, note: "Wants to see NC6 Two Bedroom Grand", with: "priya" },
   { days: 2, time: 900, who: "Lisa Moreau", for: "her father", interest: "Lantern Memory Care", source: "Senior living referral service", note: "Meet Maribel; see the Lantern courtyard", with: "maribel" },
   { days: 3, time: 690, who: "Ray & Donna Whitcomb", for: "themselves", interest: "Independent Living", source: "Facebook", lunch: true, with: "priya" },
-  { days: 5, time: 600, who: "Sylvia Grant", for: "her aunt", interest: "Assisted Living", source: "Website chat", with: "priya" },
+  { days: 5, time: 600, who: "Sylvia Grant", for: "her aunt", interest: "Assisted Living", plan: "AB2", source: "Website chat", with: "priya" },
   { days: 5, time: 780, who: "Ken Ishida", for: "himself", interest: "Independent Living", source: "Google search", lunch: true, note: "Retired engineer; ask about Tech Corner", with: "priya" },
   { days: 6, time: 630, who: "Marjorie Boyle", for: "herself", interest: "Independent Living", source: "Walk-in", with: "priya" },
   { days: 7, time: 600, who: "Ben & Alicia Ortiz", for: "Alicia’s parents", interest: "Independent Living", source: "AI search (Perplexity)", lunch: true, with: "priya" },

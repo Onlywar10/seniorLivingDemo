@@ -14,7 +14,7 @@ import type { PreviewSetup } from "@/data/staff/pool";
 import type { AnnounceSetup, IdeaPrefill, ImportSetup, NewEventSetup } from "@/data/staff/post";
 import { Icon } from "../../Icon";
 import { applyChanges, keyOf, useEventChanges } from "../eventStore";
-import { useLeaders } from "../store";
+import { say, useDecide, useDecisions, useLeaders } from "../store";
 import { AnnounceForm } from "./AnnounceForm";
 import { leaderOf } from "./EventSheet";
 import { NewEvent, type EventPrefill } from "./NewEvent";
@@ -34,7 +34,11 @@ const later = [
 ];
 
 /** An event to change, opened from Calendar or Today. `date` is the date it had on the calendar to begin with. */
-export interface EditTarget { id: string; date: string; base?: CalEvent; back: { href: string; label: string } }
+export interface EditTarget {
+  id: string; date: string; base?: CalEvent; back: { href: string; label: string };
+  /** Waiting for this person's approval: who sent it, and the Today card it came from. */
+  approval?: { card: string; by: string; role: string; kind: string; note?: string; photo?: string; channels: string[] };
+}
 
 export interface PostDeskProps {
   initial: PostKind;
@@ -115,14 +119,64 @@ function EditEvent({ edit, setup, preview }: { edit: EditTarget; setup: NewEvent
   }
   const lead = leaderOf(e, leaders);
   return (
+    <>
+    {edit.approval && <ApproveBar a={edit.approval} title={e.title} />}
     <NewEvent
       key={k}
       setup={setup}
       preview={preview}
       back={edit.back}
       editing={{ id: e.id, title: e.title, date: e.date, orig: e.orig, start: e.start, room: e.room, desc: e.desc, cost: e.cost, lantern: e.lantern, rule: e.rule, newsletter: e.newsletter }}
-      prefill={{ leader: lead ?? "", lantern: e.lantern, title: e.title, date: e.date, time: hhmm(e.start), minutes: (e.end ?? e.start + 60) - e.start, kind: e.kind, cap: e.cap, repeat: !!e.rule, room: e.room, cat: e.cat as Cat, interests: (e.interests ?? e.invites?.interests ?? []) as Interest[], photos: !!e.wanted, plan: e.plan, stops: e.stops }}
+      prefill={{ familyOk: e.familyOk, leader: lead ?? "", lantern: e.lantern, title: e.title, date: e.date, time: hhmm(e.start), minutes: (e.end ?? e.start + 60) - e.start, kind: e.kind, cap: e.cap, repeat: !!e.rule, room: e.room, cat: e.cat as Cat, interests: (e.interests ?? e.invites?.interests ?? []) as Interest[], photos: !!e.wanted, plan: e.plan, stops: e.stops }}
       onCancel={() => router.push(edit.back.href)}
     />
+    </>
+  );
+}
+
+/** Above an event waiting for approval: who sent it, and Approve or Send back (with a note to them). */
+function ApproveBar({ a, title }: { a: NonNullable<EditTarget["approval"]>; title: string }) {
+  const router = useRouter();
+  const decide = useDecide();
+  const decided = useDecisions()[a.card];
+  const [back, setBack] = useState(false);
+  const [note, setNote] = useState("");
+  const by = a.by.split(" ")[0];
+  if (decided)
+    return (
+      <div className="sx-card sx-card-body po-approve done" role="status">
+        <p><Icon name="check" /> <b>{decided === "approved" ? `Approved. ${title} is on the calendar, and ${by} is told.` : `Sent back to ${by} with your note. Nothing went out.`}</b></p>
+        <div className="pt-act">
+          <Link className="sx-btn sx-btn-primary" href="/staff/today"><Icon name="left" /> Back to Today</Link>
+          <button type="button" className="sx-btn" onClick={() => decide(a.card, null)}>Undo</button>
+        </div>
+      </div>
+    );
+  return (
+    <div className="sx-card sx-card-body po-approve">
+      <div className="po-approve-h">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {a.photo && <img src={a.photo} alt="" />}
+        <div>
+          <p><b>{a.by}</b>{a.role ? `, ${a.role},` : ""} sent this for your approval · {a.kind.toLowerCase()}</p>
+          {a.note && <p className="sx-hint">{by}’s note: “{a.note}”</p>}
+          <p className="sx-hint">Approving puts it on {a.channels.join(", ").toLowerCase().replace(/, ([^,]*)$/, " and $1")}. Change anything below first if you like.</p>
+        </div>
+      </div>
+      {back ? (
+        <form className="sx-form po-approve-back" onSubmit={(ev) => { ev.preventDefault(); decide(a.card, "declined"); say(`Sent back to ${by}. Nothing went out.`); }}>
+          <label>A note for {by}<textarea rows={2} value={note} onChange={(ev) => setNote(ev.target.value)} placeholder={`What should ${by} change?`} /></label>
+          <div className="pt-act">
+            <button type="submit" className="sx-btn sx-btn-primary" disabled={!note.trim()}><Icon name="send" /> Send back to {by}</button>
+            <button type="button" className="sx-btn" onClick={() => setBack(false)}>Cancel</button>
+          </div>
+        </form>
+      ) : (
+        <div className="pt-act">
+          <button type="button" className="sx-btn sx-btn-primary" onClick={() => { decide(a.card, "approved"); say(`Approved. ${by} is told.`); window.setTimeout(() => router.push("/staff/today"), 900); }}><Icon name="check" /> Approve</button>
+          <button type="button" className="sx-btn" onClick={() => setBack(true)}>Send back</button>
+        </div>
+      )}
+    </div>
   );
 }

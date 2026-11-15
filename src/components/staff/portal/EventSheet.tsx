@@ -2,13 +2,13 @@
 
 // One event, with everything about it: who's leading, the details as they were set (who it's for, room, time, seats,
 // price), family requests, who's coming (signed up, and residents who've shown interest), the leader's own notes
-// (materials, set-up, people), the waitlist, personal invites, attendance (tap list, QR full-screen, or a photo of the
+// (materials, set-up, people), the waitlist, personal invites, attendance (tap list, check-in card scans, or a photo of the
 // sign-in sheet), photos, print, and "Something changed". Edit (top right) opens the event in Post, where it's changed
 // for that date or every date. The same sheet opens from Today, from Calendar and from a Needs you card. Saved in this
 // browser.
 import Link from "next/link";
 import { useState } from "react";
-import { categoryOf, eventKindLabel, type EventKind } from "@/data/shared";
+import { categoryOf, eventKindLabel, type EventKind, familyOkLabel, familyOkOf } from "@/data/shared";
 import type { CalEvent, Material, Note, ReqRow } from "@/data/staff/calEvents";
 import type { NewEventSetup, PhotoKit } from "@/data/staff/post";
 import { dayName, fmtRange, fmtTime, fromIso, monthName, nowMinutes } from "@/lib/clock";
@@ -232,7 +232,7 @@ export function EventSheet({ e, residents, staff, me, todayIso, readOnly = false
 
   const requestsSec = !readOnly && reqs.length > 0 && (
     <section className="pt-ev-sec" key="reqs">
-      <h3>Family requests <Help label="How requests work"><p>Family asks → the resident says yes → staff approve → the family is told. A full event puts them on the waitlist instead, and confirms if a seat opens.</p><p>Lantern residents aren’t texted: ask in person.</p></Help></h3>
+      <h3>Family requests <Help label="How requests work"><p>This event: <b>{familyOkLabel[familyOkOf(e)]}</b>. A family member can ask by text, on the family page or by calling the front desk; the resident is always asked first, on their action page or by text. Staff are asked to check in person only if the resident hasn’t answered within a week of the event.</p><p>Family asks → the resident says yes → staff approve (if the event needs it) → the family is told. A full event puts them on the waitlist instead, and confirms if a seat opens.</p><p>Lantern residents aren’t texted: ask in person.</p></Help></h3>
       <ul className="pt-reqs">
         {reqs.map((r) => {
           const rf = first(r.resident);

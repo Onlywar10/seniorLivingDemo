@@ -55,3 +55,35 @@
 .ap-tour-sum > li > span { display: grid; gap: 2px; padding: 12px 16px; background: #fff; border: 1px solid var(--sx-line); border-radius: 12px; color: var(--sx-ink-2); min-height: 64px; }
 .ap-tour-sum b { font-size: 26px; color: var(--green-ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
 @media (max-width: 520px) { .ap-tour-sum { grid-template-columns: 1fr 1fr; } }
+
+/* Tours: the numbers, then each day's tours. Each tour: the time, who and what they want to see, then attendance. */
+.tr { display: grid; gap: 18px; }
+.tr-sum { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.tr-sum li { background: var(--sx-card); border: 1px solid var(--sx-line); border-radius: var(--sx-r, 12px); padding: 12px 14px; display: grid; gap: 2px; }
+.tr-sum b { font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tr-sum span { color: var(--sx-ink-2); font-size: 13px; }
+.tr-sum li.warn { background: var(--sx-warn-tint); border-color: var(--sx-warn); }
+.tr-bar { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; }
+.tr-bar .sx-hint { margin: 0; }
+.tr-day { display: grid; gap: 8px; }
+.tr-day h2 { margin: 0; font-size: 15px; color: var(--sx-ink-2); font-weight: 600; }
+.tr-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tr-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 200px; gap: 14px; padding: 14px 16px; align-items: start; }
+.tr-row.ask { border-color: var(--sx-warn); box-shadow: inset 4px 0 0 var(--sx-warn); }
+.tr-row time { font-weight: 600; font-variant-numeric: tabular-nums; padding-top: 2px; }
+.tr-who h3 { margin: 0; font-size: 16px; }
+.tr-who > p { margin: 2px 0 8px; color: var(--sx-ink-2); font-size: 14px; }
+.tr-who dl { margin: 0; display: grid; gap: 4px; font-size: 14px; }
+.tr-who dl div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; }
+.tr-who dt { color: var(--sx-ink-2); }
+.tr-who dd { margin: 0; min-width: 0; }
+.tr-att { display: grid; gap: 6px; justify-items: start; }
+.tr-att .sx-lbl { margin: 0; }
+.tr-ask, .tr-done { display: grid; gap: 6px; justify-items: start; }
+.tr-ask small { color: var(--sx-ink-2); }
+@media (max-width: 760px) {
+  .tr-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tr-row { grid-template-columns: 64px minmax(0, 1fr); }
+  .tr-att { grid-column: 1 / -1; grid-template-columns: auto 1fr; align-items: center; }
+  .tr-who dl div { grid-template-columns: 1fr; gap: 0; }
+}

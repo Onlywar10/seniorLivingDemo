@@ -28,6 +28,7 @@ function upcoming(slug: CommunitySlug, days: number, from = 0) {
 
 export interface EventRef { id: string; title: string; date: string; start: number; kind: EventKind; place: string; cap?: number; taken?: number; waitlist?: number; lantern?: boolean; cat?: Cat; end?: number }
 const ref = (e: CalEvent): EventRef => ({ id: e.id, title: e.title, date: e.date, start: e.start, kind: kindOf(e), place: e.room, cap: e.cap, taken: e.taken, waitlist: e.waitlist, lantern: e.lantern, cat: e.cat, end: e.end });
+export { familyOkLabel, familyOkOf, type FamilyOk } from "@/data/shared";
 export const when = (e: { date: string; start: number }) => `${dayShort(fromIso(e.date))}, ${fmtTime(e.start)}`;
 
 /* ------------------------------------------------------------ event sign-ups and approvals */
@@ -409,7 +410,6 @@ export function alertSettings(slug: CommunitySlug): AlertSetting[] {
     { kind: "concern", label: "A family concern", detail: "Care, billing, dining or housekeeping, each to its owner.", expected: "Until resolved", urgent: true, who: [p(r.lantern, ["Text", area]), p(billing, ["Email", area]), p(dining, ["Email", area]), p(r.approver, ["Email"])] },
     { kind: "inquiry", label: "A question about living here, or a tour booked", detail: "The acknowledgement has already gone. A person answers; nothing follows up automatically.", expected: "Reply the same day", who: [p(r.desk, ["Text", area]), p(r.approver, ["Email"])] },
     { kind: "review", label: "Something ready to review", detail: "The newsletter, an imported calendar, the week’s menus.", expected: "Before it publishes", who: [p(r.calendar, ["Email", area]), p(r.menus, ["Email", area]), p(r.approver, [area])] },
-    { kind: "stale", label: "A page going stale", detail: "A page hasn’t changed for longer than it should.", expected: "Before the due date", who: [p(r.calendar, ["Email"]), p(r.menus, ["Email"])] },
     { kind: "welcome", label: "A new resident to welcome", detail: "Their messages, interests, consent and a welcome post.", expected: "First week", who: [p(r.calendar, [area]), p(r.desk, [area])] },
   ];
 }

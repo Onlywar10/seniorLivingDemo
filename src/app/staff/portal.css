@@ -1183,3 +1183,17 @@ button.pt-q-photo span .icon { width: 12px; height: 12px; }
 .at2-vf-card { transform: rotate(-3deg); animation: at2-in 0.35s ease-out; }
 @keyframes at2-in { from { opacity: 0; transform: rotate(-3deg) scale(0.92); } }
 @media (prefers-reduced-motion: reduce) { .at2-vf-card { animation: none; } }
+
+/* A card's events, each one opening that event (attendance to take, photos to add). */
+.pt-task-events { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.pt-task-ev { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--sx-line); border-radius: 10px; background: var(--sx-card); color: inherit; text-align: left; text-decoration: none; font: inherit; cursor: pointer; }
+.pt-task-ev:hover, .pt-task-ev:focus-visible { border-color: var(--sx-ink-3); background: var(--sx-soft); }
+.pt-task-ev span { display: grid; gap: 2px; }
+.pt-task-ev small { color: var(--sx-ink-2); font-size: 13px; }
+
+/* "Hasn't been lately": choose a class, then the drafted text to send from Communications. */
+.pt-invite { display: grid; gap: 8px; }
+.pt-invite .sx-lbl { margin: 0; }
+.pt-invite-text { display: grid; gap: 6px; }
+.pt-invite-text small { font-weight: 400; margin-left: 6px; }
+.pt-invite-text textarea { width: 100%; font: inherit; }

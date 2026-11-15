@@ -3,6 +3,7 @@
 // Times are stored as offsets from now / today so the screens always read as current.
 import { addDays, dayShort, fmtTime, hash, iso, nowMinutes, today, MONTHS } from "@/lib/clock";
 import { isCommunity, type CommunitySlug } from "@/lib/sites";
+import type { Cat } from "@/data/shared";
 
 /* ------------------------------------------------------------ community selection */
 
@@ -45,8 +46,8 @@ export const AREAS_COOKIE = "wh-staff-areas";
 export const ASSIGN_COOKIE = "wh-staff-assign";
 
 /** The workspace sections, in menu order. */
-export type Section = "today" | "post" | "messages" | "automations" | "calendar" | "menus" | "newsletter" | "website" | "people" | "feedback" | "surveys" | "prospects" | "reports" | "settings";
-export const SECTIONS: Section[] = ["today", "post", "messages", "automations", "calendar", "menus", "newsletter", "website", "people", "feedback", "surveys", "prospects", "reports", "settings"];
+export type Section = "today" | "post" | "messages" | "automations" | "calendar" | "menus" | "newsletter" | "website" | "people" | "feedback" | "surveys" | "prospects" | "tours" | "reports" | "settings";
+export const SECTIONS: Section[] = ["today", "post", "messages", "automations", "calendar", "menus", "newsletter", "website", "people", "feedback", "surveys", "prospects", "tours", "reports", "settings"];
 
 /**
  * What each preset role may do in each section (the spec's Roles table). A section that's missing isn't shown.
@@ -58,7 +59,7 @@ export type Access = "full" | "assigned" | "view" | "announcements" | "own-pages
 export const accessFor: Record<StaffRole, Partial<Record<Section, Access>>> = {
   // Front desk: visits, dining requests, their own pages, and Apartments: availability by floor plan, the waitlist and
   // the number of tours (no inquiries or prospects: Kinlight doesn't do sales in the alpha).
-  desk: { today: "full", messages: "assigned", automations: "assigned", post: "full", calendar: "full", menus: "dining-requests", website: "own-pages", feedback: "suggestions", prospects: "full" },
+  desk: { today: "full", messages: "assigned", automations: "assigned", post: "full", calendar: "full", menus: "dining-requests", website: "own-pages", feedback: "suggestions", prospects: "full", tours: "full" },
   // Poster (fitness): their own classes, posts (resident photos go to the activities director) and the fitness page.
   fitness: { today: "full", messages: "assigned", post: "full", calendar: "full", website: "own-pages", feedback: "suggestions" },
   events: { today: "full", messages: "full", automations: "assigned", post: "full", calendar: "full", menus: "view", newsletter: "full", website: "own-pages", people: "full", feedback: "full", surveys: "full", reports: "community" },
@@ -69,6 +70,10 @@ export const accessFor: Record<StaffRole, Partial<Record<Section, Access>>> = {
   // The Lantern lead: Lantern residents, their families and the Lantern calendar.
   lantern: { today: "full", messages: "assigned", automations: "assigned", calendar: "full", people: "my-residents", surveys: "assigned" },
 };
+// Surveys are for everyone by default: each person makes and sends their own (a new one is approved once before it
+// first sends). The activities director and administrator see every survey; area owners see their area's.
+for (const r of Object.keys(accessFor) as StaffRole[]) accessFor[r].surveys ??= "assigned";
+
 export const accessLabel: Record<Access, string> = {
   full: "",
   assigned: "Yours",
@@ -202,6 +207,8 @@ export interface Approval {
   channels: string[]; note?: string; diff?: [string, string];
   /** Who approves it: the activities director for their team's posts with resident photos; the executive director for prices and special menus. */
   to: "events" | "manager";
+  /** An event waiting for approval: what it will be on the calendar. `day` is the weekday of its next date (0 Sunday). */
+  event?: { day: number; start: number; end: number; room: string; kind: "resident" | "family" | "public"; cat: Cat; cap?: number; desc: string };
 }
 
 export interface Ranking { q: string; pos: number; change: number; volume: number; url: string; hist: number[] }
@@ -220,7 +227,23 @@ export interface WrongFact {
 
 export interface Waiter { name: string; plan: string; joinedDays: number; deposit: boolean; note?: string }
 
-export interface Tour { days: number; time: number; who: string; for: string; interest: "Independent Living" | "Assisted Living" | "Lantern Memory Care"; source: string; lunch?: boolean; note?: string; with: PersonKey }
+export interface Tour { days: number; time: number; who: string; for: string; interest: "Independent Living" | "Assisted Living" | "Lantern Memory Care"; source: string; lunch?: boolean; note?: string; with: PersonKey;
+  /** The floor plan they asked to see when booking, if any. */
+  plan?: string }
+
+/**
+ * A tour counts itself when the visitor checks in: they reply HERE to the reminder text, or the front desk taps Arrived.
+ * Only a tour whose time has passed with no check-in needs a person ("did they come, or was it a no-show?").
+ * In the demo, today's first tour checked in by text, the next one didn't, and so on.
+ */
+export interface TourCheckIn { at: number; how: string }
+export function tourCheckIns(tours: Tour[], now: number): Map<string, TourCheckIn> {
+  const out = new Map<string, TourCheckIn>();
+  tours.filter((t) => t.days === 0 && t.time <= now).sort((a, b) => a.time - b.time).forEach((t, i) => {
+    if (i % 2 === 0) out.set(t.who, { at: t.time - 6, how: "Replied HERE to the reminder" });
+  });
+  return out;
+}
 
 export interface Enquiry { name: string; mins: number; source: string; interest: string; status: "New" | "Contacted" | "Tour booked" | "Nurturing"; msg: string }
 

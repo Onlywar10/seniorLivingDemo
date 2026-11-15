@@ -34,6 +34,7 @@ export interface Convo {
 export interface Reachable { name: string; relation: string; resident: string; lang: string; channel: Convo["channel"]; phone: string; email: string }
 
 const first = (n = "") => n.split(" ")[0];
+const residentHash = (x: string) => { let h = 0; for (let i = 0; i < x.length; i++) h = (h * 31 + x.charCodeAt(i)) | 0; return Math.abs(h); };
 
 /** "Today, 9:15 am", "Yesterday, 4:10 pm", "Sun, Nov 8, 5:00 pm" for something `mins` ago. */
 function stamp(mins: number) {
@@ -133,11 +134,12 @@ export function inbox(slug: CommunitySlug, as: StaffRole): { convos: Convo[]; pe
     s.enquiries.forEach((e) => people.push({ name: e.name, relation: "Asked about living here", resident: e.interest, lang: "English", channel: "Text and email", phone: prospectPhone(s, e.name), email: "" }));
     s.waitlist.forEach((w) => people.push({ name: w.name, relation: "On the waitlist", resident: planRows(slug).find((p) => p.code === w.plan)?.name ?? w.plan, lang: "English", channel: "Text and email", phone: prospectPhone(s, w.name), email: "" }));
   }
-  const seen = new Set<string>();
-  for (const c of s.contacts) {
-    if (seen.has(c.resident) || c.lantern) continue;
-    seen.add(c.resident);
-    people.push({ name: c.resident, relation: "Resident", resident: c.resident, lang: c.lang, channel: "Text", phone: "", email: "" });
+  // Every resident outside Lantern, by text: they already get Kinlight's texts (their week, invites, reminders).
+  const lanternSet = new Set(s.lanternNames);
+  const langOf = (r: string) => s.contacts.find((c) => c.resident === r)?.lang ?? "English";
+  for (const r of new Set(s.residentNames)) {
+    if (lanternSet.has(r)) continue;
+    people.push({ name: r, relation: "Resident", resident: r, lang: langOf(r), channel: "Text", phone: `${s.brand.phone.slice(0, 5)} 555-0${String(100 + (residentHash(r) % 899)).padStart(3, "0")}`, email: "" });
   }
   return { convos, people: people.sort((a, b) => a.name.localeCompare(b.name)) };
 }

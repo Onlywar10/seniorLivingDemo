@@ -13,7 +13,7 @@ import { addDays, iso, sundayOf, today } from "@/lib/clock";
 
 export const metadata: Metadata = { title: "Calendar" };
 
-type Params = { event?: string; date?: string; photos?: string; plan?: string; clash?: string };
+type Params = { event?: string; date?: string; photos?: string; attend?: string; plan?: string; clash?: string };
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<Params> }) {
   const q = await searchParams;
@@ -36,7 +36,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const wantsPhotos = q.photos === "1" || q.photos === "true";
   let focus: CalFocus | undefined;
   if (q.clash) focus = { clash: q.clash, date: q.date };
-  else if (q.event) focus = { id: q.event, date: q.date, photos: wantsPhotos };
+  else if (q.event) focus = { id: q.event, date: q.date, photos: wantsPhotos, attend: q.attend === "1" };
   else if (wantsPhotos) {
     const pick = out.filter((e) => e.date === nowIso && e.wanted && !e.photos?.length).sort((a, b) => b.start - a.start)[0]
       ?? out.filter((e) => e.date <= nowIso && e.wanted && !e.photos?.length).sort((a, b) => (b.date === a.date ? b.start - a.start : b.date.localeCompare(a.date)))[0];

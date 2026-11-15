@@ -214,6 +214,7 @@ const approvals: Approval[] = [
     detail: "Wednesday, November 18 · 3:00 pm · The Bistro. A short mindfulness session, then nutritious snacks and mocktails. Three photos from last month’s session on the event page.",
     photo: "/img/cocktail.jpg", channels: ["Website calendar", "Family text (155)", "Weekly email digest", "Large-print flyer"],
     note: "All 3 residents pictured have photo consent on file. Mocktail recipes in the description.",
+    event: { day: 3, start: 15 * 60, end: 16 * 60, room: "The Bistro", kind: "resident", cat: "fitness", desc: "A short mindfulness session with Kara, then nutritious snacks and mocktails." },
   },
   {
     id: "a4", by: "julien", to: "manager", mins: 60 * 31, kind: "Holiday menu", title: "Thanksgiving dinner menu, Thursday, November 26",
@@ -221,19 +222,20 @@ const approvals: Approval[] = [
     photo: "/img/turkey.jpg", channels: ["Website dining", "Family email digest", "Large-print menu cards"],
   },
   {
-    id: "a5", by: "callie", to: "events", mins: 60 * 40, kind: "News post with 5 photos", title: "Bocce Tournament: Round One sign-ups",
-    detail: "Five photos from last week’s practice on the courtyard court, inviting residents to sign up for Round One next Thursday.",
-    photo: "/img/bocce.jpg", channels: ["Website news", "Family email digest"],
+    id: "a5", by: "callie", to: "events", mins: 60 * 40, kind: "Event with 5 photos", title: "Bocce Tournament: Round One",
+    detail: "Thursday · 10:00 am · Courtyard bocce court · 16 places. Residents sign up for Round One; five photos from last week’s practice on the event page.",
+    photo: "/img/bocce.jpg", channels: ["Website calendar", "Resident invites (interests: games, outdoors)", "Weekly email digest", "Large-print flyer"],
     note: "All 5 residents pictured have photo consent on file.",
+    event: { day: 4, start: 10 * 60, end: 11 * 60 + 30, room: "Courtyard", kind: "resident", cat: "clubs", cap: 16, desc: "Round One of the bocce tournament on the courtyard court. Sign up to play, or come and cheer. Five photos from last week’s practice." },
   },
 ];
 
 const approvedRecently = [
-  { title: "Honoring our veterans: news post with 8 photos", by: "grant", mins: 60 * 26, ok: true },
+  { title: "Honoring our veterans: event photos (8)", by: "grant", mins: 60 * 26, ok: true },
   { title: "Paint and Sip: October story and 11 photos", by: "callie", mins: 60 * 30, ok: true },
   { title: "November activity calendar (287 events)", by: "grant", mins: 60 * 180, ok: true },
-  { title: "Axe throwing: news post", by: "kara", mins: 60 * 24 * 12, ok: true },
-  { title: "Photo post: pumpkin carving contest", by: "callie", mins: 60 * 46, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
+  { title: "Axe throwing: event with photos", by: "kara", mins: 60 * 24 * 12, ok: true },
+  { title: "Pumpkin carving contest: event photos", by: "callie", mins: 60 * 46, ok: false, note: "Changes requested: one resident without photo consent. Re-sent with photo cropped." },
 ];
 
 /* ------------------------------------------------------------ SEO */
@@ -410,14 +412,14 @@ const moves = {
 /* ------------------------------------------------------------ tours */
 
 const tours: Tour[] = [
-  { days: 0, time: 630, who: "Beverly Nakamura", for: "herself", interest: "Independent Living", source: "Google search", lunch: true, note: "Recently widowed; keen gardener", with: "mateo" },
+  { days: 0, time: 630, who: "Beverly Nakamura", for: "herself", interest: "Independent Living", plan: "B1", source: "Google search", lunch: true, note: "Recently widowed; keen gardener", with: "mateo" },
   { days: 0, time: 870, who: "Andre & Kim Dubois", for: "Andre’s father", interest: "Assisted Living", source: "Senior living referral service", note: "Asked how care works in his own apartment", with: "mateo" },
   { days: 1, time: 600, who: "Lorraine Pike", for: "herself", interest: "Independent Living", source: "Referral: Marion Halvorsen", lunch: true, with: "mateo" },
   { days: 3, time: 660, who: "The Gill family", for: "Jasbir’s brother", interest: "Independent Living", source: "Referral: Jasbir Gill", lunch: true, note: "Prefers Punjabi; Navneet will translate", with: "mateo" },
   { days: 3, time: 900, who: "Tom Reilly", for: "his wife", interest: "Lantern Memory Care", source: "Google Business Profile", note: "Meet Anjali; see the Lantern Courtyard", with: "anjali" },
-  { days: 4, time: 690, who: "Maureen & Phil Easton", for: "themselves", interest: "Independent Living", source: "Facebook", lunch: true, note: "Want to see the C2 two-bath plan", with: "mateo" },
+  { days: 4, time: 690, who: "Maureen & Phil Easton", for: "themselves", interest: "Independent Living", plan: "C2", source: "Facebook", lunch: true, note: "Want to see the C2 two-bath plan", with: "mateo" },
   { days: 4, time: 840, who: "Kevin Huang", for: "his mother", interest: "Assisted Living", source: "AI search (ChatGPT)", with: "mateo" },
-  { days: 5, time: 600, who: "Delia Fortunato", for: "herself", interest: "Independent Living", source: "Website chat", lunch: true, with: "mateo" },
+  { days: 5, time: 600, who: "Delia Fortunato", for: "herself", interest: "Independent Living", plan: "A1", source: "Website chat", lunch: true, with: "mateo" },
   { days: 6, time: 630, who: "Hank Brennan", for: "himself", interest: "Independent Living", source: "Walk-in", note: "Retired pilot; mention the Air & Space Museum trip", with: "mateo" },
   { days: 7, time: 600, who: "Sandra & Luis Ochoa", for: "Sandra’s parents", interest: "Independent Living", source: "Google search", lunch: true, with: "mateo" },
   { days: 8, time: 840, who: "Pamela Gaines", for: "her father", interest: "Lantern Memory Care", source: "Referral: physician", with: "anjali" },

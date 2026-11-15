@@ -22,7 +22,8 @@ export default async function NewSurveyPage({ searchParams }: { searchParams: Pr
   const { s, c } = sc;
   const sp = await searchParams;
   const me = viewer(s.slug, as);
-  const area = SURVEY_AREA[as] ?? "community";
+  // Their own area; the fitness director is part of the activities team.
+  const area = SURVEY_AREA[as] ?? (as === "fitness" ? "activities" : "community");
   const past = surveysOf(s.slug)
     .filter((x) => x.status === "closed" || (x.answered > 0 && x.status !== "waiting"))
     .map((x) => ({ id: x.id, title: x.title, when: x.sentLabel ?? "", rate: results(x).rate, questions: x.questions, area: x.area, audience: x.audience, topic: x.topic, anonymous: x.anonymous }));
